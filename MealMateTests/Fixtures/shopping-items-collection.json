@@ -1,0 +1,28 @@
+{
+  "createdItems": [],
+  "updatedItems": [
+    {
+      "quantity": 1.0,
+      "unit": null,
+      "food": null,
+      "referencedRecipe": null,
+      "note": "Paper towels",
+      "display": "1 Paper towels",
+      "shoppingListId": "a0000023-0000-4000-8000-000000000023",
+      "checked": true,
+      "position": 0,
+      "foodId": null,
+      "labelId": null,
+      "unitId": null,
+      "extras": {},
+      "id": "a0000024-0000-4000-8000-000000000024",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "label": null,
+      "recipeReferences": [],
+      "createdAt": "2026-10-08T18:58:04.416268Z",
+      "updatedAt": "2026-10-08T18:58:05.031928Z"
+    }
+  ],
+  "deletedItems": []
+}

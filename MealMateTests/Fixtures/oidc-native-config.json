@@ -1,0 +1,5 @@
+{
+  "authorization_endpoint": "https://idp.example.com/authorize",
+  "client_id": "mealmate-example-client",
+  "scope": "openid email profile"
+}

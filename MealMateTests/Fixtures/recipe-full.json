@@ -1,0 +1,261 @@
+{
+  "id": "a000000d-0000-4000-8000-00000000000d",
+  "userId": "a000000c-0000-4000-8000-00000000000c",
+  "householdId": "a0000003-0000-4000-8000-000000000003",
+  "groupId": "a0000002-0000-4000-8000-000000000002",
+  "name": "Lemon Herb Chicken",
+  "slug": "lemon-herb-chicken",
+  "image": "aB3x",
+  "recipeServings": 4.0,
+  "recipeYieldQuantity": 0.0,
+  "recipeYield": null,
+  "totalTime": null,
+  "prepTime": null,
+  "cookTime": null,
+  "performTime": null,
+  "description": "Bright, simple and ready in 45 minutes.",
+  "recipeCategory": [],
+  "tags": [],
+  "tools": [],
+  "rating": null,
+  "orgURL": null,
+  "dateAdded": "2026-10-08",
+  "dateUpdated": "2026-10-08T18:36:03.240153Z",
+  "createdAt": "2026-10-08T18:29:22.483612Z",
+  "updatedAt": "2026-10-08T18:36:03.242590Z",
+  "lastMade": null,
+  "recipeIngredient": [
+    {
+      "quantity": 500.0,
+      "unit": {
+        "id": "a0000013-0000-4000-8000-000000000013",
+        "name": "gram",
+        "pluralName": "grams",
+        "description": "",
+        "extras": {},
+        "fraction": true,
+        "abbreviation": "g",
+        "pluralAbbreviation": null,
+        "useAbbreviation": false,
+        "aliases": [],
+        "standardQuantity": 1.0,
+        "standardUnit": "gram",
+        "createdAt": "2026-10-02T14:07:26.726663Z",
+        "updatedAt": "2026-10-02T14:07:26.726665Z"
+      },
+      "food": {
+        "id": "a000000f-0000-4000-8000-00000000000f",
+        "name": "Flour",
+        "pluralName": null,
+        "description": "",
+        "extras": {},
+        "labelId": "a0000010-0000-4000-8000-000000000010",
+        "aliases": [
+          {
+            "name": "flour"
+          }
+        ],
+        "substitutions": [],
+        "householdsWithIngredientFood": [],
+        "label": {
+          "name": "Baking",
+          "color": "#959595",
+          "groupId": "a0000002-0000-4000-8000-000000000002",
+          "id": "a0000010-0000-4000-8000-000000000010"
+        },
+        "createdAt": "2026-10-02T14:07:27.014292Z",
+        "updatedAt": "2026-10-08T18:29:21.628417Z"
+      },
+      "referencedRecipe": null,
+      "note": "",
+      "display": "500 grams Flour",
+      "title": "Marinade",
+      "originalText": null,
+      "substitutions": [],
+      "referenceId": "a0000014-0000-4000-8000-000000000014"
+    },
+    {
+      "quantity": 2.0,
+      "unit": null,
+      "food": {
+        "id": "a0000015-0000-4000-8000-000000000015",
+        "name": "Egg",
+        "pluralName": "Eggs",
+        "description": "",
+        "extras": {},
+        "labelId": "a0000016-0000-4000-8000-000000000016",
+        "aliases": [
+          {
+            "name": "egg"
+          }
+        ],
+        "substitutions": [],
+        "householdsWithIngredientFood": [],
+        "label": {
+          "name": "Dairy Products",
+          "color": "#959595",
+          "groupId": "a0000002-0000-4000-8000-000000000002",
+          "id": "a0000016-0000-4000-8000-000000000016"
+        },
+        "createdAt": "2026-10-02T14:07:27.013583Z",
+        "updatedAt": "2026-10-08T18:29:28.979190Z"
+      },
+      "referencedRecipe": null,
+      "note": "for the marinade",
+      "display": "2 eggs for the marinade",
+      "title": null,
+      "originalText": null,
+      "substitutions": [],
+      "referenceId": "a0000017-0000-4000-8000-000000000017"
+    },
+    {
+      "quantity": 1.0,
+      "unit": {
+        "id": "a0000018-0000-4000-8000-000000000018",
+        "name": "can",
+        "pluralName": "cans",
+        "description": "",
+        "extras": {},
+        "fraction": true,
+        "abbreviation": "",
+        "pluralAbbreviation": null,
+        "useAbbreviation": false,
+        "aliases": [],
+        "standardQuantity": null,
+        "standardUnit": null,
+        "createdAt": "2026-10-02T14:07:26.761683Z",
+        "updatedAt": "2026-10-02T14:07:26.761686Z"
+      },
+      "food": {
+        "id": "a0000019-0000-4000-8000-000000000019",
+        "name": "Canned tomatoes",
+        "pluralName": null,
+        "description": "",
+        "extras": {},
+        "labelId": "a000001a-0000-4000-8000-00000000001a",
+        "aliases": [
+          {
+            "name": "canned tomato"
+          }
+        ],
+        "substitutions": [],
+        "householdsWithIngredientFood": [],
+        "label": {
+          "name": "Canned Goods",
+          "color": "#959595",
+          "groupId": "a0000002-0000-4000-8000-000000000002",
+          "id": "a000001a-0000-4000-8000-00000000001a"
+        },
+        "createdAt": "2026-10-02T14:07:27.013688Z",
+        "updatedAt": "2026-10-08T18:29:22.238675Z"
+      },
+      "referencedRecipe": null,
+      "note": "",
+      "display": "1 can Canned tomatoes",
+      "title": "Sauce",
+      "originalText": null,
+      "substitutions": [],
+      "referenceId": "a000001b-0000-4000-8000-00000000001b"
+    },
+    {
+      "quantity": 300.0,
+      "unit": {
+        "id": "a0000013-0000-4000-8000-000000000013",
+        "name": "gram",
+        "pluralName": "grams",
+        "description": "",
+        "extras": {},
+        "fraction": true,
+        "abbreviation": "g",
+        "pluralAbbreviation": null,
+        "useAbbreviation": false,
+        "aliases": [],
+        "standardQuantity": 1.0,
+        "standardUnit": "gram",
+        "createdAt": "2026-10-02T14:07:26.726663Z",
+        "updatedAt": "2026-10-02T14:07:26.726665Z"
+      },
+      "food": {
+        "id": "a000001c-0000-4000-8000-00000000001c",
+        "name": "Chicken thighs",
+        "pluralName": null,
+        "description": "",
+        "extras": {},
+        "labelId": "a000001d-0000-4000-8000-00000000001d",
+        "aliases": [
+          {
+            "name": "ground beef"
+          }
+        ],
+        "substitutions": [],
+        "householdsWithIngredientFood": [],
+        "label": {
+          "name": "Meat",
+          "color": "#959595",
+          "groupId": "a0000002-0000-4000-8000-000000000002",
+          "id": "a000001d-0000-4000-8000-00000000001d"
+        },
+        "createdAt": "2026-10-02T14:07:27.013335Z",
+        "updatedAt": "2026-10-08T18:29:22.332532Z"
+      },
+      "referencedRecipe": null,
+      "note": "",
+      "display": "300 grams Chicken thighs",
+      "title": null,
+      "originalText": null,
+      "substitutions": [],
+      "referenceId": "a000001e-0000-4000-8000-00000000001e"
+    }
+  ],
+  "recipeInstructions": [
+    {
+      "id": "a000001f-0000-4000-8000-00000000001f",
+      "title": "",
+      "summary": "",
+      "text": "Whisk the lemon juice, olive oil, garlic and herbs. Coat the chicken and let it rest for 30 minutes.",
+      "ingredientReferences": [],
+      "noteReferences": []
+    },
+    {
+      "id": "a0000020-0000-4000-8000-000000000020",
+      "title": "",
+      "summary": "",
+      "text": "Heat a little oil in a large pan over medium heat.",
+      "ingredientReferences": [],
+      "noteReferences": []
+    },
+    {
+      "id": "a0000021-0000-4000-8000-000000000021",
+      "title": "",
+      "summary": "",
+      "text": "Sear the chicken until golden, about 6 minutes per side.",
+      "ingredientReferences": [],
+      "noteReferences": []
+    }
+  ],
+  "nutrition": {
+    "calories": null,
+    "carbohydrateContent": null,
+    "cholesterolContent": null,
+    "fatContent": null,
+    "fiberContent": null,
+    "proteinContent": null,
+    "saturatedFatContent": null,
+    "sodiumContent": null,
+    "sugarContent": null,
+    "transFatContent": null,
+    "unsaturatedFatContent": null
+  },
+  "settings": {
+    "public": false,
+    "showNutrition": false,
+    "showAssets": false,
+    "landscapeView": false,
+    "disableComments": false,
+    "locked": false
+  },
+  "assets": [],
+  "notes": [],
+  "extras": {},
+  "comments": []
+}

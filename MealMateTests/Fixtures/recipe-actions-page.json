@@ -1,0 +1,18 @@
+{
+  "page": 1,
+  "per_page": 50,
+  "total": 1,
+  "total_pages": 1,
+  "items": [
+    {
+      "actionType": "post",
+      "title": "Send to Bring",
+      "url": "https://bring-bridge.example.com/",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "id": "a0000012-0000-4000-8000-000000000012"
+    }
+  ],
+  "next": null,
+  "previous": null
+}

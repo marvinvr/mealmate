@@ -1,0 +1,142 @@
+name: MealMate
+options:
+  bundleIdPrefix: com.mealmate-app
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "27.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: WZ6VURTF6A
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+
+targets:
+  MealMate:
+    type: application
+    platform: iOS
+    sources:
+      - path: MealMate/Sources
+      - path: MealMate/Resources
+        buildPhase: resources
+      - path: MealMate/Support
+        buildPhase: none
+    settings:
+      base:
+        PRODUCT_NAME: MealMate
+        # Bundle IDs are registered in App Store Connect; do not change.
+        PRODUCT_BUNDLE_IDENTIFIER: com.mealmate-app.ios
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: MealMate/Support/Info.plist
+        CODE_SIGN_ENTITLEMENTS: MealMate/Support/MealMate.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
+    dependencies:
+      - target: MealMateShare
+        embed: true
+
+  # Share extension: "Import to MealMate" from Safari and other apps.
+  # It reuses the API client, models and the shared credential store; it must
+  # not compile app-only code (SwiftUI app shell, ASWebAuthenticationSession).
+  MealMateShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+      - path: MealMate/Sources/MealieService
+      - path: MealMate/Sources/Models
+      - path: MealMate/Sources/Auth/KeychainStore.swift
+      - path: MealMate/Sources/Auth/CredentialStore.swift
+      # Import flow + its SwiftUI view, shared with the app (Features/Import).
+      - path: MealMate/Sources/Features/Import/RecipeImporter.swift
+      - path: MealMate/Sources/Features/Import/ShareImportView.swift
+      - path: MealMate/Sources/Shared/Theme.swift
+      - path: MealMate/Resources/Assets.xcassets
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: MealMateShare
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        PRODUCT_BUNDLE_IDENTIFIER: com.mealmate-app.ios.share
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/MealMateShare.entitlements
+        APPLICATION_EXTENSION_API_ONLY: true
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+
+  MealMateTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MealMateTests
+        excludes:
+          - Fixtures
+      # Folder reference: fixtures land in the test bundle under Fixtures/.
+      - path: MealMateTests/Fixtures
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: MealMate
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mealmate-app.ios.tests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/MealMate.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MealMate"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+  # XCUITest flows against a real Mealie server (scripts/ui-test.sh, scheme MealMateUITests).
+  MealMateUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MealMateUITests
+    dependencies:
+      - target: MealMate
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mealmate-app.ios.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: MealMate
+        # Test glue passes untyped JSON around; strict concurrency adds nothing here.
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+
+schemes:
+  MealMate:
+    build:
+      targets:
+        MealMate: all
+        MealMateTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - MealMateTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  # UI tests only; needs a server + token (see scripts/README.md, `scripts/ui-test.sh`).
+  MealMateUITests:
+    build:
+      targets:
+        MealMate: all
+        MealMateUITests: [test]
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - MealMateUITests

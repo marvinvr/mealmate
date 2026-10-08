@@ -1,0 +1,19 @@
+{
+  "production": true,
+  "version": "v3.28.0",
+  "demoStatus": false,
+  "allowSignup": false,
+  "allowPasswordLogin": true,
+  "defaultGroupSlug": null,
+  "defaultHouseholdSlug": null,
+  "enableOidc": true,
+  "oidcRedirect": false,
+  "oidcProviderName": "Example SSO",
+  "tokenTime": 48,
+  "allowedIframeHosts": [
+    "youtube.com",
+    "youtube-nocookie.com",
+    "vimeo.com",
+    "player.vimeo.com"
+  ]
+}

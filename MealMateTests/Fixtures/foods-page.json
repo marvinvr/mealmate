@@ -1,0 +1,56 @@
+{
+  "page": 1,
+  "per_page": 3,
+  "total": 584,
+  "total_pages": 195,
+  "items": [
+    {
+      "id": "a0000005-0000-4000-8000-000000000005",
+      "name": "Parmesan",
+      "pluralName": null,
+      "description": "",
+      "extras": {},
+      "labelId": null,
+      "aliases": [],
+      "substitutions": [],
+      "householdsWithIngredientFood": [],
+      "label": null,
+      "createdAt": "2026-10-08T18:29:21.950820Z",
+      "updatedAt": "2026-10-08T18:29:21.950821Z"
+    },
+    {
+      "id": "a0000006-0000-4000-8000-000000000006",
+      "name": "Shallot",
+      "pluralName": null,
+      "description": "",
+      "extras": {},
+      "labelId": null,
+      "aliases": [],
+      "substitutions": [],
+      "householdsWithIngredientFood": [],
+      "label": null,
+      "createdAt": "2026-10-08T18:29:21.889407Z",
+      "updatedAt": "2026-10-08T18:29:21.889409Z"
+    },
+    {
+      "id": "a0000007-0000-4000-8000-000000000007",
+      "name": "Mozzarella",
+      "pluralName": null,
+      "description": "",
+      "extras": {},
+      "labelId": null,
+      "aliases": [
+        {
+          "name": "mozzarella"
+        }
+      ],
+      "substitutions": [],
+      "householdsWithIngredientFood": [],
+      "label": null,
+      "createdAt": "2026-10-08T18:11:51.866541Z",
+      "updatedAt": "2026-10-08T18:11:51.866543Z"
+    }
+  ],
+  "next": "/foods?orderBy=None&orderByNullPosition=None&orderDirection=desc&queryFilter=None&paginationSeed=None&page=2&perPage=3",
+  "previous": null
+}

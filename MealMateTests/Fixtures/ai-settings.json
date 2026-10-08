@@ -1,0 +1,9 @@
+{
+  "defaultProviderId": null,
+  "audioProviderId": null,
+  "imageProviderId": null,
+  "providers": [],
+  "aiEnabled": false,
+  "audioProviderEnabled": false,
+  "imageProviderEnabled": false
+}

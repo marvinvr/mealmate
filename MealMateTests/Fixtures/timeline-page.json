@@ -1,0 +1,52 @@
+{
+  "page": 1,
+  "per_page": 5,
+  "total": 5,
+  "total_pages": 1,
+  "items": [
+    {
+      "recipeId": "a000000d-0000-4000-8000-00000000000d",
+      "userId": "a000000c-0000-4000-8000-00000000000c",
+      "subject": "Recipe Created",
+      "eventType": "system",
+      "eventMessage": null,
+      "image": "does not have image",
+      "timestamp": "2026-10-08T18:29:22.483612Z",
+      "id": "a000004d-0000-4000-8000-00000000004d",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "createdAt": "2026-10-08T18:29:22.495851Z",
+      "updatedAt": "2026-10-08T18:29:22.495854Z"
+    },
+    {
+      "recipeId": "a000000b-0000-4000-8000-00000000000b",
+      "userId": "a000000c-0000-4000-8000-00000000000c",
+      "subject": "Recipe Created",
+      "eventType": "system",
+      "eventMessage": null,
+      "image": "does not have image",
+      "timestamp": "2026-10-08T18:29:21.986086Z",
+      "id": "a000004e-0000-4000-8000-00000000004e",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "createdAt": "2026-10-08T18:29:21.997307Z",
+      "updatedAt": "2026-10-08T18:29:21.997309Z"
+    },
+    {
+      "recipeId": "a0000022-0000-4000-8000-000000000022",
+      "userId": "a000000c-0000-4000-8000-00000000000c",
+      "subject": "Recipe Created",
+      "eventType": "system",
+      "eventMessage": null,
+      "image": "does not have image",
+      "timestamp": "2026-10-08T18:11:52.392640Z",
+      "id": "a000004f-0000-4000-8000-00000000004f",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "createdAt": "2026-10-08T18:11:52.402955Z",
+      "updatedAt": "2026-10-08T18:11:52.402958Z"
+    }
+  ],
+  "next": null,
+  "previous": null
+}

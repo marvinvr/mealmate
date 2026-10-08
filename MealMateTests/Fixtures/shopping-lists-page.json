@@ -1,0 +1,93 @@
+{
+  "page": 1,
+  "per_page": 50,
+  "total": 2,
+  "total_pages": 1,
+  "items": [
+    {
+      "name": "Groceries",
+      "extras": {},
+      "createdAt": "2026-10-08T18:58:04.042168Z",
+      "updatedAt": "2026-10-08T18:58:05.032674Z",
+      "groupId": "a0000002-0000-4000-8000-000000000002",
+      "userId": "a000000c-0000-4000-8000-00000000000c",
+      "id": "a0000023-0000-4000-8000-000000000023",
+      "householdId": "a0000003-0000-4000-8000-000000000003",
+      "recipeReferences": [
+        {
+          "id": "a000002a-0000-4000-8000-00000000002a",
+          "shoppingListId": "a0000023-0000-4000-8000-000000000023",
+          "recipeId": "a000000d-0000-4000-8000-00000000000d",
+          "recipeQuantity": 1.0,
+          "recipe": {
+            "id": "a000000d-0000-4000-8000-00000000000d",
+            "userId": "a000000c-0000-4000-8000-00000000000c",
+            "householdId": "a0000003-0000-4000-8000-000000000003",
+            "groupId": "a0000002-0000-4000-8000-000000000002",
+            "name": "Lemon Herb Chicken",
+            "slug": "lemon-herb-chicken",
+            "image": "aB3x",
+            "recipeServings": 4.0,
+            "recipeYieldQuantity": 0.0,
+            "recipeYield": null,
+            "totalTime": null,
+            "prepTime": null,
+            "cookTime": null,
+            "performTime": null,
+            "description": "Bright, simple and ready in 45 minutes.",
+            "recipeCategory": [],
+            "tags": [],
+            "tools": [],
+            "rating": null,
+            "orgURL": null,
+            "dateAdded": "2026-10-08",
+            "dateUpdated": "2026-10-08T18:36:03.240153Z",
+            "createdAt": "2026-10-08T18:29:22.483612Z",
+            "updatedAt": "2026-10-08T18:36:03.242590Z",
+            "lastMade": null
+          }
+        }
+      ],
+      "labelSettings": [
+        {
+          "shoppingListId": "a0000023-0000-4000-8000-000000000023",
+          "labelId": "a000002b-0000-4000-8000-00000000002b",
+          "position": 0,
+          "id": "a000002c-0000-4000-8000-00000000002c",
+          "label": {
+            "name": "Alcohol",
+            "color": "#959595",
+            "groupId": "a0000002-0000-4000-8000-000000000002",
+            "id": "a000002b-0000-4000-8000-00000000002b"
+          }
+        },
+        {
+          "shoppingListId": "a0000023-0000-4000-8000-000000000023",
+          "labelId": "a000002d-0000-4000-8000-00000000002d",
+          "position": 1,
+          "id": "a000002e-0000-4000-8000-00000000002e",
+          "label": {
+            "name": "Baked Goods",
+            "color": "#959595",
+            "groupId": "a0000002-0000-4000-8000-000000000002",
+            "id": "a000002d-0000-4000-8000-00000000002d"
+          }
+        },
+        {
+          "shoppingListId": "a0000023-0000-4000-8000-000000000023",
+          "labelId": "a0000010-0000-4000-8000-000000000010",
+          "position": 2,
+          "id": "a000002f-0000-4000-8000-00000000002f",
+          "label": {
+            "name": "Baking",
+            "color": "#959595",
+            "groupId": "a0000002-0000-4000-8000-000000000002",
+            "id": "a0000010-0000-4000-8000-000000000010"
+          }
+        }
+      ]
+    }
+  ],
+  "next": null,
+  "previous": null
+}

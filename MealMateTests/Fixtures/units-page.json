@@ -1,0 +1,58 @@
+{
+  "page": 1,
+  "per_page": 3,
+  "total": 24,
+  "total_pages": 8,
+  "items": [
+    {
+      "id": "a0000051-0000-4000-8000-000000000051",
+      "name": "sprig",
+      "pluralName": "sprigs",
+      "description": "",
+      "extras": {},
+      "fraction": true,
+      "abbreviation": "",
+      "pluralAbbreviation": null,
+      "useAbbreviation": false,
+      "aliases": [],
+      "standardQuantity": null,
+      "standardUnit": null,
+      "createdAt": "2026-10-02T14:07:26.777625Z",
+      "updatedAt": "2026-10-02T14:07:26.777627Z"
+    },
+    {
+      "id": "a0000052-0000-4000-8000-000000000052",
+      "name": "pinch",
+      "pluralName": "pinches",
+      "description": "",
+      "extras": {},
+      "fraction": true,
+      "abbreviation": "",
+      "pluralAbbreviation": null,
+      "useAbbreviation": false,
+      "aliases": [],
+      "standardQuantity": null,
+      "standardUnit": null,
+      "createdAt": "2026-10-02T14:07:26.774776Z",
+      "updatedAt": "2026-10-02T14:07:26.774778Z"
+    },
+    {
+      "id": "a0000053-0000-4000-8000-000000000053",
+      "name": "pack",
+      "pluralName": "packs",
+      "description": "",
+      "extras": {},
+      "fraction": true,
+      "abbreviation": "",
+      "pluralAbbreviation": null,
+      "useAbbreviation": false,
+      "aliases": [],
+      "standardQuantity": null,
+      "standardUnit": null,
+      "createdAt": "2026-10-02T14:07:26.769012Z",
+      "updatedAt": "2026-10-02T14:07:26.769015Z"
+    }
+  ],
+  "next": "/units?orderBy=None&orderByNullPosition=None&orderDirection=desc&queryFilter=None&paginationSeed=None&page=2&perPage=3",
+  "previous": null
+}

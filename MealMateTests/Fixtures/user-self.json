@@ -1,0 +1,34 @@
+{
+  "id": "a000000c-0000-4000-8000-00000000000c",
+  "username": "jane",
+  "fullName": "Jane Doe",
+  "email": "jane@example.com",
+  "authMethod": "Mealie",
+  "admin": true,
+  "group": "Demo Group",
+  "household": "Demo Household",
+  "advanced": true,
+  "showAnnouncements": true,
+  "lastReadAnnouncement": null,
+  "canInvite": true,
+  "canManage": true,
+  "canManageHousehold": true,
+  "canOrganize": true,
+  "groupId": "a0000002-0000-4000-8000-000000000002",
+  "groupSlug": "demo-group",
+  "householdId": "a0000003-0000-4000-8000-000000000003",
+  "householdSlug": "demo-household",
+  "tokens": [
+    {
+      "name": "Example token",
+      "id": 1,
+      "createdAt": "2026-10-08T17:42:36.843950Z"
+    },
+    {
+      "name": "Example token",
+      "id": 2,
+      "createdAt": "2026-10-08T18:17:11.071629Z"
+    }
+  ],
+  "cacheKey": "1234"
+}

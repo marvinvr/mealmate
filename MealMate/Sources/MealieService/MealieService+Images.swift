@@ -1,0 +1,46 @@
+import Foundation
+
+/// Image variants Mealie generates for every recipe image (all WebP).
+enum RecipeImageSize: String, Sendable, CaseIterable {
+    /// Full size.
+    case original
+    /// ~600px wide; good for cards and the detail hero on phones.
+    case min
+    /// ~300px wide; list thumbnails.
+    case tiny
+
+    var fileName: String {
+        switch self {
+        case .original: "original.webp"
+        case .min: "min-original.webp"
+        case .tiny: "tiny-original.webp"
+        }
+    }
+}
+
+// Media URLs. Media endpoints don't require auth, so these URLs work with
+// AsyncImage / URLSession.shared directly.
+extension MealieService {
+    /// `/api/media/recipes/{id}/images/{size}.webp?version=<imageKey>`.
+    /// The image key is appended so a changed image isn't served from cache.
+    func recipeImageURL(recipeID: String, imageKey: String?, size: RecipeImageSize = .min) -> URL? {
+        url(path: "/api/media/recipes/\(recipeID.pathSegment)/images/\(size.fileName)",
+            query: imageKey.map { [URLQueryItem(name: "version", value: $0)] } ?? [])
+    }
+
+    /// `nil` when the recipe has no image.
+    func imageURL(for recipe: RecipeSummary, size: RecipeImageSize = .min) -> URL? {
+        guard recipe.hasImage else { return nil }
+        return recipeImageURL(recipeID: recipe.id, imageKey: recipe.imageKey, size: size)
+    }
+
+    func imageURL(for recipe: Recipe, size: RecipeImageSize = .original) -> URL? {
+        guard recipe.hasImage else { return nil }
+        return recipeImageURL(recipeID: recipe.id, imageKey: recipe.imageKey, size: size)
+    }
+
+    /// Recipe asset file (`RecipeAsset.fileName`).
+    func recipeAssetURL(recipeID: String, fileName: String) -> URL? {
+        url(path: "/api/media/recipes/\(recipeID.pathSegment)/assets/\(fileName.pathSegment)")
+    }
+}

@@ -1,0 +1,60 @@
+{
+  "input": "2 cups flour",
+  "confidence": {
+    "average": 0.999918,
+    "comment": 0.0,
+    "name": null,
+    "unit": 0.999975,
+    "quantity": 1.0,
+    "food": 0.999804
+  },
+  "ingredient": {
+    "quantity": 2.0,
+    "unit": {
+      "id": "a000000e-0000-4000-8000-00000000000e",
+      "name": "cup",
+      "pluralName": "cups",
+      "description": "",
+      "extras": {},
+      "fraction": true,
+      "abbreviation": "c",
+      "pluralAbbreviation": null,
+      "useAbbreviation": false,
+      "aliases": [],
+      "standardQuantity": 1.0,
+      "standardUnit": "cup",
+      "createdAt": "2026-10-02T14:07:26.666903Z",
+      "updatedAt": "2026-10-02T14:07:26.666906Z"
+    },
+    "food": {
+      "id": "a000000f-0000-4000-8000-00000000000f",
+      "name": "Flour",
+      "pluralName": null,
+      "description": "",
+      "extras": {},
+      "labelId": "a0000010-0000-4000-8000-000000000010",
+      "aliases": [
+        {
+          "name": "flour"
+        }
+      ],
+      "substitutions": [],
+      "householdsWithIngredientFood": [],
+      "label": {
+        "name": "Baking",
+        "color": "#959595",
+        "groupId": "a0000002-0000-4000-8000-000000000002",
+        "id": "a0000010-0000-4000-8000-000000000010"
+      },
+      "createdAt": "2026-10-02T14:07:27.014292Z",
+      "updatedAt": "2026-10-08T18:29:21.628417Z"
+    },
+    "referencedRecipe": null,
+    "note": "",
+    "display": "2 cup flour",
+    "title": null,
+    "originalText": "2 cups flour",
+    "substitutions": [],
+    "referenceId": "a0000011-0000-4000-8000-000000000011"
+  }
+}
