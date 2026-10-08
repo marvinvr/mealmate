@@ -21,6 +21,9 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
     foods/units that exist on the server are linked; unknown ones become part of the note,
     so nothing typed is lost and no foods are created. No quantity = 0 (shown without a number).
   - Item updates always send `recipeReferences` back unchanged (see `api.md`).
+  - Row text: `ShoppingListItem.displayText`. Free-text items (no food/unit) with quantity
+    0 or 1 show only the note: Mealie's web UI creates them with quantity 1 and its
+    `display` would read "1 2 Lemons".
 - `ShoppingItemEditor`: quantity, unit, food, note, label (`ShoppingCatalog`, cached
   `shopping.units` / `shopping.labels`).
 - `AddToShoppingListSheet`: adds a recipe's ingredients with a servings scale via

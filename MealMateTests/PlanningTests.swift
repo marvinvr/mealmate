@@ -158,6 +158,21 @@ struct ShoppingItemDraftTests {
         #expect(placeholder.isPending)
         #expect(placeholder.displayText == "eggs")
     }
+
+    @Test func freeTextWithDefaultQuantityShowsOnlyTheNote() {
+        var item = ShoppingListItem(id: "1", shoppingListId: "list", quantity: 1, note: "2 Lemons",
+                                    display: "1 2 Lemons", checked: false, createdAt: nil)
+        #expect(item.displayText == "2 Lemons")
+        item.quantity = 3
+        item.note = "Lemons"
+        item.display = "3 Lemons"
+        #expect(item.displayText == "3 Lemons")
+        item.quantity = 1
+        item.food = IngredientFood(id: "food-lemon", name: "lemon")
+        item.note = nil
+        item.display = "1 lemon"
+        #expect(item.displayText == "1 lemon")
+    }
 }
 
 // MARK: - Weeks

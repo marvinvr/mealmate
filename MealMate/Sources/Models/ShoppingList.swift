@@ -69,6 +69,11 @@ struct ShoppingListItem: Codable, Hashable, Identifiable, Sendable {
     var updatedAt: Date?
 
     var displayText: String {
+        // Free-text items (no food/unit) with Mealie's default quantity: the note already holds
+        // the amount, and the server's display would repeat it ("1 2 Lemons").
+        if food == nil, unit == nil, let note, !note.isEmpty, (quantity ?? 0) == 0 || quantity == 1 {
+            return note
+        }
         if let display, !display.isEmpty { return display }
         return [quantity.map { $0.formatted() }, unit?.name, food?.name, note]
             .compactMap { $0 }
