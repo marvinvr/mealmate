@@ -34,6 +34,14 @@ enum DebugLaunch {
             let address = server ?? CredentialStore.lastServerURL?.absoluteString
             router.onboardingPrefill = address.map { .init(serverAddress: $0, autoContinue: true) }
             return true
+        case .loginDemo:
+            session.showOnboardingWithoutSigningOut()
+            let info = AppInfo(version: "v3.28.0", allowPasswordLogin: true, enableOidc: true,
+                               oidcProviderName: "Authentik")
+            let server = ResolvedServer(url: URL(string: "https://mealie.example.com")!, info: info)
+            router.onboardingPrefill = .init(serverAddress: "mealie.example.com", autoContinue: false,
+                                             resolved: server)
+            return true
         case .signOut:
             session.restore()
             session.signOut()

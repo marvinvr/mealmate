@@ -72,6 +72,8 @@ final class AppRouter {
         var serverAddress: String
         /// Resolve the server immediately and continue to the login screen.
         var autoContinue: Bool
+        /// DEBUG (`login-demo`): show the login screen for this server without resolving it.
+        var resolved: ResolvedServer? = nil
     }
 
     /// Pushes onto the selected tab's stack (or `tab` if given, switching to it).

@@ -97,8 +97,8 @@ Compiled out of Release (`DebugLaunch`, `WebAuthenticator.prefersEphemeralSessio
 - `MEALMATE_TEST_SERVER` + `MEALMATE_TEST_TOKEN`: ephemeral sign-in at launch, nothing
   persisted, nothing revoked.
 - `-MealMateRoute <route>`: `onboarding`, `login`, `login-oidc` (starts OIDC on appear),
-  `signout` (revokes the stored minted token) and all screen routes, see
-  `development-workflow.md`.
+  `login-demo` (sample OIDC server, no network), `signout` (revokes the stored minted token)
+  and all screen routes, see `development-workflow.md`.
 - `MEALMATE_OIDC_EPHEMERAL=1`: ephemeral web-auth session, which skips the iOS
   "wants to use … to sign in" alert so OIDC can run unattended.
 

@@ -24,7 +24,11 @@ struct OnboardingFlowView: View {
             if let prefill = router.onboardingPrefill {
                 model.address = prefill.serverAddress
                 router.onboardingPrefill = nil
-                if prefill.autoContinue { await model.resolve() }
+                if let resolved = prefill.resolved {
+                    path = [resolved]
+                } else if prefill.autoContinue {
+                    await model.resolve()
+                }
             } else if model.address.isEmpty, let last = CredentialStore.lastServerURL {
                 model.address = last.absoluteString
             }

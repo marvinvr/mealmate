@@ -55,7 +55,7 @@ The single list of routes. `-MealMateRoute <route>` (DEBUG launch argument) and
 `MealMate/Sources/App/AppRoute.swift` (source of truth if this table lags). State
 routes leave a one-shot intent for the screen (see `docs/ui.md`). Routes marked
 DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
-`login-oidc`, `signout`) need the DEBUG harness.
+`login-oidc`, `login-demo`, `signout`) need the DEBUG harness.
 
 **Shell and navigation**
 
@@ -64,6 +64,7 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `onboarding` | Server entry (stored credentials untouched) |
 | `login` | Login screen for the test server (resolved automatically) |
 | `login-oidc` | Login screen, then starts OIDC sign-in |
+| `login-demo` | Login screen for a sample `mealie.example.com` with OIDC ("Sign in with Authentik"), no network |
 | `signout` | Signs out the stored session (revokes the minted token) |
 | `recipes`, `mealplan`, `shopping`, `library` | Tab |
 | `settings` | Settings sheet |

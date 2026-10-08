@@ -12,6 +12,8 @@ enum AppRoute: Equatable, Sendable {
     case login
     /// Like `login`, then starts the OIDC sign-in automatically (DEBUG: verify the browser flow).
     case loginOIDC
+    /// DEBUG: login screen for a sample `mealie.example.com` server offering OIDC (no network).
+    case loginDemo
     /// DEBUG: sign out the stored session (revokes the minted token) and show onboarding.
     case signOut
     case tab(AppTab)
@@ -28,6 +30,7 @@ enum AppRoute: Equatable, Sendable {
         ("onboarding", { _ in .onboarding }),
         ("login", { _ in .login }),
         ("login-oidc", { _ in .loginOIDC }),
+        ("login-demo", { _ in .loginDemo }),
         ("signout", { _ in .signOut }),
         ("recipes", { _ in .tab(.recipes) }),
         ("mealplan", { _ in .tab(.mealPlan) }),
@@ -130,7 +133,7 @@ enum AppRoute: Equatable, Sendable {
     @MainActor
     func apply(router: AppRouter, session: AppSession) {
         switch self {
-        case .onboarding, .login, .loginOIDC, .signOut:
+        case .onboarding, .login, .loginOIDC, .loginDemo, .signOut:
             break // handled by DebugLaunch (needs the harness environment)
         case .tab(let tab):
             router.selectedTab = tab
