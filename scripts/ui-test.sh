@@ -11,7 +11,7 @@
 #   --keep-results        keep the .xcresult bundle (build/ui-tests.xcresult). It contains
 #                         the typed API token in its activity log: local only, never share it.
 #
-# Server and token are read from ~/.config/mise/test-server and ~/.config/mise/test-token
+# Server and token are read from ~/.config/mealmate/test-server and ~/.config/mealmate/test-token
 # (override with MEALMATE_TEST_SERVER_FILE / MEALMATE_TEST_TOKEN_FILE) and handed to the
 # test runner as TEST_RUNNER_MEALMATE_TEST_SERVER / TEST_RUNNER_MEALMATE_TEST_TOKEN. Both are
 # redacted from the xcodebuild output. Screenshots land in screenshots/qa-*.png (git-ignored).
@@ -36,8 +36,8 @@ udid="${positional[0]}"
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 derived_data="${derived_data:-$repo_root/build/DD-uitest}"
 results="$repo_root/build/ui-tests.xcresult"
-server_file="${MEALMATE_TEST_SERVER_FILE:-$HOME/.config/mise/test-server}"
-token_file="${MEALMATE_TEST_TOKEN_FILE:-$HOME/.config/mise/test-token}"
+server_file="${MEALMATE_TEST_SERVER_FILE:-$HOME/.config/mealmate/test-server}"
+token_file="${MEALMATE_TEST_TOKEN_FILE:-$HOME/.config/mealmate/test-token}"
 
 server=""; token=""
 [[ -f "$server_file" ]] && server="$(tr -d '[:space:]' < "$server_file")"

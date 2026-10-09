@@ -63,7 +63,7 @@ xcodegen generate
 xcodebuild -project MealMate.xcodeproj -scheme MealMate -configuration Debug \
   -destination "platform=iOS Simulator,id=$UDID" -derivedDataPath build/DD-<role> build
 
-# signed-in screen (token from ~/.config/mise/test-token, server from ~/.config/mise/test-server)
+# signed-in screen (token from ~/.config/mealmate/test-token, server from ~/.config/mealmate/test-server)
 scripts/screenshot.sh --derived-data build/DD-<role> "$UDID" recipes recipes-list
 
 # signed-out screens: no token

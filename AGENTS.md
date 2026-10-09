@@ -7,8 +7,8 @@ is the repo-local source of truth for workflow, verification and multi-agent git
 
 If `AGENTS.local.md` exists (git-ignored, checkout-specific: test server, simulator, publishing
 constraints), read it immediately after this file. The test server and token themselves live
-outside the repo in `~/.config/mise/test-server` and `~/.config/mise/test-token` (legacy
-folder name); `scripts/screenshot.sh` reads them from there.
+outside the repo in `~/.config/mealmate/test-server` and `~/.config/mealmate/test-token`;
+`scripts/screenshot.sh` and `scripts/ui-test.sh` read them from there.
 
 Then read:
 

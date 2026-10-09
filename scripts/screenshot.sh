@@ -17,7 +17,7 @@
 #                     narrow Split View / Slide Over window; the shot is cropped to it
 #   --suffix <text>   appended to <name> (e.g. -landscape), default none
 #
-# Credentials are read from ~/.config/mise/test-server and ~/.config/mise/test-token
+# Credentials are read from ~/.config/mealmate/test-server and ~/.config/mealmate/test-token
 # (override with MEALMATE_TEST_SERVER_FILE / MEALMATE_TEST_TOKEN_FILE). The token is
 # passed via SIMCTL_CHILD_* and never printed.
 set -euo pipefail
@@ -56,8 +56,8 @@ bundle_id="com.mealmate-app.ios"
 derived_data="${derived_data:-$repo_root/build/DD-foundation}"
 app_path="${app_path:-$derived_data/Build/Products/Debug-iphonesimulator/MealMate.app}"
 out_dir="$repo_root/screenshots"
-server_file="${MEALMATE_TEST_SERVER_FILE:-$HOME/.config/mise/test-server}"
-token_file="${MEALMATE_TEST_TOKEN_FILE:-$HOME/.config/mise/test-token}"
+server_file="${MEALMATE_TEST_SERVER_FILE:-$HOME/.config/mealmate/test-server}"
+token_file="${MEALMATE_TEST_TOKEN_FILE:-$HOME/.config/mealmate/test-token}"
 
 [[ -d "$app_path" ]] || { echo "error: app not found at $app_path (build first)" >&2; exit 1; }
 mkdir -p "$out_dir"

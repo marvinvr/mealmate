@@ -69,12 +69,12 @@ sign in through the UI so the token lands in the Keychain.
 ## Test Server and Token
 
 The DEBUG harness signs in with `MEALMATE_TEST_SERVER` + `MEALMATE_TEST_TOKEN` (ephemeral,
-nothing persisted). `scripts/screenshot.sh` reads them from `~/.config/mise/test-server` and
-`~/.config/mise/test-token` (outside the repo; override with `MEALMATE_TEST_SERVER_FILE` /
+nothing persisted). `scripts/screenshot.sh` reads them from `~/.config/mealmate/test-server` and
+`~/.config/mealmate/test-token` (outside the repo; override with `MEALMATE_TEST_SERVER_FILE` /
 `MEALMATE_TEST_TOKEN_FILE`) and passes the token via `SIMCTL_CHILD_*` without printing it.
 
 For `curl` checks, read the token into a variable only:
-`TOKEN=$(cat ~/.config/mise/test-token)` then `-H "Authorization: Bearer $TOKEN"`. Never
+`TOKEN=$(cat ~/.config/mealmate/test-token)` then `-H "Authorization: Bearer $TOKEN"`. Never
 echo it, never `set -x`, never paste it into files, logs or commit messages.
 
 Test data you create on the server: prefix **"MealMate Test"**, delete it afterwards. Never
