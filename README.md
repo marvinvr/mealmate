@@ -1,7 +1,7 @@
 # MealMate
 
-A free, native iOS app for [Mealie](https://github.com/mealie-recipes/mealie), the
-self-hosted recipe manager. On the App Store as **MealMate for Mealie**.
+A free, native iPhone and iPad app for [Mealie](https://github.com/mealie-recipes/mealie),
+the self-hosted recipe manager. On the App Store as **MealMate for Mealie**.
 
 MealMate is built with SwiftUI for iOS 26: native navigation, Liquid Glass, SF Symbols,
 Dynamic Type and dark mode. It is not a web wrapper, has no paywall and no ads.
@@ -27,6 +27,9 @@ Dynamic Type and dark mode. It is not a web wrapper, has no paywall and no ads.
 - **Meal planner**: week view that opens on today, recipes or notes per day and meal type, drag
   to move, random suggestions with undo; add any recipe to the plan from its page.
 - **Library**: cookbooks, categories, tags and tools.
+- **iPad**: a real iPad layout, not a scaled-up phone: more recipes per row, ingredients
+  beside the steps, cook mode with the ingredients always in view, shopping lists side by side,
+  all orientations, Split View, Slide Over, Stage Manager and keyboard shortcuts.
 - Pull to refresh everywhere, instant launch with your last data, haptics, context menus and
   share sheets.
 

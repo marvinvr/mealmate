@@ -53,10 +53,12 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>MealMate uses the camera when you take a photo for a recipe.</string>
+	<!-- One window: AppSession and AppRouter are app-wide, so a second iPad window would mirror
+	     the first one's navigation. Split View, Slide Over and Stage Manager resizing still work. -->
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
-		<true/>
+		<false/>
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict>

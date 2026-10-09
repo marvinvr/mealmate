@@ -63,6 +63,7 @@ Warm neutrals instead of the system's cool greys: food photos look better on a p
 | `.metadata` | subheadline (+ `.secondary`) | Times, servings, ratings; `.monospacedDigit()` for changing numbers |
 | `.stepLabel` | footnote, semibold | "Step 2" above step text |
 | `.cookStep` | title2 | Cook mode step text |
+| `.cookStepRegular` | title | Cook mode step text in regular width (iPad) |
 | `.cookIngredient` | title3 | Cook mode ingredients |
 
 - Reading text (steps, notes, descriptions): `.body` with `.lineSpacing(Theme.LineSpacing.body)`;
@@ -78,7 +79,9 @@ Warm neutrals instead of the system's cool greys: food photos look better on a p
   Chips and buttons: `.capsule`.
 - No shadows on content. Separation comes from whitespace, surface tone and the image hairline.
 - **Grid vs list:** recipe browsing (home, search without a query, cookbook contents) is a grid of
-  `gridMinimumColumnWidth` columns (2 on iPhone, more on iPad, 1 at accessibility sizes), built
+  `gridMinimumColumnWidth` columns (at least 2, also on 375 pt phones; in regular width
+  `gridMinimumColumnWidthRegular` = 220: 4 on a 13" iPad in portrait, 5 in landscape; 1 at
+  accessibility sizes), built
   as a plain `List` of card rows (not `ScrollView` + `LazyVGrid`, see §8), with an optional list
   toggle. Cards in List rows are `Button`s that push via `AppRouter` (a `NavigationLink` there
   gets a chevron). Everything task-like is a `List`
@@ -88,6 +91,28 @@ Warm neutrals instead of the system's cool greys: food photos look better on a p
   (it matches `mealMateSurface`).
   Exception: partial-height (`.medium` detent) sheets give grouped rows a grey glass fill; when such
   a sheet mixes a `.surfaceCard()` with rows, give the rows `.listRowBackground(Color.mealMateSurface)`.
+
+### iPad (regular width)
+
+Same design language, more room; never a stretched iPhone layout. Narrow iPad windows (Split
+View, Slide Over, small Stage Manager windows) are compact width and look exactly like iPhone.
+
+- Lists and forms (meal plan, shopping list, library, recipe rows) stay at a readable width:
+  `.readableContentWidth()` centres them at `Theme.readableWidth` (720 pt), like UIKit's
+  readable content guide. The shopping add bar matches that width.
+- Recipe detail from 900 pt wide: header on top (max 760 pt), then ingredients (300–400 pt)
+  beside steps and everything after them (max 680 pt), content max 1180 pt. Hero stays
+  full-bleed; its height is capped at 520 pt and 42% of the screen height (landscape).
+- Shopping: lists in a sidebar column beside the open list (`NavigationSplitView`); the
+  selected list is a 16% accent wash like a selected chip, not the solid system fill.
+- Cook mode from 1000 pt wide: the ingredients (servings, check-off) stay in a panel beside
+  the steps, the current step's ingredients get a 12% accent wash; step text `.cookStepRegular`.
+- Long sheets (editor, Add to Shopping List, meal plan entry) use `.presentationSizing(.page)`;
+  short ones keep the default form sheet.
+- Onboarding and sign-in keep their 520 pt column and sit lower on tall screens instead of
+  hugging the top.
+- Hardware keyboard: ⌘1–⌘4 tabs, ⌘N new recipe, ⇧⌘N import, ⌘, settings (menu bar
+  commands); cook mode ← / → and Esc.
 
 ## 5. Images
 
