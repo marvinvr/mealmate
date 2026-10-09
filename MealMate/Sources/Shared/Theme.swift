@@ -75,6 +75,12 @@ enum Theme {
 
     /// Minimum width of a grid column (use with `GridItem(.adaptive(minimum:))`).
     static let gridMinimumColumnWidth: CGFloat = 160
+    /// Minimum grid column width in regular width (iPad): bigger photos, 4 columns on a 13" iPad
+    /// in portrait, 5 in landscape.
+    static let gridMinimumColumnWidthRegular: CGFloat = 220
+
+    /// Widest a list or form gets on iPad before it's centred (`.readableContentWidth()`).
+    static let readableWidth: CGFloat = 720
 }
 
 // MARK: - Typography
@@ -98,6 +104,8 @@ extension Font {
 
     /// Cook mode: current step text.
     static let cookStep = Font.title2
+    /// Cook mode step text in regular width (iPad), read from further away.
+    static let cookStepRegular = Font.title
     /// Cook mode: ingredient lines.
     static let cookIngredient = Font.title3
 }
@@ -130,10 +138,30 @@ extension View {
             .tint(.mealMateProminent)
     }
 
+    /// Centres a List's / ScrollView's content at `Theme.readableWidth` once the view is wider
+    /// (iPad), like UIKit's readable content guide. No effect at iPhone widths.
+    func readableContentWidth(_ maxWidth: CGFloat = Theme.readableWidth) -> some View {
+        modifier(ReadableContentWidth(maxWidth: maxWidth))
+    }
+
     /// Flat content card for non-image blocks (nutrition, notes, server info). No shadow.
     func surfaceCard(padding: CGFloat = Theme.Spacing.m) -> some View {
         self.padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.mealMateSurface, in: .rect(cornerRadius: Theme.Radius.card, style: .continuous))
+    }
+}
+
+
+private struct ReadableContentWidth: ViewModifier {
+    let maxWidth: CGFloat
+    @State private var width: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        // `nil` keeps the system margins (iPhone, narrow iPad windows).
+        let margin: CGFloat? = width > maxWidth + 2 * Theme.Spacing.screen ? (width - maxWidth) / 2 : nil
+        content
+            .contentMargins(.horizontal, margin, for: .scrollContent)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
 }

@@ -24,6 +24,7 @@ struct RecipeCollectionContent: View {
     @Binding var toast: RecipeToast?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var userData = RecipeUserData.shared
     @State private var changes = RecipeChanges.shared
     @State private var gridWidth: CGFloat = 0
@@ -48,13 +49,15 @@ struct RecipeCollectionContent: View {
 
     // MARK: Layouts
 
-    /// Cards per row: as many `gridMinimumColumnWidth` columns as fit (2 on iPhone), one at
-    /// accessibility sizes.
+    /// Cards per row: as many minimum-width columns as fit, at least two (also on 375 pt
+    /// iPhones and narrow iPad windows); larger cards in regular width (4–5 on a 13" iPad). One
+    /// at accessibility sizes.
     private var columnCount: Int {
         if dynamicTypeSize.isAccessibilitySize { return 1 }
         let available = gridWidth - 2 * Theme.Spacing.screen
         guard available > 0 else { return 2 }
-        return max(1, Int((available + Theme.Spacing.grid) / (Theme.gridMinimumColumnWidth + Theme.Spacing.grid)))
+        let minimum = horizontalSizeClass == .regular ? Theme.gridMinimumColumnWidthRegular : Theme.gridMinimumColumnWidth
+        return max(2, Int((available + Theme.Spacing.grid) / (minimum + Theme.Spacing.grid)))
     }
 
     private var gridRows: [[RecipeSummary]] {
@@ -162,6 +165,7 @@ struct RecipeCollectionContent: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
+        .readableContentWidth()
         .overlay {
             if model.items.isEmpty { stateView }
         }

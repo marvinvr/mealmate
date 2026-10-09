@@ -35,6 +35,7 @@ private struct RecipeDetailScreen: View {
     @State private var isPublicLinkPresented = false
     @State private var confirmsDelete = false
     @State private var isWorking = false
+    @State private var contentSize: CGSize = .zero
 
     var body: some View {
         Group {
@@ -118,59 +119,33 @@ private struct RecipeDetailScreen: View {
     // MARK: Content
 
     private func content(_ recipe: Recipe) -> some View {
-        ScrollViewReader { proxy in
+        let isWide = contentSize.width >= Self.twoColumnMinimumWidth
+        return ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if recipe.hasImage {
-                        StretchyHero(recipe: recipe)
+                        StretchyHero(recipe: recipe, height: Self.heroHeight(for: contentSize))
                             .padding(.top, -topInset)
                     }
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
-                        RecipeHeader(model: model, recipe: recipe, onRate: { rate(recipe, $0) })
-                        actionRow(recipe)
-                        if let error = model.refreshError {
-                            Label(error, systemImage: "exclamationmark.triangle")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                    Group {
+                        if isWide {
+                            wideBody(recipe)
+                        } else {
+                            VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+                                headerSections(recipe)
+                                ingredientsSection(recipe)
+                                trailingSections(recipe)
+                            }
+                            .padding(.horizontal, Theme.Spacing.screen)
+                            .frame(maxWidth: 680, alignment: .leading)
                         }
-                        if !recipe.ingredients.isEmpty {
-                            IngredientsSection(model: model, recipe: recipe, onAddToList: {
-                                sheet = .addRecipeToShoppingList(recipe, scale: model.scale)
-                            })
-                            .id("ingredients")
-                        }
-                        if !recipe.instructions.isEmpty {
-                            StepsSection(model: model, recipe: recipe)
-                                .id("steps")
-                        }
-                        if !recipe.noteList.isEmpty {
-                            NotesSection(notes: recipe.noteList)
-                                .id("notes")
-                        }
-                        if let nutrition = recipe.nutrition, !nutrition.isEmpty {
-                            NutritionSection(nutrition: nutrition)
-                        }
-                        if recipe.settings?.showAssets == true {
-                            AttachmentsSection(recipe: recipe)
-                        }
-                        OrganizersSection(recipe: recipe)
-                        if let link = sourceURL(recipe) {
-                            SourceLink(url: link)
-                        }
-                        if recipe.settings?.disableComments != true {
-                            CommentsSection(model: model, onShowAll: { isCommentsPresented = true })
-                                .id("comments")
-                        }
-                        HistorySection(model: model, onMadeIt: { isMadeItPresented = true }, onShowAll: { isTimelinePresented = true })
-                            .id("history")
                     }
-                    .padding(.horizontal, Theme.Spacing.screen)
                     .padding(.top, recipe.hasImage ? Theme.Spacing.l : Theme.Spacing.s)
                     .padding(.bottom, Theme.Spacing.xxxl)
-                    .frame(maxWidth: 680, alignment: .leading)
                     .frame(maxWidth: .infinity)
                 }
             }
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { contentSize = $0 }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentInsets.top
             } action: { _, inset in
@@ -178,7 +153,7 @@ private struct RecipeDetailScreen: View {
             }
             .scrollEdgeEffectHidden(recipe.hasImage && !showsNavigationTitle, for: .top)
             .onScrollGeometryChange(for: Bool.self) { geometry in
-                let threshold = recipe.hasImage ? min(geometry.containerSize.width / Theme.Aspect.hero, 520) - geometry.contentInsets.top : 40
+                let threshold = recipe.hasImage ? Self.heroHeight(for: geometry.containerSize) - geometry.contentInsets.top : 40
                 return geometry.contentOffset.y + geometry.contentInsets.top > threshold
             } action: { _, past in
                 showsNavigationTitle = past
@@ -190,6 +165,90 @@ private struct RecipeDetailScreen: View {
             }
             .screenBackground()
         }
+    }
+
+    /// Below this width the detail is one 680 pt column; above it (iPad, roughly from 13" portrait
+    /// up) ingredients sit next to the steps.
+    private static let twoColumnMinimumWidth: CGFloat = 900
+
+    /// Full-bleed hero: 4:3 of the width, capped on wide screens (iPad, landscape) so the title
+    /// stays in view.
+    static func heroHeight(for size: CGSize) -> CGFloat {
+        let cap = size.height > 0 ? min(520, max(size.height * 0.42, 280)) : 520
+        return min(max(size.width, 1) / Theme.Aspect.hero, cap)
+    }
+
+    @ViewBuilder
+    private func headerSections(_ recipe: Recipe) -> some View {
+        RecipeHeader(model: model, recipe: recipe, onRate: { rate(recipe, $0) })
+        actionRow(recipe)
+        if let error = model.refreshError {
+            Label(error, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func ingredientsSection(_ recipe: Recipe) -> some View {
+        if !recipe.ingredients.isEmpty {
+            IngredientsSection(model: model, recipe: recipe, onAddToList: {
+                sheet = .addRecipeToShoppingList(recipe, scale: model.scale)
+            })
+            .id("ingredients")
+        }
+    }
+
+    @ViewBuilder
+    private func trailingSections(_ recipe: Recipe) -> some View {
+        if !recipe.instructions.isEmpty {
+            StepsSection(model: model, recipe: recipe)
+                .id("steps")
+        }
+        if !recipe.noteList.isEmpty {
+            NotesSection(notes: recipe.noteList)
+                .id("notes")
+        }
+        if let nutrition = recipe.nutrition, !nutrition.isEmpty {
+            NutritionSection(nutrition: nutrition)
+        }
+        if recipe.settings?.showAssets == true {
+            AttachmentsSection(recipe: recipe)
+        }
+        OrganizersSection(recipe: recipe)
+        if let link = sourceURL(recipe) {
+            SourceLink(url: link)
+        }
+        if recipe.settings?.disableComments != true {
+            CommentsSection(model: model, onShowAll: { isCommentsPresented = true })
+                .id("comments")
+        }
+        HistorySection(model: model, onMadeIt: { isMadeItPresented = true }, onShowAll: { isTimelinePresented = true })
+            .id("history")
+    }
+
+    /// iPad / wide windows: header on top, then ingredients (with servings) beside steps and
+    /// everything after them, so you can read a step and its amounts without scrolling back.
+    private func wideBody(_ recipe: Recipe) -> some View {
+        let ingredientsWidth = min(max(contentSize.width * 0.34, 300), 400)
+        return VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+                headerSections(recipe)
+            }
+            .frame(maxWidth: 760, alignment: .leading)
+            HStack(alignment: .top, spacing: Theme.Spacing.xxxl) {
+                if !recipe.ingredients.isEmpty {
+                    ingredientsSection(recipe)
+                        .frame(width: ingredientsWidth, alignment: .leading)
+                }
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
+                    trailingSections(recipe)
+                }
+                .frame(maxWidth: 680, alignment: .leading)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.xxl)
+        .frame(maxWidth: 1180, alignment: .leading)
     }
 
     // MARK: Actions
@@ -485,9 +544,10 @@ private struct ShareTextItem: Identifiable {
 
 // MARK: - Hero
 
-/// Full-bleed 4:3 photo that stretches when pulled down.
+/// Full-bleed photo (4:3 of the width, capped on iPad) that stretches when pulled down.
 private struct StretchyHero: View {
     let recipe: Recipe
+    let height: CGFloat
 
     var body: some View {
         GeometryReader { proxy in
@@ -497,8 +557,7 @@ private struct StretchyHero: View {
                 .frame(width: proxy.size.width, height: proxy.size.height + stretch)
                 .offset(y: -stretch)
         }
-        .aspectRatio(Theme.Aspect.hero, contentMode: .fit)
-        .frame(maxHeight: 520)
+        .frame(height: height)
         .clipped(antialiased: false)
         .accessibilityHidden(true)
     }
