@@ -52,7 +52,9 @@ final class AppRouter {
     var selectedTab: AppTab = .recipes
     var recipesPath = NavigationPath()
     var mealPlanPath = NavigationPath()
-    var shoppingPath = NavigationPath()
+    /// Typed (shopping pushes only `AppDestination`s) so the iPad split view can show the first
+    /// list beside the lists and the rest as the detail stack (`ShoppingSplitRoot`).
+    var shoppingPath: [AppDestination] = []
     var libraryPath = NavigationPath()
 
     var isSettingsPresented = false
@@ -83,7 +85,14 @@ final class AppRouter {
         switch tab {
         case .recipes: recipesPath.append(destination)
         case .mealPlan: mealPlanPath.append(destination)
-        case .shopping: shoppingPath.append(destination)
+        case .shopping:
+            // A list replaces whatever list was open (same result on iPhone, where lists are
+            // only pushed from the root; on iPad it becomes the split view's selection).
+            if case .shoppingList = destination {
+                shoppingPath = [destination]
+            } else {
+                shoppingPath.append(destination)
+            }
         case .library: libraryPath.append(destination)
         }
     }
@@ -103,7 +112,7 @@ final class AppRouter {
         switch tab {
         case .recipes: recipesPath = NavigationPath()
         case .mealPlan: mealPlanPath = NavigationPath()
-        case .shopping: shoppingPath = NavigationPath()
+        case .shopping: shoppingPath = []
         case .library: libraryPath = NavigationPath()
         }
     }

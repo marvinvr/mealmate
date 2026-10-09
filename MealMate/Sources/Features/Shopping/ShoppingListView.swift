@@ -6,6 +6,7 @@ struct ShoppingListView: View {
     @Environment(\.mealie) private var mealie
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppRouter.self) private var router
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var model: ShoppingListViewModel
     @State private var draft = ""
     @FocusState private var addBarFocused: Bool
@@ -32,8 +33,9 @@ struct ShoppingListView: View {
                     ShoppingAddBar(text: $draft, isFocused: $addBarFocused, submit: submitDraft)
                 }
             }
-            // The add bar takes the bottom edge; two stacked floating bars felt busy.
-            .toolbarVisibility(.hidden, for: .tabBar)
+            // The add bar takes the bottom edge; two stacked floating bars felt busy. On iPad
+            // (regular width) the tab bar is at the top and stays, so tabs can be switched.
+            .toolbarVisibility(horizontalSizeClass == .regular ? .automatic : .hidden, for: .tabBar)
             .task {
                 await model.load(using: mealie)
                 consumeIntent()
@@ -136,6 +138,7 @@ struct ShoppingListView: View {
                 .id(Self.bottomID)
         }
         .listStyle(.insetGrouped)
+        .readableContentWidth()
         .overlay {
             if model.items.isEmpty {
                 ContentUnavailableView {
@@ -372,6 +375,8 @@ struct ShoppingAddBar: View {
         .padding(.horizontal, Theme.Spacing.m)
         .frame(minHeight: 48)
         .glassEffect(.regular.interactive(), in: .capsule)
+        // iPad: as wide as the list above it, not the whole window.
+        .frame(maxWidth: Theme.readableWidth)
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.bottom, Theme.Spacing.xs)
     }

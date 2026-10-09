@@ -6,7 +6,10 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
 ## Shopping
 
 - `ShoppingListsView` / `ShoppingListsViewModel` (tab root): lists with unchecked counts
-  (cached `shopping.lists`), create, rename, delete.
+  (cached `shopping.lists`), create, rename, delete. On iPad (regular width) it is the
+  sidebar of `ShoppingSplitRoot` (`MainTabView`) with a `selection`: rows select instead of
+  push, the first list opens when none is, a deleted open list falls back to the first.
+  `router.push(.shoppingList)` always replaces the open list (`shoppingPath = [list]`).
 - `ShoppingListView` / `ShoppingListViewModel`: one list (cached `shopping.list.<id>`).
   - Grouping is pure and unit tested (`ShoppingListLayout`): items filed under their label,
     else their food's label; sections in the list's label order, unknown labels by name,

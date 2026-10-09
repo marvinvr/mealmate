@@ -13,6 +13,13 @@ struct ShoppingListsView: View {
     @State private var nameText = ""
     /// Deep link / DEBUG route: "add this recipe to a list" sheet by slug.
     @State private var addRecipeSlug: String?
+    /// iPad split view (`ShoppingSplitRoot`): the open list, highlighted in the sidebar. `nil` on
+    /// iPhone, where rows push.
+    private let selection: Binding<AppDestination?>?
+
+    init(selection: Binding<AppDestination?>? = nil) {
+        self.selection = selection
+    }
 
     var body: some View {
         content
@@ -27,6 +34,8 @@ struct ShoppingListsView: View {
                 }
             }
             .task { await model.load(using: mealie) }
+            .onChange(of: model.rows.map(\.id), initial: true) { selectFirstListIfNeeded() }
+            .onChange(of: model.phase == .loaded) { selectFirstListIfNeeded() }
             .onAppear(perform: consumeIntent)
             .onChange(of: router.pendingIntent) { consumeIntent() }
             .onChange(of: scenePhase) { _, phase in
@@ -52,7 +61,17 @@ struct ShoppingListsView: View {
             .confirmationDialog("Delete “\(deletingRow?.list.displayName ?? "")”?",
                                 isPresented: deletingBinding, titleVisibility: .visible,
                                 presenting: deletingRow) { row in
-                Button("Delete List", role: .destructive) { Task { await model.delete(row) } }
+                Button("Delete List", role: .destructive) {
+                    Task {
+                        await model.delete(row)
+                        // iPad: open the first remaining list instead of the deleted one.
+                        if selection?.wrappedValue == .shoppingList(id: row.id),
+                           !model.rows.contains(where: { $0.id == row.id }) {
+                            selection?.wrappedValue = nil
+                            selectFirstListIfNeeded()
+                        }
+                    }
+                }
             } message: { _ in
                 Text("The list and all its items are deleted for everyone in your household.")
             }
@@ -101,18 +120,30 @@ struct ShoppingListsView: View {
     }
 
     private var list: some View {
-        List {
-            if let refreshError = model.refreshError {
-                Label(refreshError, systemImage: "exclamationmark.triangle")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .listRowBackground(Color.clear)
-            }
-            Section {
-                ForEach(model.rows) { row in
-                    NavigationLink(value: AppDestination.shoppingList(id: row.id)) {
-                        ShoppingListRow(row: row)
-                    }
+        List { listContent }
+            .listStyle(.insetGrouped)
+            .refreshable { await model.refresh() }
+    }
+
+    /// iPad: keep a list open beside the lists (the first one when none is open, e.g. on launch
+    /// or after deleting the open one). A deep-linked list may not be in cached rows yet: keep it.
+    private func selectFirstListIfNeeded() {
+        guard let selection, selection.wrappedValue == nil, case .loaded = model.phase,
+              let first = model.rows.first else { return }
+        selection.wrappedValue = .shoppingList(id: first.id)
+    }
+
+    @ViewBuilder
+    private var listContent: some View {
+        if let refreshError = model.refreshError {
+            Label(refreshError, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .listRowBackground(Color.clear)
+        }
+        Section {
+            ForEach(model.rows) { row in
+                rowLink(row)
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) { deletingRow = row } label: {
                             Label("Delete", systemImage: "trash")
@@ -125,11 +156,32 @@ struct ShoppingListsView: View {
                         Button("Rename…", systemImage: "pencil") { startRename(row) }
                         Button("Delete…", systemImage: "trash", role: .destructive) { deletingRow = row }
                     }
-                }
             }
         }
-        .listStyle(.insetGrouped)
-        .refreshable { await model.refresh() }
+    }
+
+    /// iPhone: pushes. iPad split view: selects, shown with the quiet accent wash of a selected
+    /// chip rather than the system's solid selection fill.
+    @ViewBuilder
+    private func rowLink(_ row: ShoppingListsViewModel.Row) -> some View {
+        if let selection {
+            let destination = AppDestination.shoppingList(id: row.id)
+            let isSelected = selection.wrappedValue == destination
+            Button {
+                selection.wrappedValue = destination
+            } label: {
+                ShoppingListRow(row: row)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .listRowBackground(isSelected ? Color.accentColor.opacity(0.16) : Color.mealMateSurface)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+        } else {
+            NavigationLink(value: AppDestination.shoppingList(id: row.id)) {
+                ShoppingListRow(row: row)
+            }
+        }
     }
 
     private func startRename(_ row: ShoppingListsViewModel.Row) {

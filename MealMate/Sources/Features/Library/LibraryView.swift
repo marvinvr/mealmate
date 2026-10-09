@@ -44,6 +44,7 @@ struct LibraryView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableContentWidth()
         .screenBackground()
         .overlay {
             if !trimmedSearch.isEmpty, searchResultsEmpty {
@@ -214,6 +215,7 @@ struct OrganizerListView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableContentWidth()
         .screenBackground()
         .overlay {
             if organizers.isEmpty {
@@ -244,6 +246,7 @@ struct CookbookListView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableContentWidth()
         .screenBackground()
         .overlay {
             if store.cookbooks.isEmpty {

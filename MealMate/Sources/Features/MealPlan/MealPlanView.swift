@@ -60,6 +60,7 @@ struct MealPlanView: View {
             }
             .listStyle(.insetGrouped)
             .listSectionSpacing(Theme.Spacing.l)
+            .readableContentWidth()
             .screenBackground()
             .refreshable { await model.refresh() }
             .animation(.snappy, value: model.week)
