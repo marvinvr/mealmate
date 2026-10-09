@@ -79,6 +79,7 @@ final class ImportRecipeViewModel {
         do {
             let recipe = try await importer.importRecipe(from: url, includeOrganizers: ImportPreferences.includeOrganizers)
             phase = .imported(recipe)
+            RecipeChanges.shared.recipesChanged()
         } catch let problem as RecipeImportProblem {
             phase = problem.error?.isCancelled == true ? .editing : .failed(problem)
         } catch {
@@ -97,6 +98,7 @@ final class ImportRecipeViewModel {
             let slug = try await mealie.createRecipeWithAI(request, images: images)
             let recipe = (try? await mealie.recipe(slug: slug)) ?? Recipe(id: slug, slug: slug, name: nil)
             phase = .imported(recipe)
+            RecipeChanges.shared.recipesChanged()
         } catch {
             let wrapped = MealieError.wrap(error)
             phase = wrapped.isCancelled ? .editing : .failed(RecipeImportProblem(wrapped))

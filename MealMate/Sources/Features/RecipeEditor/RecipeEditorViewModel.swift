@@ -255,6 +255,7 @@ final class RecipeEditorViewModel {
                 result = try await mealie.recipe(slug: slug)
             }
             setSaved(result)
+            if changedSomething || createdSlug != nil { RecipeChanges.shared.recipesChanged() }
             createdSlug = nil
             return result
         } catch {

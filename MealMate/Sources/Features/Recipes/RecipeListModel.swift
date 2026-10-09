@@ -157,6 +157,13 @@ final class RecipeListModel {
         await reload()
     }
 
+    /// Hides recipes deleted elsewhere until the next reload confirms it.
+    func removeDeleted(_ ids: Set<String>) {
+        let before = items.count
+        items.removeAll { ids.contains($0.id) }
+        if let total, items.count < before { self.total = max(0, total - (before - items.count)) }
+    }
+
     func clearFilters() {
         filters = RecipeFilters()
     }

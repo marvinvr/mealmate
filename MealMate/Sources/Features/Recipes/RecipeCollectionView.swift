@@ -25,6 +25,7 @@ struct RecipeCollectionContent: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var userData = RecipeUserData.shared
+    @State private var changes = RecipeChanges.shared
     @State private var gridWidth: CGFloat = 0
     @Environment(AppRouter.self) private var router
 
@@ -39,6 +40,10 @@ struct RecipeCollectionContent: View {
             }
         }
         .animation(.smooth, value: model.items.map(\.id))
+        .onChange(of: changes.revision) {
+            model.removeDeleted(changes.deletedIDs)
+            Task { await model.reload() }
+        }
     }
 
     // MARK: Layouts
