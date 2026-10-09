@@ -69,6 +69,8 @@ struct RecipeEditorView: View {
                     .screenBackground()
             }
         }
+        // iPad: a long form, give it a page-sized sheet instead of the small form sheet.
+        .presentationSizing(.page)
         .task {
             guard model == nil else { return }
             let model = switch source {

@@ -129,6 +129,8 @@ struct MealPlanEntryEditor: View {
                 if kind == .note { titleFocused = true }
             }
         }
+        // iPad: room for the recipe search results.
+        .presentationSizing(.page)
     }
 
     private var navigationTitle: String {

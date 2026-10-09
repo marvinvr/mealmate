@@ -27,14 +27,18 @@ struct AddToShoppingListSheet: View {
     }
 
     var body: some View {
-        switch source {
-        case .recipe(let recipe, let scale):
-            AddToShoppingListForm(recipe: recipe, scale: scale)
-        case .slug(let slug):
-            RecipeLoadingSheet(slug: slug, title: "Add to List") { recipe in
-                AddToShoppingListForm(recipe: recipe, scale: 1)
+        Group {
+            switch source {
+            case .recipe(let recipe, let scale):
+                AddToShoppingListForm(recipe: recipe, scale: scale)
+            case .slug(let slug):
+                RecipeLoadingSheet(slug: slug, title: "Add to List") { recipe in
+                    AddToShoppingListForm(recipe: recipe, scale: 1)
+                }
             }
         }
+        // iPad: room for the whole ingredient list.
+        .presentationSizing(.page)
     }
 }
 
