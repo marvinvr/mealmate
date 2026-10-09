@@ -158,10 +158,11 @@ private struct ReadableContentWidth: ViewModifier {
     @State private var width: CGFloat = 0
 
     func body(content: Content) -> some View {
-        // `nil` keeps the system margins (iPhone, narrow iPad windows).
-        let margin: CGFloat? = width > maxWidth + 2 * Theme.Spacing.screen ? (width - maxWidth) / 2 : nil
+        // Added to the safe area (not `contentMargins`, which only wins over it), so it also
+        // centres beside a split view's sidebar. 0 on iPhone and in narrow iPad windows.
+        let margin = max((width - maxWidth) / 2, 0)
         content
-            .contentMargins(.horizontal, margin, for: .scrollContent)
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            .safeAreaPadding(.horizontal, margin)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width.rounded(.down) } action: { width = $0 }
     }
 }
