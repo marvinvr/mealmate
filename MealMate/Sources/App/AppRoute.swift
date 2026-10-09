@@ -74,6 +74,8 @@ enum AppRoute: Equatable, Sendable {
         ("cook-step/*/*", { .intent("cook-step/\($0[1])", tab: .recipes, destination: .cookMode(slug: $0[0]), presented: true) }),
         ("library-search/*", { .intent("library-search/\($0[0])", tab: .library) }),
         ("library-all/*", { .intent("library-all/\($0[0])", tab: .library) }),
+        ("library-cook", { _ in .intent("library-cook", tab: .library) }),
+        ("library-cook/*", { .intent("library-cook/\($0[0])", tab: .library) }),
         // Shopping / meal plan states and sheets.
         ("shopping-new", { _ in .intent("shopping-new", tab: .shopping) }),
         ("shopping-add-recipe/*", { .intent("shopping-add-recipe/\($0[0])", tab: .shopping) }),

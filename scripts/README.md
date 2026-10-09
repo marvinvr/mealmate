@@ -92,6 +92,7 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `cook-step/<slug>/<n>`, `cook-ingredients/<slug>`, `cook-done/<slug>` | Cook mode at step n / ingredients sheet / done page |
 | `library-search/<text>` | Library search |
 | `library-all/<category\|tag\|tool\|cookbooks\|favorites>` | Full organizer list / favorites |
+| `library-cook`, `library-cook/<food>,…` | What Can I Cook? with the saved selection / with exactly these foods (replaces the saved selection; `library-cook/-` = empty) |
 
 **Shopping and meal plan** (`<day>` = `YYYY-MM-DD`)
 

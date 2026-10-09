@@ -23,6 +23,18 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
 - `OrganizerStore.shared`: categories, tags, tools, cookbooks (cached `library.<kind>`,
   refreshed at most every two minutes), shared by Library and the filter sheet.
 
+## What Can I Cook?
+
+- `CookSuggestionsScreen` / `CookSuggestionsModel` (`Features/Library`, `LibraryRoute.whatCanICook`,
+  a row under Favorites): the user picks foods they have (search-first chips, 250 ms debounce,
+  like the filter sheet) and gets `GET /api/recipes/suggestions` results (limit 30), fewest
+  missing first, with "Missing: …" / "You have everything" and substitutions per row.
+- `CookPantry` (selected foods, missing-ingredients allowance 0/1/2/3/5, "Count Foods on Hand")
+  is kept in `UserDefaults` per server (`cook.pantry.<server>`); survives sign-out. Results
+  reload (debounced) on every change; the last result is cached (`recipes.suggestions`).
+- No selection = no request (see the quirk in `api.md`). Only recipes with parsed ingredients
+  (foods linked) can match. Pure logic (`CookSuggestions`: query, texts, allowances) is unit tested.
+
 ## Detail and Cook Mode
 
 - `RecipeDetailView` / `RecipeDetailModel`: recipe cached-first (`recipes.detail.<slug>`),
@@ -73,6 +85,7 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
 
 ## Verification
 
-Unit: `RecipeFeatureTests` (incl. public links, sub-recipes, substitutions), `RecipeEditorTests`. UI: `RecipesUITests`,
+Unit: `RecipeFeatureTests` (incl. public links, sub-recipes, substitutions), `RecipeEditorTests`,
+`CookSuggestionsTests`. UI: `RecipesUITests`,
 `RecipeEditorUITests`. Screenshot routes: `scripts/README.md` (recipes, recipe-, cook-,
-library-, import, editor-).
+library-, library-cook, import, editor-).

@@ -20,6 +20,9 @@ struct LibraryView: View {
                     NavigationLink(value: LibraryRoute.favorites) {
                         LibraryRow(title: "Favorites", systemImage: "heart", count: userData.hasLoaded ? userData.favoriteIDs.count : nil)
                     }
+                    NavigationLink(value: LibraryRoute.whatCanICook()) {
+                        LibraryRow(title: "What Can I Cook?", systemImage: "refrigerator")
+                    }
                 } footer: {
                     if store.hasLoaded, store.isEmpty {
                         Text("Cookbooks, categories, tags and tools you create in Mealie show up here.")
@@ -69,6 +72,8 @@ struct LibraryView: View {
                 OrganizerListView(kind: kind)
             case .cookbooks:
                 CookbookListView()
+            case .whatCanICook(let preselection):
+                CookSuggestionsScreen(preselection: preselection)
             }
         }
         .onAppear(perform: consumeIntent)
@@ -128,6 +133,11 @@ struct LibraryView: View {
 
     private func consumeIntent() {
         guard let intent = router.consumeIntent("library-") else { return }
+        if intent == "library-cook" || intent.hasPrefix("library-cook/") {
+            let names = intent.split(separator: "/", maxSplits: 1).dropFirst().first.map(String.init)
+            router.libraryPath.append(LibraryRoute.whatCanICook(preselection: names))
+            return
+        }
         let parts = intent.split(separator: "/", maxSplits: 1).map(String.init)
         guard parts.count == 2 else { return }
         switch parts[0] {
@@ -151,6 +161,8 @@ enum LibraryRoute: Hashable {
     case favorites
     case cookbooks
     case all(OrganizerKind)
+    /// "What Can I Cook?"; `preselection` = comma-separated food names (debug route).
+    case whatCanICook(preselection: String? = nil)
 }
 
 struct LibraryRow: View {

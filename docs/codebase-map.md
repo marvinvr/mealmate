@@ -21,7 +21,7 @@ MealMate/
       CookMode/        Full-screen step-by-step cooking
       RecipeEditor/    Create/edit sheet, draft ↔ PATCH mapping, photos, organizer picker
       Import/          Import sheet (URL + AI), importer + share UI shared with the extension
-      Library/         Library tab, organizer store, preset recipe lists
+      Library/         Library tab, organizer store, preset recipe lists, What Can I Cook?
       Shopping/        Lists, list screen, item editor, add-recipe sheet, planning components
       MealPlan/        Week view, entry editor, add-to-plan sheet, week math, today provider
       Settings/        Account, server, about, sign out
