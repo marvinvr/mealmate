@@ -69,8 +69,10 @@ private struct CookModeScreen: View {
             CookIngredientsSheet(model: model)
         }
         .sheet(isPresented: $isMadeItPresented) {
-            MadeItSheet(recipeName: model.recipe?.displayName ?? "") { date, note in
-                try await model.markMade(at: date, note: note, userName: session.currentUser?.displayName, userID: session.currentUser?.id)
+            MadeItSheet(recipeName: model.recipe?.displayName ?? "") { date, note, photo in
+                // A failed photo upload still counts as made; the entry shows without a photo.
+                try await model.markMade(at: date, note: note, photo: photo,
+                                         userName: session.currentUser?.displayName, userID: session.currentUser?.id)
                 madeIt = true
             }
         }

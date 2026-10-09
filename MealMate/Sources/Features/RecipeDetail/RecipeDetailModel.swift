@@ -150,9 +150,13 @@ final class RecipeDetailModel {
 
     // MARK: Writes
 
-    /// "I made this": sets last made and adds a timeline event.
-    func markMade(at date: Date, note: String, userName: String?, userID: String?) async throws {
-        guard let recipe else { return }
+    /// "I made this": sets last made and adds a timeline event, with an optional photo
+    /// (JPEG). Returns `false` when the entry was saved but the photo upload failed; a
+    /// retry would duplicate the entry, so that isn't thrown.
+    @discardableResult
+    func markMade(at date: Date, note: String, photo: Data? = nil, userName: String?, userID: String?) async throws -> Bool {
+        guard let recipe else { return true }
+        var created: TimelineEvent
         do {
             let updated = try await mealie.markLastMade(slug: recipe.slug, at: date)
             self.recipe?.lastMade = updated.lastMade ?? date
@@ -160,13 +164,23 @@ final class RecipeDetailModel {
             let subject = userName.map { "\($0) made this" } ?? "Made this"
             let event = TimelineEventCreate(recipeId: recipe.id, subject: subject, eventType: .comment,
                                             eventMessage: trimmed.isEmpty ? nil : trimmed, timestamp: date, userId: userID)
-            let created = try await mealie.createTimelineEvent(event)
-            timeline.insert(created, at: 0)
-            timeline.sort { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
-            if let current = self.recipe { await mealie.storeInCache(current, key: cacheKey) }
+            created = try await mealie.createTimelineEvent(event)
         } catch {
             throw MealieError.wrap(error)
         }
+        var photoSaved = true
+        if let photo {
+            do {
+                try await mealie.uploadTimelineImage(eventID: created.id, imageData: photo)
+                created.image = TimelineEvent.hasImageMarker
+            } catch {
+                photoSaved = false
+            }
+        }
+        timeline.insert(created, at: 0)
+        timeline.sort { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
+        if let current = self.recipe { await mealie.storeInCache(current, key: cacheKey) }
+        return photoSaved
     }
 
     func addComment(_ text: String) async throws {
@@ -203,6 +217,30 @@ final class RecipeDetailModel {
             timeline = previous
             throw MealieError.wrap(error)
         }
+    }
+
+    /// Copies the recipe on the server (Mealie names the copy) and returns the copy.
+    func duplicate() async throws -> Recipe {
+        guard let recipe else { throw MealieError.decoding("The recipe isn’t loaded.") }
+        do {
+            let copy = try await mealie.duplicateRecipe(slug: recipe.slug)
+            RecipeChanges.shared.recipesChanged()
+            return copy
+        } catch {
+            throw MealieError.wrap(error)
+        }
+    }
+
+    /// Deletes the recipe on the server and forgets its cached copy and cooking state.
+    func delete() async throws {
+        guard let recipe else { return }
+        do {
+            try await mealie.deleteRecipe(slug: recipe.slug)
+        } catch {
+            throw MealieError.wrap(error)
+        }
+        cooking.reset(recipe.id)
+        RecipeChanges.shared.recipeDeleted(id: recipe.id)
     }
 
     /// Triggers a `post` action server-side with the current servings scale.

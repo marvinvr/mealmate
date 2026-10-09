@@ -248,6 +248,22 @@ struct RecipeCommentCreate: Codable, Hashable, Sendable {
     var text: String
 }
 
+// MARK: - Public links
+
+/// A public link to one recipe (`RecipeShareToken` / `…Summary`): `/api/shared/recipes`.
+/// The web page lives at `<server>/g/<group>/shared/r/<id>` (`RecipeLinks.publicURL`).
+struct RecipeShareToken: Codable, Hashable, Identifiable, Sendable {
+    var id: String
+    var recipeId: String
+    var expiresAt: Date?
+    var createdAt: Date?
+
+    func isExpired(now: Date = Date()) -> Bool {
+        guard let expiresAt else { return false }
+        return expiresAt <= now
+    }
+}
+
 // MARK: - Timeline
 
 /// `RecipeTimelineEventOut`: `GET /api/recipes/timeline/events`.
@@ -266,7 +282,8 @@ struct TimelineEvent: Codable, Hashable, Identifiable, Sendable {
     var createdAt: Date?
     var updatedAt: Date?
 
-    var hasImage: Bool { image == "has image" }
+    static let hasImageMarker = "has image"
+    var hasImage: Bool { image == Self.hasImageMarker }
 }
 
 struct TimelineEventType: OpenStringEnum {

@@ -62,6 +62,15 @@ enum RecipeLinks {
         return URL(string: "\(base)/g/\(groupSlug.pathSegment)/r/\(slug.pathSegment)")
     }
 
+    /// A public link (share token) on the Mealie web UI: `<server>/g/<group>/shared/r/<token>`.
+    /// Needs the group slug; Mealie has no group-less form of this page.
+    static func publicURL(server: URL, groupSlug: String?, tokenID: String) -> URL? {
+        guard let groupSlug, !groupSlug.isEmpty else { return nil }
+        var base = server.absoluteString
+        while base.hasSuffix("/") { base.removeLast() }
+        return URL(string: "\(base)/g/\(groupSlug.pathSegment)/shared/r/\(tokenID.pathSegment)")
+    }
+
     /// Plain-text recipe for sharing: title, description, ingredients, steps.
     static func plainText(_ recipe: Recipe, scale: Double = 1, servings: Double? = nil) -> String {
         var lines: [String] = [recipe.displayName]

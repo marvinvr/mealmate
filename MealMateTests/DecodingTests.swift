@@ -138,6 +138,17 @@ struct DecodingTests {
         #expect(!action.isLink)
     }
 
+    @Test func shareTokens() throws {
+        let tokens = try Fixture.decode(LossyArray<RecipeShareToken>.self, from: "shared-recipes").elements
+        #expect(tokens.count == 2)
+        #expect(tokens[0].id == "00000000-0000-4000-8000-0000000000b1")
+        #expect(tokens[0].expiresAt != nil)
+        #expect(tokens[0].createdAt != nil)
+        let now = try #require(tokens[0].createdAt)
+        #expect(!tokens[0].isExpired(now: now))
+        #expect(tokens[1].isExpired(now: now))
+    }
+
     @Test func timeline() throws {
         let page = try Fixture.decode(Page<TimelineEvent>.self, from: "timeline-page")
         let event = try #require(page.items.first)

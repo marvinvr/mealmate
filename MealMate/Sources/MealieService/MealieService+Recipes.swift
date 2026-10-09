@@ -68,6 +68,13 @@ extension MealieService {
         try await perform(.delete("/api/recipes/\(slug.pathSegment)"))
     }
 
+    /// `POST /api/recipes/{slug}/duplicate` → the new recipe. Without a name Mealie
+    /// picks one (the original name with a number appended).
+    func duplicateRecipe(slug: String, name: String? = nil) async throws -> Recipe {
+        struct Body: Encodable { let name: String? }
+        return try await send(.json(.post, "/api/recipes/\(slug.pathSegment)/duplicate", body: Body(name: name)))
+    }
+
     // MARK: Images
 
     /// `PUT /api/recipes/{slug}/image` (multipart: `image` file + `extension`).
@@ -144,6 +151,17 @@ extension MealieService {
         try await perform(.delete("/api/recipes/timeline/events/\(id.pathSegment)"))
     }
 
+    /// `PUT /api/recipes/timeline/events/{id}/image` (multipart: `image` file + `extension`).
+    @discardableResult
+    func uploadTimelineImage(eventID: String, imageData: Data) async throws -> UpdateImageResponse {
+        var request = MealieRequest.multipart(.put, "/api/recipes/timeline/events/\(eventID.pathSegment)/image", parts: [
+            .file("image", data: imageData, fileName: "image.jpg", mimeType: "image/jpeg"),
+            .field("extension", "jpg"),
+        ])
+        request.timeout = 120
+        return try await send(request)
+    }
+
     /// Image of a timeline event (when `TimelineEvent.hasImage`).
     func timelineImageURL(recipeID: String, eventID: String, size: RecipeImageSize = .min) -> URL? {
         url(path: "/api/media/recipes/\(recipeID.pathSegment)/images/timeline/\(eventID.pathSegment)/\(size.fileName)")
@@ -165,6 +183,26 @@ extension MealieService {
     /// `DELETE /api/comments/{id}`.
     func deleteComment(id: String) async throws {
         try await perform(.delete("/api/comments/\(id.pathSegment)"))
+    }
+
+    // MARK: Public links (share tokens)
+
+    /// `GET /api/shared/recipes?recipe_id=`: the recipe's public links (not paginated).
+    func shareTokens(recipeID: String) async throws -> [RecipeShareToken] {
+        try await send(.get("/api/shared/recipes", query: [URLQueryItem(name: "recipe_id", value: recipeID)]),
+                       as: LossyArray<RecipeShareToken>.self).elements
+    }
+
+    /// `POST /api/shared/recipes`: a link anyone can open without an account, until `expiresAt`.
+    @discardableResult
+    func createShareToken(recipeID: String, expiresAt: Date) async throws -> RecipeShareToken {
+        struct Body: Encodable { let recipeId: String; let expiresAt: Date }
+        return try await send(.json(.post, "/api/shared/recipes", body: Body(recipeId: recipeID, expiresAt: expiresAt)))
+    }
+
+    /// `DELETE /api/shared/recipes/{id}`: revokes a public link.
+    func deleteShareToken(id: String) async throws {
+        try await perform(.delete("/api/shared/recipes/\(id.pathSegment)"))
     }
 
     // MARK: Recipe actions

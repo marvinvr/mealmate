@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 // MARK: - Comments (inline preview)
@@ -256,6 +257,8 @@ struct HistorySection: View {
 struct TimelineEventView: View {
     let event: TimelineEvent
     let recipeID: String
+    /// Shows the event's photo full width under the text (history sheet) instead of a thumbnail.
+    var showsLargePhoto = false
 
     @Environment(\.mealie) private var mealie
 
@@ -279,20 +282,37 @@ struct TimelineEventView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                if showsLargePhoto, event.hasImage, let url = mealie.timelineImageURL(recipeID: recipeID, eventID: event.id, size: .min) {
+                    photo(url)
+                        .aspectRatio(Theme.Aspect.card, contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .recipeImageShape()
+                        .padding(.top, Theme.Spacing.xs)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if event.hasImage, let url = mealie.timelineImageURL(recipeID: recipeID, eventID: event.id, size: .tiny) {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    RecipeImagePlaceholder(seed: event.id, showsGlyph: false)
-                }
-                .frame(width: 48, height: 48)
-                .recipeImageShape(cornerRadius: Theme.Radius.thumbnail)
-                .accessibilityHidden(true)
+            if !showsLargePhoto, event.hasImage, let url = mealie.timelineImageURL(recipeID: recipeID, eventID: event.id, size: .tiny) {
+                photo(url)
+                    .frame(width: 48, height: 48)
+                    .recipeImageShape(cornerRadius: Theme.Radius.thumbnail)
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func photo(_ url: URL) -> some View {
+        Color.clear
+            .overlay {
+                AsyncImage(url: url, transaction: Transaction(animation: .smooth)) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill().transition(.opacity)
+                    } else {
+                        RecipeImagePlaceholder(seed: event.id, showsGlyph: false)
+                    }
+                }
+            }
+            .clipped()
+            .accessibilityHidden(true)
     }
 
     private var icon: String {
@@ -323,7 +343,7 @@ struct RecipeTimelineSheet: View {
                             Text(errorMessage).font(.footnote).foregroundStyle(.red)
                         }
                         ForEach(model.timeline) { event in
-                            TimelineEventView(event: event, recipeID: model.recipe?.id ?? "")
+                            TimelineEventView(event: event, recipeID: model.recipe?.id ?? "", showsLargePhoto: true)
                                 .swipeActions {
                                     if event.userId == session.currentUser?.id, event.eventType != .system {
                                         Button(role: .destructive) {
@@ -358,14 +378,20 @@ struct RecipeTimelineSheet: View {
 
 // MARK: - I made this
 
-/// Confirms "I made this" with a date and an optional note, then saves.
+/// Confirms "I made this" with a date, an optional note and an optional photo, then saves.
 struct MadeItSheet: View {
     let recipeName: String
-    let save: (Date, String) async throws -> Void
+    let save: (Date, String, Data?) async throws -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var date = Date()
     @State private var note = ""
+    @State private var photo: Data?
+    @State private var preview: UIImage?
+    @State private var isPreparingPhoto = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var showsPhotoPicker = false
+    @State private var showsCamera = false
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -376,6 +402,7 @@ struct MadeItSheet: View {
                     DatePicker("Date", selection: $date, in: ...Date(), displayedComponents: .date)
                     TextField("How did it turn out? (optional)", text: $note, axis: .vertical)
                         .lineLimit(2...5)
+                    photoRow
                 } footer: {
                     if let errorMessage {
                         Text(errorMessage).foregroundStyle(.red)
@@ -397,13 +424,95 @@ struct MadeItSheet: View {
                     } else {
                         Button("Save", systemImage: "checkmark") { submit() }
                             .primaryActionStyle()
+                            .disabled(isPreparingPhoto)
                     }
                 }
             }
             .sensoryFeedback(.error, trigger: errorMessage) { _, new in new != nil }
+            .photosPicker(isPresented: $showsPhotoPicker, selection: $photoItem, matching: .images, photoLibrary: .shared())
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        await usePhoto(data)
+                    } else {
+                        errorMessage = "This photo couldn’t be loaded. Try another one."
+                    }
+                    photoItem = nil
+                }
+            }
+            .fullScreenCover(isPresented: $showsCamera) {
+                CameraPicker { image in
+                    Task {
+                        if let data = image.jpegData(compressionQuality: 1) { await usePhoto(data) }
+                    }
+                }
+                .ignoresSafeArea()
+            }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(isSaving)
+    }
+
+    @ViewBuilder
+    private var photoRow: some View {
+        if let preview {
+            HStack(spacing: Theme.Spacing.s) {
+                Image(uiImage: preview)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 56, height: 56)
+                    .recipeImageShape(cornerRadius: Theme.Radius.thumbnail)
+                    .accessibilityLabel("Your photo")
+                Spacer()
+                photoMenu(title: "Change", systemImage: "photo")
+                Button("Remove Photo", systemImage: "xmark.circle.fill") {
+                    withAnimation(.smooth) {
+                        photo = nil
+                        self.preview = nil
+                    }
+                }
+                .labelStyle(.iconOnly)
+                .foregroundStyle(.secondary)
+                .buttonStyle(.borderless)
+                .frame(minWidth: 44, minHeight: 44)
+            }
+        } else {
+            photoMenu(title: "Add a Photo", systemImage: "camera")
+                .overlay(alignment: .trailing) {
+                    if isPreparingPhoto { ProgressView() }
+                }
+        }
+    }
+
+    private func photoMenu(title: String, systemImage: String) -> some View {
+        Menu {
+            Button("Choose from Library", systemImage: "photo.on.rectangle") { showsPhotoPicker = true }
+            if CameraPicker.isAvailable {
+                Button("Take Photo", systemImage: "camera") { showsCamera = true }
+            }
+        } label: {
+            Label(title, systemImage: systemImage)
+                .frame(maxWidth: preview == nil ? .infinity : nil, alignment: .leading)
+        }
+        .disabled(isPreparingPhoto || isSaving)
+    }
+
+    private func usePhoto(_ data: Data) async {
+        isPreparingPhoto = true
+        defer { isPreparingPhoto = false }
+        let jpeg = await Task.detached(priority: .userInitiated) {
+            RecipePhotoEncoder.jpegData(from: data)
+        }.value
+        guard let jpeg else {
+            errorMessage = "This photo couldn’t be read. Try another one."
+            return
+        }
+        errorMessage = nil
+        withAnimation(.smooth) {
+            photo = jpeg
+            preview = UIImage(data: jpeg)
+        }
     }
 
     private func submit() {
@@ -411,7 +520,7 @@ struct MadeItSheet: View {
         errorMessage = nil
         Task {
             do {
-                try await save(date, note)
+                try await save(date, note, photo)
                 dismiss()
             } catch {
                 errorMessage = "Couldn’t save. \((error as? MealieError)?.errorDescription ?? "Please try again.")"

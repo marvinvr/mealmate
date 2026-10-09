@@ -20,6 +20,7 @@ private struct RecipeDetailScreen: View {
     @Environment(AppSession.self) private var session
     @Environment(AppRouter.self) private var router
     @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
     @State private var userData = RecipeUserData.shared
     @State private var cooking = CookingSessionStore.shared
     @State private var sheet: RecipeSheet?
@@ -31,6 +32,9 @@ private struct RecipeDetailScreen: View {
     @State private var topInset: CGFloat = 0
     @State private var scrollTarget: String?
     @State private var shareText: ShareTextItem?
+    @State private var isPublicLinkPresented = false
+    @State private var confirmsDelete = false
+    @State private var isWorking = false
 
     var body: some View {
         Group {
@@ -86,10 +90,23 @@ private struct RecipeDetailScreen: View {
             RecipeTimelineSheet(model: model)
         }
         .sheet(isPresented: $isMadeItPresented) {
-            MadeItSheet(recipeName: model.recipe?.displayName ?? "") { date, note in
-                try await model.markMade(at: date, note: note, userName: session.currentUser?.displayName, userID: session.currentUser?.id)
-                toast = RecipeToast(message: "Nice! Added to the recipe’s history.", systemImage: "checkmark.circle.fill")
+            MadeItSheet(recipeName: model.recipe?.displayName ?? "") { date, note, photo in
+                let photoSaved = try await model.markMade(at: date, note: note, photo: photo,
+                                                          userName: session.currentUser?.displayName, userID: session.currentUser?.id)
+                toast = photoSaved
+                    ? RecipeToast(message: "Nice! Added to the recipe’s history.", systemImage: "checkmark.circle.fill")
+                    : RecipeToast(message: "Saved, but the photo couldn’t be uploaded", systemImage: "exclamationmark.triangle", isError: true)
             }
+        }
+        .sheet(isPresented: $isPublicLinkPresented) {
+            if let recipe = model.recipe {
+                RecipePublicLinkSheet(recipe: recipe)
+            }
+        }
+        .confirmationDialog("Delete “\(model.recipe?.displayName ?? "")”?", isPresented: $confirmsDelete, titleVisibility: .visible) {
+            Button("Delete Recipe", role: .destructive) { deleteRecipe() }
+        } message: {
+            Text("This removes the recipe from your Mealie server for everyone, including its history and comments.")
         }
         .sheet(item: $shareText) { item in
             ActivityView(items: [item.text])
@@ -313,6 +330,13 @@ private struct RecipeDetailScreen: View {
                       subject: Text(recipe.displayName)) {
                 Label("Share as Text", systemImage: "doc.plaintext")
             }
+            if session.currentUser?.groupSlug != nil {
+                Button {
+                    isPublicLinkPresented = true
+                } label: {
+                    Label("Public Link…", systemImage: "link.badge.plus")
+                }
+            }
         } label: {
             Label("Share", systemImage: "square.and.arrow.up")
         }
@@ -364,8 +388,49 @@ private struct RecipeDetailScreen: View {
                     }
                 }
             }
+            Section {
+                Button {
+                    duplicateRecipe()
+                } label: {
+                    Label("Duplicate", systemImage: "plus.square.on.square")
+                }
+                Button(role: .destructive) {
+                    confirmsDelete = true
+                } label: {
+                    Label("Delete Recipe…", systemImage: "trash")
+                }
+            }
         } label: {
             Label("More", systemImage: "ellipsis")
+        }
+        .disabled(isWorking)
+    }
+
+    private func duplicateRecipe() {
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            do {
+                let copy = try await model.duplicate()
+                router.push(.recipe(slug: copy.slug))
+            } catch {
+                let message = (error as? MealieError)?.errorDescription ?? "Please try again."
+                toast = RecipeToast(message: "Couldn’t duplicate. \(message)", systemImage: "exclamationmark.triangle", isError: true)
+            }
+        }
+    }
+
+    private func deleteRecipe() {
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            do {
+                try await model.delete()
+                dismiss()
+            } catch {
+                let message = (error as? MealieError)?.errorDescription ?? "Please try again."
+                toast = RecipeToast(message: "Couldn’t delete. \(message)", systemImage: "exclamationmark.triangle", isError: true)
+            }
         }
     }
 
@@ -401,6 +466,8 @@ private struct RecipeDetailScreen: View {
         case "recipe-timeline": isTimelinePresented = true
         case "recipe-madeit": isMadeItPresented = true
         case "recipe-actions": scrollTarget = nil
+        case "recipe-public-link": isPublicLinkPresented = true
+        case "recipe-delete": confirmsDelete = true
         case "recipe-share":
             shareText = ShareTextItem(text: RecipeLinks.plainText(recipe, scale: model.scale))
         default: break

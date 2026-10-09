@@ -222,6 +222,32 @@ struct RecipeLinkTests {
             == "https://mealie.example.com/recipe/tomato-soup")
     }
 
+    @Test func publicURLNeedsGroupSlug() {
+        let server = URL(string: "https://mealie.example.com/")!
+        #expect(RecipeLinks.publicURL(server: server, groupSlug: "home", tokenID: "abc-123")?.absoluteString
+            == "https://mealie.example.com/g/home/shared/r/abc-123")
+        #expect(RecipeLinks.publicURL(server: server, groupSlug: nil, tokenID: "abc-123") == nil)
+    }
+
+    @Test func publicLinkExpiry() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        #expect(PublicLinkExpiry.day.date(from: now, calendar: calendar).timeIntervalSince(now) == 86_400)
+        #expect(PublicLinkExpiry.month.date(from: now, calendar: calendar).timeIntervalSince(now) == 30 * 86_400)
+        #expect(PublicLinkExpiry.year.date(from: now, calendar: calendar) > PublicLinkExpiry.month.date(from: now, calendar: calendar))
+    }
+
+    @Test func activePublicLinksDropExpiredAndSortByExpiry() {
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        let tokens = [
+            RecipeShareToken(id: "soon", recipeId: "r1", expiresAt: now.addingTimeInterval(3_600)),
+            RecipeShareToken(id: "expired", recipeId: "r1", expiresAt: now.addingTimeInterval(-60)),
+            RecipeShareToken(id: "later", recipeId: "r1", expiresAt: now.addingTimeInterval(86_400)),
+        ]
+        #expect(RecipePublicLinkModel.active(tokens, now: now).map(\.id) == ["later", "soon"])
+    }
+
     @Test func linkActionPlaceholders() {
         let recipe = Recipe(id: "r1", slug: "tomato-soup", name: "Tomato Soup")
         let url = RecipeActionLink.url(template: "https://example.com/add?u=${url}&s=${slug}&x=${scale}",
@@ -241,3 +267,4 @@ struct RecipeLinkTests {
         #expect(text.contains("4 servings"))
     }
 }
+

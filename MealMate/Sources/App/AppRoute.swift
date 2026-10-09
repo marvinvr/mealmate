@@ -67,6 +67,8 @@ enum AppRoute: Equatable, Sendable {
         ("recipe-madeit/*", { .intent("recipe-madeit", tab: .recipes, destination: .recipe(slug: $0[0])) }),
         ("recipe-actions/*", { .intent("recipe-actions", tab: .recipes, destination: .recipe(slug: $0[0])) }),
         ("recipe-share/*", { .intent("recipe-share", tab: .recipes, destination: .recipe(slug: $0[0])) }),
+        ("recipe-public-link/*", { .intent("recipe-public-link", tab: .recipes, destination: .recipe(slug: $0[0])) }),
+        ("recipe-delete/*", { .intent("recipe-delete", tab: .recipes, destination: .recipe(slug: $0[0])) }),
         ("cook-ingredients/*", { .intent("cook-ingredients", tab: .recipes, destination: .cookMode(slug: $0[0]), presented: true) }),
         ("cook-done/*", { .intent("cook-done", tab: .recipes, destination: .cookMode(slug: $0[0]), presented: true) }),
         ("cook-step/*/*", { .intent("cook-step/\($0[1])", tab: .recipes, destination: .cookMode(slug: $0[0]), presented: true) }),
