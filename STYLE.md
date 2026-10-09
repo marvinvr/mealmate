@@ -210,11 +210,27 @@ View, Slide Over, small Stage Manager windows) are compact width and look exactl
 
 ## 12. App icon
 
-`Design/make-icon.swift` (run `swift Design/make-icon.swift` from the repo root) draws the icon and
-writes it to `AppIcon.appiconset`: one larger prep bowl of chopped herbs and two small bowls of
-paprika and saffron, seen from above, on an oat ground. Light (opaque), dark (transparent; the
-system supplies the backdrop) and tinted (grayscale) variants, single 1024pt universal size.
-Edit the script, never the PNGs.
+`Design/make-icon.swift` (run `swift Design/make-icon.swift` from the repo root) draws every icon:
+one larger prep bowl of chopped herbs and two small bowls of paprika and saffron, seen from above.
+Each comes in light (opaque), dark and tinted (grayscale on black) appearances, single 1024pt
+universal size. Edit the script, never the PNGs.
+
+- **Primary (free):** oat ground, white ceramic; dark is transparent (the system supplies the
+  backdrop). Written to `Assets.xcassets/AppIcon.appiconset`.
+- **Alternates** (supporter perk, `docs/supporter.md`) go to `AppIcons.xcassets/AppIcon<Name>.appiconset`,
+  an app-only catalog the share extension doesn't compile. Same composition, new ground and material;
+  their dark appearance is a deeper, opaque version of the ground.
+  - Mono: paper-grey ground, white bowls, graphite contents.
+  - Dark: charcoal ground, speckled dark stoneware.
+  - Herb: rosemary-green ground, cream bowls.
+  - Tomato: warm tomato-red ground, cream bowls.
+  - Pastel: blush ground, mint-glazed bowls, softer ingredients.
+  - Wood: an edge-glued cutting board (procedural grain), cream bowls.
+  - **Head Chef exclusives:** Copper Pot (polished copper saucepan with handle and rivets, copper
+    bowls, deep warm-brown ground) and Midnight Kitchen (midnight-blue ground with gold dust, dark
+    ceramic with gilded rims).
+- **Previews** for the in-app picker: `AppIcons.xcassets/IconPreview<Name>.imageset` (384 px, light +
+  dark; `IconPreviewDefault` for the primary). A transparent dark render sits on a dark backdrop.
 
 ## 13. Asset notes
 
