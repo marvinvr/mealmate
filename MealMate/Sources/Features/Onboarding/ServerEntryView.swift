@@ -5,6 +5,8 @@ struct ServerEntryView: View {
     @Bindable var model: ServerEntryViewModel
     @Environment(AppSession.self) private var session
     @FocusState private var isFieldFocused: Bool
+    @State private var height: CGFloat = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         ScrollView {
@@ -31,11 +33,12 @@ struct ServerEntryView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 48)
+            .padding(.top, Onboarding.topPadding(minimum: 48, height: height, isRegularWidth: horizontalSizeClass == .regular))
             .padding(.bottom, 24)
             .frame(maxWidth: 520)
             .frame(maxWidth: .infinity)
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .scrollDismissesKeyboard(.interactively)
         .screenBackground()
         .toolbar(.hidden, for: .navigationBar)
@@ -49,7 +52,7 @@ struct ServerEntryView: View {
                 .accessibilityHidden(true)
             Text("Welcome to MealMate")
                 .font(.largeTitle.bold())
-            Text("Your recipes, meal plan and shopping list from Mealie, right on your iPhone.")
+            Text("Your recipes, meal plan and shopping list from Mealie, right on your \(UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone").")
                 .font(.title3)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

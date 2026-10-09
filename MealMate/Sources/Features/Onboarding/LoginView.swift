@@ -8,6 +8,8 @@ struct LoginView: View {
     @State private var showsPasswordForm: Bool
     @State private var showsTokenSheet = false
     @FocusState private var focusedField: Field?
+    @State private var height: CGFloat = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private enum Field { case username, password }
 
@@ -55,11 +57,12 @@ struct LoginView: View {
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.top, 24)
+            .padding(.top, Onboarding.topPadding(minimum: 24, height: height, isRegularWidth: horizontalSizeClass == .regular))
             .padding(.bottom, 24)
             .frame(maxWidth: 520)
             .frame(maxWidth: .infinity)
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .scrollDismissesKeyboard(.interactively)
         .screenBackground()
         .navigationTitle("")

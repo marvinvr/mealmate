@@ -35,3 +35,12 @@ struct OnboardingFlowView: View {
         }
     }
 }
+
+enum Onboarding {
+    /// Top padding of the onboarding screens: fixed on iPhone; on tall screens (iPad) the
+    /// 520 pt column moves down towards the optical centre instead of hugging the top.
+    static func topPadding(minimum: CGFloat, height: CGFloat, isRegularWidth: Bool) -> CGFloat {
+        guard isRegularWidth, height > 700 else { return minimum }
+        return max(minimum, height * 0.16)
+    }
+}
