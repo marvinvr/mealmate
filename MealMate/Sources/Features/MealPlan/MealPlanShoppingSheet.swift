@@ -56,6 +56,8 @@ struct MealPlanShoppingSheet: View {
             }
             .actionToast($toast)
         }
+        // iPad: room for a week of recipes.
+        .presentationSizing(.page)
         .sensoryFeedback(.success, trigger: successFeedback)
         .sensoryFeedback(.error, trigger: errorFeedback)
         .task {

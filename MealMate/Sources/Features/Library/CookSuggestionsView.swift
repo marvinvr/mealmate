@@ -34,6 +34,7 @@ private struct CookSuggestionsContent: View {
             resultsSection
         }
         .listStyle(.insetGrouped)
+        .readableContentWidth()
         .screenBackground()
         .navigationTitle("What Can I Cook?")
         .navigationBarTitleDisplayMode(.large)

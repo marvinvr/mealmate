@@ -107,7 +107,8 @@ View, Slide Over, small Stage Manager windows) are compact width and look exactl
   selected list is a 16% accent wash like a selected chip, not the solid system fill.
 - Cook mode from 1000 pt wide: the ingredients (servings, check-off) stay in a panel beside
   the steps, the current step's ingredients get a 12% accent wash; step text `.cookStepRegular`.
-- Long sheets (editor, Add to Shopping List, meal plan entry) use `.presentationSizing(.page)`;
+- Long sheets (editor, Add to Shopping List, meal plan entry, the week's Add to List) use
+  `.presentationSizing(.page)`;
   short ones keep the default form sheet.
 - Onboarding and sign-in keep their 520 pt column and sit lower on tall screens instead of
   hugging the top.
