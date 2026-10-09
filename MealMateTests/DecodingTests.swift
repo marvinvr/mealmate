@@ -91,7 +91,7 @@ struct DecodingTests {
         #expect(list.displayName == "Groceries")
         #expect(list.items.count == 4)
         #expect(list.items[0].checked)
-        #expect(list.items[0].displayText == "1 Paper towels")
+        #expect(list.items[0].displayText == "Paper towels")
         #expect(list.items[1].label?.name == "Baking")
         #expect(list.items[2].recipeReferences?.count == 1)
         #expect(list.recipeReferences?.first?.recipe?.name == "Lemon Herb Chicken")
