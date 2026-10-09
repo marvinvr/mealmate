@@ -24,10 +24,12 @@ MealMate/
       Library/         Library tab, organizer store, preset recipe lists, What Can I Cook?
       Shopping/        Lists, list screen, item editor, add-recipe sheet, planning components
       MealPlan/        Week view, entry editor, add-to-plan sheet, week math, today provider
-      Settings/        Account, server, about, sign out
+      Settings/        Supporter + app icon rows, account, server, about, sign out
+      Supporter/       StoreKit supporter tier, prompt ladder, app icons (docs/supporter.md)
     Shared/            Theme.swift (tokens, fonts, modifiers), RecipeFormatting, Components/
-  Resources/           Assets.xcassets (AppIcon, AccentColor, background/surface/prominent colors)
-  Support/             Info.plist, MealMate.entitlements
+  Resources/           Assets.xcassets (AppIcon, AccentColor, background/surface/prominent colors),
+                       AppIcons.xcassets (alternate icons + previews, app target only)
+  Support/             Info.plist, MealMate.entitlements, MealMate.storekit (local StoreKit config)
 ShareExtension/        MealMateShare: ShareViewController hosting ShareImportView
 MealMateTests/         Swift Testing; Fixtures/ = anonymized JSON responses
 MealMateUITests/       XCUITest flows against a real server (scripts/ui-test.sh)

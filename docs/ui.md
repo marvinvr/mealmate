@@ -10,8 +10,8 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
 - `MainTabView`: four tabs (`AppTab`: recipes, mealPlan, shopping, library), each wrapped in
   `TabRoot` = its own `NavigationStack(path:)` + the `AccountButton` toolbar item (avatar,
   opens Settings) + `.navigationDestination(for: AppDestination.self)`. Also hosts the
-  Settings sheet, the full-screen cover (cook mode) and `createFlowRouteSheets()` (import /
-  editor sheets requested by routes). Tab bar minimizes on scroll (on iPad it sits at the
+  Settings sheet, the full-screen cover (cook mode), `createFlowRouteSheets()` (import /
+  editor sheets requested by routes) and `supporterPromptPresenter()` (docs/supporter.md). Tab bar minimizes on scroll (on iPad it sits at the
   top). Regular width (iPad): the Shopping tab is `ShoppingSplitRoot`, a `NavigationSplitView`
   driven by the same `router.shoppingPath` (typed `[AppDestination]`): its first element
   (`.shoppingList`) is the sidebar selection, the rest the detail stack, so deep links and

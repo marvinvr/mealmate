@@ -29,7 +29,8 @@ The working map for coding agents. It sits between the root files (`README.md` f
 - `../scripts/README.md`: `screenshot.sh`, `ui-test.sh` and the full route list.
 - `feature-gaps.md`: Mealie v3.28 features vs. MealMate, what was built, what was skipped
   and why, candidates for later.
-- `supporter.md`: plan (not built) for an optional tip jar.
+- `supporter.md`: the optional supporter tier (StoreKit products, status rules, app icons,
+  prompt ladder, App Store Connect product list).
 - `mealie-openapi-v3.28.json`: Mealie's OpenAPI spec. Large: query it with `jq`/`grep`.
 
 ## Style of These Docs
