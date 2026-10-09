@@ -1,0 +1,215 @@
+{
+  "identifier": "6E0C0000-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "6E0A0001-0000-4000-8000-000000000001",
+      "localizations": [
+        {
+          "description": "A quick thank-you.",
+          "displayName": "Espresso",
+          "locale": "en_US"
+        },
+        {
+          "description": "Ein kleines Dankeschön.",
+          "displayName": "Espresso",
+          "locale": "de"
+        }
+      ],
+      "productID": "tip.espresso",
+      "referenceName": "Tip – Espresso",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "6E0A0002-0000-4000-8000-000000000002",
+      "localizations": [
+        {
+          "description": "A generous thank-you.",
+          "displayName": "Brunch",
+          "locale": "en_US"
+        },
+        {
+          "description": "Ein herzliches Dankeschön.",
+          "displayName": "Brunch",
+          "locale": "de"
+        }
+      ],
+      "productID": "tip.brunch",
+      "referenceName": "Tip – Brunch",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "19.99",
+      "familyShareable": false,
+      "internalID": "6E0A0003-0000-4000-8000-000000000003",
+      "localizations": [
+        {
+          "description": "Thanks for keeping MealMate going.",
+          "displayName": "Dinner Party",
+          "locale": "en_US"
+        },
+        {
+          "description": "Danke, dass du MealMate am Laufen hältst.",
+          "displayName": "Dinnerparty",
+          "locale": "de"
+        }
+      ],
+      "productID": "tip.dinnerparty",
+      "referenceName": "Tip – Dinner Party",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "6E0A0004-0000-4000-8000-000000000004",
+      "localizations": [
+        {
+          "description": "Wow. Thank you, truly.",
+          "displayName": "Feast",
+          "locale": "en_US"
+        },
+        {
+          "description": "Wow. Von Herzen danke.",
+          "displayName": "Festmahl",
+          "locale": "de"
+        }
+      ],
+      "productID": "tip.feast",
+      "referenceName": "Tip – Feast",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {},
+  "subscriptionGroups": [
+    {
+      "id": "6E0B0000-0000-4000-8000-000000000100",
+      "localizations": [
+        {
+          "description": "",
+          "displayName": "MealMate Supporter",
+          "locale": "en_US"
+        },
+        {
+          "description": "",
+          "displayName": "MealMate Supporter",
+          "locale": "de"
+        }
+      ],
+      "name": "MealMate Supporter",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "4.99",
+          "familyShareable": true,
+          "groupNumber": 1,
+          "internalID": "6E0B0001-0000-4000-8000-000000000101",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "All icons, incl. two Head Chef exclusives.",
+              "displayName": "Head Chef Monthly",
+              "locale": "en_US"
+            },
+            {
+              "description": "Alle App-Icons plus zwei exklusive.",
+              "displayName": "Head Chef monatlich",
+              "locale": "de"
+            }
+          ],
+          "productID": "headchef.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Head Chef – Monthly",
+          "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "39.99",
+          "familyShareable": true,
+          "groupNumber": 1,
+          "internalID": "6E0B0002-0000-4000-8000-000000000102",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "All icons, incl. two Head Chef exclusives.",
+              "displayName": "Head Chef Yearly",
+              "locale": "en_US"
+            },
+            {
+              "description": "Alle App-Icons plus zwei exklusive.",
+              "displayName": "Head Chef jährlich",
+              "locale": "de"
+            }
+          ],
+          "productID": "headchef.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Head Chef – Yearly",
+          "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "1.99",
+          "familyShareable": true,
+          "groupNumber": 2,
+          "internalID": "6E0B0003-0000-4000-8000-000000000103",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Six app icons and a big thank-you.",
+              "displayName": "Sous Chef Monthly",
+              "locale": "en_US"
+            },
+            {
+              "description": "Sechs App-Icons und ein herzliches Danke.",
+              "displayName": "Sous Chef monatlich",
+              "locale": "de"
+            }
+          ],
+          "productID": "souschef.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Sous Chef – Monthly",
+          "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "14.99",
+          "familyShareable": true,
+          "groupNumber": 2,
+          "internalID": "6E0B0004-0000-4000-8000-000000000104",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Six app icons and a big thank-you.",
+              "displayName": "Sous Chef Yearly",
+              "locale": "en_US"
+            },
+            {
+              "description": "Sechs App-Icons und ein herzliches Danke.",
+              "displayName": "Sous Chef jährlich",
+              "locale": "de"
+            }
+          ],
+          "productID": "souschef.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Sous Chef – Yearly",
+          "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

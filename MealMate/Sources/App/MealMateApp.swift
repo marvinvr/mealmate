@@ -4,6 +4,7 @@ import SwiftUI
 struct MealMateApp: App {
     @State private var session: AppSession
     @State private var router: AppRouter
+    @State private var supporter = SupporterStore()
 
     init() {
         // Recipe images load through URLSession.shared; give it a real disk cache.
@@ -27,8 +28,11 @@ struct MealMateApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .appIconEntitlementGuard()
+                .task { await supporter.start() }
                 .environment(session)
                 .environment(router)
+                .environment(supporter)
         }
         .commands {
             MealMateCommands(router: router, session: session)

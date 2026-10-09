@@ -51,6 +51,10 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<!-- Finished consumables (tips) stay in Transaction.all, so supporter status survives a
+	     reinstall and shows on other devices (docs/supporter.md). Don't remove. -->
+	<key>SKIncludeConsumableInAppPurchaseHistory</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>MealMate uses the camera when you take a photo for a recipe.</string>
 	<!-- One window: AppSession and AppRouter are app-wide, so a second iPad window would mirror

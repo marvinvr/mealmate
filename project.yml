@@ -37,6 +37,9 @@ targets:
         INFOPLIST_FILE: MealMate/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: MealMate/Support/MealMate.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Supporter icons (MealMate/Resources/AppIcons.xcassets, app target only; drawn by
+        # Design/make-icon.swift). Keep in sync with MealMateAppIcon.
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIconMono AppIconDark AppIconHerb AppIconTomato AppIconPastel AppIconWood AppIconCopperPot AppIconMidnightKitchen
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
     dependencies:
@@ -83,6 +86,9 @@ targets:
       - path: MealMateTests/Fixtures
         type: folder
         buildPhase: resources
+      # Loaded by SKTestSession in the supporter StoreKit tests.
+      - path: MealMate/Support/MealMate.storekit
+        buildPhase: resources
     dependencies:
       - target: MealMate
     settings:
@@ -98,6 +104,9 @@ targets:
     platform: iOS
     sources:
       - path: MealMateUITests
+      # SKTestSession purchases for SupporterScreenshotTests.
+      - path: MealMate/Support/MealMate.storekit
+        buildPhase: resources
     dependencies:
       - target: MealMate
     settings:
@@ -117,6 +126,8 @@ schemes:
         MealMateTests: [test]
     run:
       config: Debug
+      # Local StoreKit products for the supporter tier when run from Xcode (docs/supporter.md).
+      storeKitConfiguration: MealMate/Support/MealMate.storekit
     test:
       config: Debug
       gatherCoverageData: false

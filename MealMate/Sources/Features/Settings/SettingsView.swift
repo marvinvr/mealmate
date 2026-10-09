@@ -1,15 +1,26 @@
 import SwiftUI
 
-/// Settings sheet (opened from the avatar button): account, server, about, sign out.
+/// Settings sheet (opened from the avatar button): supporter + app icon, account, server, about,
+/// sign out.
 struct SettingsView: View {
     @Environment(AppSession.self) private var session
+    @Environment(AppRouter.self) private var router
+    @Environment(SupporterStore.self) private var supporter
     @Environment(\.dismiss) private var dismiss
     @Environment(\.mealie) private var mealie
     @State private var confirmsSignOut = false
+    @State private var path: [SettingsPage] = []
+    @State private var showsSupporter = false
+    @State private var appIcon: MealMateAppIcon = .default
+
+    private enum SettingsPage: Hashable {
+        case appIcon
+    }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
+                supporterSection
                 accountSection
                 serverSection
                 aboutSection
@@ -28,6 +39,22 @@ struct SettingsView: View {
                     Button("Done", systemImage: "checkmark") { dismiss() }
                 }
             }
+            .navigationDestination(for: SettingsPage.self) { page in
+                switch page {
+                case .appIcon: AppIconPickerView()
+                }
+            }
+            .sheet(isPresented: $showsSupporter) {
+                SupporterView(context: .settings)
+            }
+            .onChange(of: router.pendingIntent, initial: true) {
+                // Debug routes `supporter` / `app-icon`.
+                switch router.consumeIntent("settings-") {
+                case "settings-supporter": showsSupporter = true
+                case "settings-app-icon": path = [.appIcon]
+                default: break
+                }
+            }
             .refreshable { await session.refresh() }
             // Picks up a profile picture (new `cacheKey`) or name changed in Mealie meanwhile.
             .task { await session.refresh() }
@@ -44,6 +71,65 @@ struct SettingsView: View {
 
     private var serverHost: String {
         session.serverURL?.host() ?? "Mealie"
+    }
+
+    private var supporterSection: some View {
+        Section {
+            Button {
+                showsSupporter = true
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: supporter.isSupporter ? "heart.fill" : "heart")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .frame(width: 44, height: 44)
+                        .background(Color.accentColor.opacity(0.16), in: .circle)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(supporterTitle)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text(supporterSubtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.vertical, 4)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            NavigationLink(value: SettingsPage.appIcon) {
+                HStack(spacing: 14) {
+                    AppIconImage(icon: appIcon, size: 30)
+                    Text("App Icon")
+                    Spacer()
+                    Text(appIcon.displayName)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .trackingAppIcon($appIcon)
+    }
+
+    private var supporterTitle: String {
+        switch supporter.activeTier {
+        case .headChef: "Thank You, Head Chef"
+        case .sousChef: "Thank You, Sous Chef"
+        case .none: supporter.isSupporter ? "Thank You for Your Support" : "Support MealMate"
+        }
+    }
+
+    private var supporterSubtitle: String {
+        if supporter.isSupporter {
+            if let since = supporter.status.supporterSince {
+                return "Supporter since \(since.formatted(.dateTime.month(.wide).year()))"
+            }
+            return "You’re a supporter."
+        }
+        return "MealMate stays free. Chip in if you like."
     }
 
     private var accountSection: some View {

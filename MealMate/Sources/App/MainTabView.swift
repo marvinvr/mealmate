@@ -41,6 +41,7 @@ struct MainTabView: View {
             AppDestinationView(destination: destination)
         }
         .createFlowRouteSheets()
+        .supporterPromptPresenter()
     }
 }
 

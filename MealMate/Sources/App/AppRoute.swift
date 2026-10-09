@@ -18,6 +18,8 @@ enum AppRoute: Equatable, Sendable {
     case signOut
     case tab(AppTab)
     case settings
+    /// Open Settings and leave `intent` for it (supporter sheet, app icon picker).
+    case settingsIntent(String)
     /// Push `destination` onto `tab`'s stack.
     case push(AppDestination, tab: AppTab)
     /// Present `destination` full screen (e.g. cook mode).
@@ -37,6 +39,10 @@ enum AppRoute: Equatable, Sendable {
         ("shopping", { _ in .tab(.shopping) }),
         ("library", { _ in .tab(.library) }),
         ("settings", { _ in .settings }),
+        // Supporter tier: sheet from Settings, icon picker, the prompt as it appears by itself.
+        ("supporter", { _ in .settingsIntent("settings-supporter") }),
+        ("app-icon", { _ in .settingsIntent("settings-app-icon") }),
+        ("supporter-prompt/*", { .intent("supporter-prompt/\($0[0])", tab: .recipes) }),
         ("recipe/*", { .push(.recipe(slug: $0[0]), tab: .recipes) }),
         ("cook/*", { .present(.cookMode(slug: $0[0])) }),
         ("shopping/*", { .push(.shoppingList(id: $0[0]), tab: .shopping) }),
@@ -145,6 +151,9 @@ enum AppRoute: Equatable, Sendable {
         case .tab(let tab):
             router.selectedTab = tab
         case .settings:
+            router.isSettingsPresented = true
+        case .settingsIntent(let intent):
+            router.pendingIntent = intent
             router.isSettingsPresented = true
         case .push(let destination, let tab):
             router.popToRoot(tab)
