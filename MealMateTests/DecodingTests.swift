@@ -192,6 +192,20 @@ struct DecodingTests {
         #expect(page.items.map(\.slug) == ["ok"])
     }
 
+    @Test func recipeSuggestions() throws {
+        let response = try Fixture.decode(RecipeSuggestionResponse.self, from: "recipe-suggestions")
+        // The entry without id/slug is dropped, the rest survive.
+        #expect(response.items.map(\.recipe.slug) == ["lemon-herb-chicken", "tomato-soup"])
+        let complete = try #require(response.items.first)
+        #expect(complete.missingFoods.isEmpty && complete.substitutedFoods.isEmpty && complete.missingTools.isEmpty)
+        let soup = response.items[1]
+        // A food without a name is dropped; the summary-shaped one decodes.
+        #expect(soup.missingFoods.map(\.name) == ["Parmesan", "basil"])
+        #expect(soup.substitutedFoods.first?.food.name == "butter")
+        #expect(soup.substitutedFoods.first?.substituteFood.name == "olive oil")
+        #expect(soup.missingTools.map(\.name) == ["Blender"])
+    }
+
     @Test func flexibleImageKey() throws {
         let json = #"[{"id":"a","slug":"a","image":12},{"id":"b","slug":"b","image":false},{"id":"c","slug":"c","image":null}]"#
         let recipes = try MealieJSON.decoder.decode([RecipeSummary].self, from: Data(json.utf8))

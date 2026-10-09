@@ -1,0 +1,98 @@
+{
+  "items": [
+    {
+      "recipe": {
+        "id": "a000000d-0000-4000-8000-00000000000d",
+        "userId": "a000000c-0000-4000-8000-00000000000c",
+        "householdId": "a0000003-0000-4000-8000-000000000003",
+        "groupId": "a0000002-0000-4000-8000-000000000002",
+        "name": "Lemon Herb Chicken",
+        "slug": "lemon-herb-chicken",
+        "image": "aB3x",
+        "recipeServings": 4.0,
+        "recipeYieldQuantity": 0.0,
+        "recipeYield": null,
+        "totalTime": "45 minutes",
+        "prepTime": null,
+        "cookTime": null,
+        "performTime": null,
+        "description": "Bright, simple and ready in 45 minutes.",
+        "recipeCategory": [],
+        "tags": [],
+        "tools": [],
+        "rating": 4.0,
+        "orgURL": null,
+        "dateAdded": "2026-10-08",
+        "dateUpdated": "2026-10-08T18:36:03.240153+00:00",
+        "createdAt": "2026-10-08T18:29:22.483612+00:00",
+        "updatedAt": "2026-10-08T18:36:03.242590+00:00",
+        "lastMade": null
+      },
+      "missingFoods": [],
+      "substitutedFoods": [],
+      "missingTools": []
+    },
+    {
+      "recipe": {
+        "id": "a000000e-0000-4000-8000-00000000000e",
+        "name": "Tomato Soup",
+        "slug": "tomato-soup",
+        "image": null,
+        "recipeServings": 2.0,
+        "dateAdded": "2026-10-07",
+        "createdAt": "2026-10-07T10:00:00+00:00"
+      },
+      "missingFoods": [
+        {
+          "id": "a0000005-0000-4000-8000-000000000005",
+          "name": "Parmesan",
+          "pluralName": null,
+          "description": "",
+          "extras": {},
+          "labelId": null,
+          "aliases": [],
+          "substitutions": [],
+          "householdsWithIngredientFood": [],
+          "label": null,
+          "createdAt": "2026-10-08T18:29:21.950820+00:00",
+          "updatedAt": "2026-10-08T18:29:21.950821+00:00"
+        },
+        {
+          "id": "a0000006-0000-4000-8000-000000000006",
+          "name": "basil",
+          "pluralName": null
+        },
+        { "id": "broken-food-without-name" }
+      ],
+      "substitutedFoods": [
+        {
+          "food": {
+            "id": "a0000007-0000-4000-8000-000000000007",
+            "name": "butter",
+            "pluralName": null,
+            "householdsWithIngredientFood": []
+          },
+          "substituteFood": {
+            "id": "a0000008-0000-4000-8000-000000000008",
+            "name": "olive oil",
+            "pluralName": null
+          }
+        }
+      ],
+      "missingTools": [
+        {
+          "id": "a0000009-0000-4000-8000-000000000009",
+          "name": "Blender",
+          "slug": "blender",
+          "householdsWithTool": []
+        }
+      ]
+    },
+    {
+      "recipe": { "name": "Broken entry without id or slug" },
+      "missingFoods": [],
+      "substitutedFoods": [],
+      "missingTools": []
+    }
+  ]
+}

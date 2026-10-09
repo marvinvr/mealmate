@@ -116,6 +116,10 @@ Recipes
   "<name> (1)", "(2)", …
 - Sub-recipe ingredients: `referencedRecipe` set, no food/unit, `display` is only the
   quantity ("1").
+- `GET /api/recipes/suggestions` with no `foods` and no `tools` applies no matching and returns
+  every recipe with empty missing lists: only query with a selection. It matches linked foods
+  only (unparsed ingredients never match), never reports on-hand foods as missing
+  (`includeFoodsOnHand`), and orders by fewest missing, then most matched.
 
 Shopping
 

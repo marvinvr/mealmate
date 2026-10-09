@@ -15,6 +15,12 @@ extension MealieService {
         try await send(.get("/api/recipes/\(slug.pathSegment)"))
     }
 
+    /// `GET /api/recipes/suggestions`: recipes that can be cooked with the given foods/tools,
+    /// fewest missing first. Needs a non-empty selection (see `RecipeSuggestionQuery`).
+    func recipeSuggestions(_ query: RecipeSuggestionQuery) async throws -> [RecipeSuggestion] {
+        try await send(.get("/api/recipes/suggestions", query: query.queryItems), as: RecipeSuggestionResponse.self).items
+    }
+
     // MARK: Create / import
 
     /// `POST /api/recipes`: creates an empty recipe and returns its slug.
