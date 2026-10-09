@@ -21,9 +21,11 @@ struct AccountButton: View {
 /// Round avatar: the user's Mealie profile picture, initials while it loads, when the user
 /// has none (404) or loading fails.
 ///
-/// Loaded with the bearer token through `RecipeImageLoader` (memory + disk, keyed by the
-/// `cacheKey` URL, so a new picture gets a new URL once `/api/users/self` is refreshed). A
-/// cached picture shows on the first frame, so tab switches don't flash the initials.
+/// Same URL as Mealie's web UI (`profile.webp?cacheKey=…`), loaded with the bearer token through
+/// `RecipeImageLoader`. A cached picture shows on the first frame, so tab switches don't flash
+/// the initials. The `cacheKey` alone isn't a reliable version (it stays put when the file
+/// changes outside an upload or OIDC sync), so the picture is then re-fetched like a browser
+/// revalidates it, at most once per `refreshInterval`.
 struct UserAvatar: View {
     let user: User?
     var size: CGFloat = 32
@@ -50,15 +52,30 @@ struct UserAvatar: View {
         .clipShape(Circle())
         .contentShape(Circle())
         .task(id: url) {
-            guard let url, loaded?.url != url, RecipeImageLoader.memoryImage(for: url) == nil else { return }
-            guard let image = await RecipeImageLoader.shared.image(for: mealie.mediaRequest(url), maxPixelSize: Self.maxPixelSize),
-                  !Task.isCancelled else { return }
-            withAnimation(.smooth(duration: 0.25)) { loaded = (url, image) }
+            guard let url else { return }
+            let request = mealie.mediaRequest(url)
+            let loader = RecipeImageLoader.shared
+            if image(for: url) == nil,
+               let cached = await loader.image(for: request, maxPixelSize: Self.maxPixelSize), !Task.isCancelled {
+                withAnimation(.smooth(duration: 0.25)) { loaded = (url, cached) }
+            }
+            let refreshed = await loader.refresh(request, maxPixelSize: Self.maxPixelSize, minInterval: Self.refreshInterval)
+            guard !Task.isCancelled else { return }
+            switch refreshed {
+            case .image(let image):
+                withAnimation(.smooth(duration: 0.25)) { loaded = (url, image) }
+            case .missing:
+                withAnimation(.smooth(duration: 0.25)) { loaded = nil }
+            case .unchanged:
+                break
+            }
         }
     }
 
     /// One decode for every avatar size (toolbar 32pt, Settings 52pt) at 3x and up.
     private static let maxPixelSize: CGFloat = 256
+    /// Toolbar avatars appear on every tab switch; one re-fetch a minute is plenty.
+    private static let refreshInterval: TimeInterval = 60
 
     private func image(for url: URL?) -> UIImage? {
         guard let url else { return nil }

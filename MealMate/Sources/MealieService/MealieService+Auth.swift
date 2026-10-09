@@ -65,9 +65,10 @@ extension MealieService {
     }
 
     /// Profile picture URL, built like Mealie's web UI:
-    /// `/api/media/users/{id}/profile.webp?cacheKey=<user.cacheKey>`. Mealie sets a new
-    /// `cacheKey` whenever the picture is uploaded, so the URL changes with the picture.
-    /// The file only exists once the user has uploaded one (404 otherwise).
+    /// `/api/media/users/{id}/profile.webp?cacheKey=<user.cacheKey>`. Mealie writes this file on
+    /// upload and from an OIDC `picture` claim at sign-in, and sets a new `cacheKey` both times;
+    /// a file changed any other way keeps the old key (`UserAvatar` re-fetches for that).
+    /// 404 while the user has no picture.
     func userAvatarURL(userID: String, cacheKey: String? = nil) -> URL? {
         let query = cacheKey.flatMap { $0.isEmpty ? nil : [URLQueryItem(name: "cacheKey", value: $0)] } ?? []
         return url(path: "/api/media/users/\(userID.pathSegment)/profile.webp", query: query)

@@ -55,7 +55,11 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
   cleared on sign-out. Also loads user avatars.
 - `UserAvatar` (`App/AccountButton.swift`): round Mealie profile picture of the signed-in
   user (toolbar account button, Settings), initials while loading, without a picture or on
-  failure. Settings refreshes `/api/users/self` on open, so a changed picture shows up.
+  failure. Same URL as Mealie's web UI (`/api/media/users/{id}/profile.webp?cacheKey=…`; Mealie
+  stores an OIDC `picture` claim there too). `cacheKey` stays put when the file changes outside
+  an upload / OIDC sync (and starts at the same default for every user), so the shown picture
+  is re-fetched at most once a minute (`RecipeImageLoader.refresh`), which also clears a
+  remembered 404. Settings refreshes `/api/users/self` on open.
 - `RecipeImagePlaceholder`: muted food tone picked deterministically from a seed.
 - `RecipeCard` (grid: 4:3 photo, serif title, metadata) and `RecipeRow` (list: 56 pt
   thumbnail); `RecipeMetadataLine`. Rows go in a `NavigationLink`; cards inside `List` rows

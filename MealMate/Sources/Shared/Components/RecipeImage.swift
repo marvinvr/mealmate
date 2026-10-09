@@ -107,8 +107,12 @@ struct RecipeImage: View {
 /// disk (`Caches/RecipeImages`) → network, with in-flight requests de-duplicated. A disk hit
 /// older than `revalidationInterval` is shown immediately and refreshed in the background.
 /// Images are decoded and downsampled off the main thread (ImageIO), so scrolling a grid
-/// never decodes WebP on the main thread. A 404 is remembered (in memory, until sign-out) so
-/// a missing avatar isn't requested on every appearance.
+/// never decodes WebP on the main thread. A 404 is remembered (in memory) so a missing avatar
+/// isn't requested on every appearance.
+///
+/// Avatar URLs are the exception to "immutable": Mealie keeps a user's `cacheKey` when the file
+/// changes without an upload or OIDC sync (and every user starts on the same default key), so
+/// `refresh(_:maxPixelSize:)` re-downloads them like a browser revalidates, throttled per URL.
 actor RecipeImageLoader {
     static let shared = RecipeImageLoader()
 
@@ -125,6 +129,8 @@ actor RecipeImageLoader {
     private var revalidating: Set<URL> = []
     /// URLs the server answered with 404 (no avatar / photo). Cleared by `removeAll()`.
     private var missing: Set<URL> = []
+    /// Last network fetch per URL, for `refresh`'s throttle.
+    private var fetchedAt: [URL: Date] = [:]
     private var didTrim = false
 
     init() {
@@ -172,10 +178,12 @@ actor RecipeImageLoader {
             }
             switch await Self.download(request, session: session) {
             case .data(let data):
+                await self.noteFetched(url)
                 guard let image = Self.decode(data, maxPixelSize: maxPixel) else { return nil }
                 try? data.write(to: file, options: .atomic)
                 return image
             case .missing:
+                await self.noteFetched(url)
                 await self.markMissing(url)
                 return nil
             case .failed:
@@ -189,10 +197,46 @@ actor RecipeImageLoader {
         return image
     }
 
+    enum Refresh {
+        /// The server's current image (now also in memory and on disk).
+        case image(UIImage)
+        /// The server has none (404); the cached copy was dropped.
+        case missing
+        /// Fetched within `minInterval`, or the request failed: keep what is shown.
+        case unchanged
+    }
+
+    /// Re-downloads `request`, bypassing memory, disk and the 404 memo, and updates the caches.
+    /// For images whose URL doesn't change with the content (user avatars). At most once per
+    /// `minInterval` per URL, counting the initial download.
+    func refresh(_ request: URLRequest, maxPixelSize maxPixel: CGFloat, minInterval: TimeInterval) async -> Refresh {
+        guard let url = request.url else { return .unchanged }
+        if let last = fetchedAt[url], Date().timeIntervalSince(last) < minInterval { return .unchanged }
+        if let task = inFlight[url] { _ = await task.value; return .unchanged }
+        fetchedAt[url] = Date()
+        let file = fileURL(for: url)
+        switch await Self.download(request, session: session) {
+        case .data(let data):
+            guard let image = Self.decode(data, maxPixelSize: maxPixel) else { return .unchanged }
+            try? data.write(to: file, options: .atomic)
+            Self.memory.store(image, for: url)
+            missing.remove(url)
+            return .image(image)
+        case .missing:
+            Self.memory.remove(url)
+            try? FileManager.default.removeItem(at: file)
+            missing.insert(url)
+            return .missing
+        case .failed:
+            return .unchanged
+        }
+    }
+
     /// Removes all cached images (memory and disk).
     func removeAll() {
         Self.memory.removeAll()
         missing.removeAll()
+        fetchedAt.removeAll()
         try? FileManager.default.removeItem(at: directory)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
@@ -222,6 +266,10 @@ actor RecipeImageLoader {
 
     private func markMissing(_ url: URL) {
         missing.insert(url)
+    }
+
+    private func noteFetched(_ url: URL) {
+        fetchedAt[url] = Date()
     }
 
     private func fileURL(for url: URL) -> URL {
@@ -290,7 +338,7 @@ actor RecipeImageLoader {
         return UIImage(cgImage: cgImage)
     }
 
-    /// `NSCache` is thread-safe; it's only reached through the two methods below.
+    /// `NSCache` is thread-safe; it's only reached through the methods below.
     private final class MemoryCache: @unchecked Sendable {
         private let cache: NSCache<NSURL, UIImage> = {
             let cache = NSCache<NSURL, UIImage>()
@@ -305,6 +353,10 @@ actor RecipeImageLoader {
         func store(_ image: UIImage, for url: URL) {
             let cost = image.cgImage.map { $0.bytesPerRow * $0.height } ?? 0
             cache.setObject(image, forKey: url as NSURL, cost: cost)
+        }
+
+        func remove(_ url: URL) {
+            cache.removeObject(forKey: url as NSURL)
         }
 
         func removeAll() {
