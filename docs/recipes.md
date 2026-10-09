@@ -12,8 +12,9 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   `RecipeListQueryBuilder` turns preset + filters into a `RecipeQuery` (unit tested).
 - `RecipeCollectionContent` renders grid or rows (`RecipeLayout`, persisted per device),
   pull-to-refresh, context menus (`RecipeContextMenu`), empty/error states. Both layouts are a
-  plain `List` (the grid as rows of `RecipeCard`s, 2 per row on iPhone, 1 at accessibility
-  sizes), so the search field is visible under the large title from the start.
+  plain `List` (the grid as rows of `RecipeCard`s, at least 2 per row, larger cards and 4–5
+  per row on iPad, 1 at accessibility sizes), so the search field is visible under the large
+  title from the start.
 - `RecipeFilterSheet` applies live; active filters show as removable chips (`ActiveFilterBar`).
   Foods are search-first: selected foods first, then server results (`foods(search:)`,
   250 ms debounce) as you type; nothing else is listed before typing.
@@ -58,9 +59,14 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   `RecipeCollectionContent` hides deleted IDs and reloads page one.
 - `CookingSessionStore.shared`: servings, checked ingredients and cook step per recipe,
   shared by detail and cook mode, kept 12 h in UserDefaults, cleared on sign-out.
+- `RecipeDetailView` from 900 pt wide (iPad): ingredients beside steps (`wideBody`); below
+  that one 680 pt column. The hero height comes from `heroHeight(for:)` (also the threshold
+  for the inline title).
 - `CookModeView` (full screen via `router.present(.cookMode(slug:))`): one step per page with
   its referenced ingredients, ingredients sheet, done page with "I made this"; disables the
-  idle timer while visible.
+  idle timer while visible. From 1000 pt wide (iPad) `CookIngredientsPanel` replaces the
+  sheet and the per-step list: all ingredients beside the steps, the current step's
+  highlighted. Keyboard: ← / → step, Esc closes, ⌘I ingredients sheet.
 
 ## Editor
 

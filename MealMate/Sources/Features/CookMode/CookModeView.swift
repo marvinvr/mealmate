@@ -4,6 +4,8 @@ import UIKit
 /// Cook mode (`AppDestination.cookMode`, full screen): one step per page in large type,
 /// each with the ingredients it uses, an ingredients overview with check-off, and a done
 /// page with "I made this". Keeps the screen awake while visible; works in landscape.
+/// On wide screens (iPad) the ingredients stay beside the steps (`CookIngredientsPanel`)
+/// instead of a sheet. Keyboard: ← / → step, Esc closes.
 /// Shares servings and check marks with the recipe detail (`CookingSessionStore`).
 struct CookModeView: View {
     let slug: String
@@ -24,6 +26,13 @@ private struct CookModeScreen: View {
     @State private var isIngredientsPresented = false
     @State private var isMadeItPresented = false
     @State private var madeIt = false
+    @State private var width: CGFloat = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPad (13" in both orientations, 11" in landscape): ingredients beside the steps.
+    private var showsIngredientsPanel: Bool {
+        horizontalSizeClass == .regular && width >= 1000 && model.recipe?.ingredients.isEmpty == false
+    }
 
     var body: some View {
         NavigationStack {
@@ -48,6 +57,7 @@ private struct CookModeScreen: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
             .screenBackground()
             .toolbar { toolbar }
             .navigationBarTitleDisplayMode(.inline)
@@ -83,6 +93,7 @@ private struct CookModeScreen: View {
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Button("Close", systemImage: "xmark") { dismiss() }
+                .keyboardShortcut(.cancelAction)
         }
         ToolbarItem(placement: .principal) {
             if let recipe = model.recipe, !recipe.instructions.isEmpty {
@@ -100,9 +111,10 @@ private struct CookModeScreen: View {
                 .accessibilityLabel(page < count ? "Step \(page + 1) of \(count)" : "All steps done")
             }
         }
-        if model.recipe?.ingredients.isEmpty == false {
+        if model.recipe?.ingredients.isEmpty == false && !showsIngredientsPanel {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Ingredients", systemImage: "list.bullet") { isIngredientsPresented = true }
+                    .keyboardShortcut("i", modifiers: .command)
             }
         }
     }
@@ -112,22 +124,36 @@ private struct CookModeScreen: View {
     private func pager(_ recipe: Recipe) -> some View {
         let steps = recipe.instructions
         let sectionTitles = Self.sectionTitles(steps)
-        return VStack(spacing: 0) {
-            TabView(selection: $page.animation(.smooth)) {
-                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                    CookStepPage(number: index + 1, sectionTitle: sectionTitles[index], step: step, model: model)
-                        .tag(index)
-                }
-                CookDonePage(recipe: recipe, madeIt: madeIt, onMadeIt: { isMadeItPresented = true }, onClose: {
-                    model.resetCooking()
-                    dismiss()
-                })
-                .tag(steps.count)
+        let showsPanel = showsIngredientsPanel
+        return HStack(spacing: 0) {
+            VStack(spacing: 0) {
+                stepPager(recipe, sectionTitles: sectionTitles, showsIngredients: !showsPanel)
+                controls(stepCount: steps.count)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-
-            controls(stepCount: steps.count)
+            if showsPanel {
+                Divider()
+                    .ignoresSafeArea(edges: .bottom)
+                CookIngredientsPanel(model: model, currentStep: page < steps.count ? steps[page] : nil)
+                    .frame(width: min(400, max(340, width * 0.3)))
+            }
         }
+    }
+
+    private func stepPager(_ recipe: Recipe, sectionTitles: [String?], showsIngredients: Bool) -> some View {
+        let steps = recipe.instructions
+        return TabView(selection: $page.animation(.smooth)) {
+            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                CookStepPage(number: index + 1, sectionTitle: sectionTitles[index], step: step, model: model,
+                             showsIngredients: showsIngredients)
+                    .tag(index)
+            }
+            CookDonePage(recipe: recipe, madeIt: madeIt, onMadeIt: { isMadeItPresented = true }, onClose: {
+                model.resetCooking()
+                dismiss()
+            })
+            .tag(steps.count)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
     }
 
     private func controls(stepCount: Int) -> some View {
@@ -144,6 +170,7 @@ private struct CookModeScreen: View {
                 .buttonBorderShape(.circle)
                 .disabled(page == 0)
                 .accessibilityLabel("Previous Step")
+                .keyboardShortcut(.leftArrow, modifiers: [])
 
                 if page < stepCount {
                     Button {
@@ -155,6 +182,7 @@ private struct CookModeScreen: View {
                     }
                     .primaryActionStyle()
                     .buttonBorderShape(.capsule)
+                    .keyboardShortcut(.rightArrow, modifiers: [])
                 }
             }
         }
@@ -192,12 +220,15 @@ private struct CookStepPage: View {
     let sectionTitle: String?
     let step: RecipeStep
     let model: RecipeDetailModel
+    /// `false` when the ingredients panel beside the pager already shows them (iPad).
+    var showsIngredients = true
 
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(AppSession.self) private var session
 
     var body: some View {
-        let ingredients = model.referencedIngredients(for: step)
+        let ingredients = showsIngredients ? model.referencedIngredients(for: step) : []
         ScrollView {
             Group {
                 if verticalSizeClass == .compact && !ingredients.isEmpty {
@@ -213,7 +244,7 @@ private struct CookStepPage: View {
                 }
             }
             .padding(.horizontal, Theme.Spacing.xl)
-            .padding(.vertical, Theme.Spacing.l)
+            .padding(.vertical, horizontalSizeClass == .regular ? Theme.Spacing.xxl : Theme.Spacing.l)
             .frame(maxWidth: verticalSizeClass == .compact ? .infinity : 720, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -232,7 +263,7 @@ private struct CookStepPage: View {
                 .foregroundStyle(.secondary)
                 .textCase(nil)
             Text(LocalizedStringKey(step.text.trimmingCharacters(in: .whitespacesAndNewlines)))
-                .font(.cookStep)
+                .font(horizontalSizeClass == .regular ? .cookStepRegular : .cookStep)
                 .lineSpacing(Theme.LineSpacing.cook)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -296,6 +327,71 @@ private struct CookDonePage: View {
         }
         .padding(Theme.Spacing.xl)
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Ingredients panel (iPad)
+
+/// All ingredients beside the steps on wide screens, with servings and check-off; the ones the
+/// current step uses are highlighted and scrolled into view.
+private struct CookIngredientsPanel: View {
+    let model: RecipeDetailModel
+    let currentStep: RecipeStep?
+
+    @Environment(AppSession.self) private var session
+
+    var body: some View {
+        let used = Set(currentStep.map { model.referencedIngredients(for: $0).map(\.index) } ?? [])
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Ingredients")
+                            .font(.sectionTitle)
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer()
+                        if model.checkedCount > 0 {
+                            Button("Uncheck All") { withAnimation(.smooth) { model.resetCooking() } }
+                                .font(.subheadline.weight(.medium))
+                        }
+                    }
+                    ServingsStepper(model: model)
+                    if let recipe = model.recipe {
+                        ForEach(RecipeSections.ingredients(recipe.ingredients)) { section in
+                            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                                if let title = section.title {
+                                    Text(title)
+                                        .font(.headline)
+                                        .padding(.top, Theme.Spacing.xs)
+                                        .accessibilityAddTraits(.isHeader)
+                                }
+                                ForEach(section.items) { entry in
+                                    IngredientRow(ingredient: entry.item, scale: model.scale, isChecked: model.isChecked(entry.index),
+                                                  isOnHand: entry.item.food?.isOnHand(householdSlug: session.currentUser?.householdSlug) ?? false,
+                                                  font: .cookIngredient,
+                                                  toggle: { withAnimation(.smooth) { model.toggleIngredient(entry.index) } })
+                                        .padding(.horizontal, Theme.Spacing.xs)
+                                        .background {
+                                            if used.contains(entry.index) {
+                                                RoundedRectangle(cornerRadius: Theme.Radius.thumbnail, style: .continuous)
+                                                    .fill(Color.accentColor.opacity(0.12))
+                                            }
+                                        }
+                                        .accessibilityHint(used.contains(entry.index) ? "Used in this step." : "")
+                                        .id(entry.index)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(Theme.Spacing.l)
+            }
+            .sensoryFeedback(.selection, trigger: model.checkedCount)
+            .onChange(of: used.min()) { _, first in
+                guard let first else { return }
+                withAnimation(.smooth) { proxy.scrollTo(first, anchor: .center) }
+            }
+        }
     }
 }
 
