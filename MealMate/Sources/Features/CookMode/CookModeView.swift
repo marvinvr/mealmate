@@ -57,7 +57,7 @@ private struct CookModeScreen: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width.rounded(.down) } action: { width = $0 }
             .screenBackground()
             .toolbar { toolbar }
             .navigationBarTitleDisplayMode(.inline)

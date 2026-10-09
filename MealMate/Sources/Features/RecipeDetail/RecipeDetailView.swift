@@ -145,7 +145,11 @@ private struct RecipeDetailScreen: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { contentSize = $0 }
+            .onGeometryChange(for: CGSize.self) {
+                // Whole points: the wide layout's column widths derive from this, and a
+                // fraction of a point of overflow would otherwise feed back into it.
+                CGSize(width: $0.size.width.rounded(.down), height: $0.size.height.rounded(.down))
+            } action: { contentSize = $0 }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentInsets.top
             } action: { _, inset in
@@ -230,21 +234,27 @@ private struct RecipeDetailScreen: View {
     /// iPad / wide windows: header on top, then ingredients (with servings) beside steps and
     /// everything after them, so you can read a step and its amounts without scrolling back.
     private func wideBody(_ recipe: Recipe) -> some View {
-        let ingredientsWidth = min(max(contentSize.width * 0.34, 300), 400)
+        // Explicit column widths that always fit, so the content never pushes the scroll view
+        // wider than the screen.
+        let available = min(contentSize.width, 1180) - 2 * Theme.Spacing.xxl
+        let hasIngredients = !recipe.ingredients.isEmpty
+        let ingredientsWidth = hasIngredients ? min(max(available * 0.36, 300), 400).rounded(.down) : 0
+        let gap = hasIngredients ? Theme.Spacing.xxxl : 0
+        let mainWidth = min(680, available - ingredientsWidth - gap).rounded(.down)
         return VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
                 headerSections(recipe)
             }
             .frame(maxWidth: 760, alignment: .leading)
-            HStack(alignment: .top, spacing: Theme.Spacing.xxxl) {
-                if !recipe.ingredients.isEmpty {
+            HStack(alignment: .top, spacing: gap) {
+                if hasIngredients {
                     ingredientsSection(recipe)
                         .frame(width: ingredientsWidth, alignment: .leading)
                 }
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxl) {
                     trailingSections(recipe)
                 }
-                .frame(maxWidth: 680, alignment: .leading)
+                .frame(width: mainWidth, alignment: .leading)
             }
         }
         .padding(.horizontal, Theme.Spacing.xxl)
