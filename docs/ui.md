@@ -79,6 +79,7 @@ through `RecipeSheet` + `RecipeSheetView` (`Recipes/RecipeIntegrations.swift`).
 | `AddToShoppingListSheet(recipe:scale:)` / `(slug:)` | Shopping | Pick a list (last used preselected, or create one), servings, untick what's at home (on-hand foods start unticked) |
 | `AddToMealPlanSheet(recipe:)` | MealPlan | Pick a day (next 7 days or any date) and a meal type |
 | `MealPlanShoppingSheet(week:entries:day:)` | MealPlan | Add the week's (or one day's) planned recipes to a list; today and later preticked |
+| `ShoppingSectionOrderSheet` | Shopping | Drag the list's labels into store order (label settings) |
 | `RecipeEditorView()` / `(recipe:onSave:)` | RecipeEditor | Create or edit a recipe |
 | `ImportRecipeView()` | Import | Import from a URL (duplicate check), AI import when available |
 | `MealPlanEntryEditor` | MealPlan | Add/edit an entry: day, meal, recipe (searchable) or note |

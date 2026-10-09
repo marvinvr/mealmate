@@ -81,6 +81,7 @@ enum AppRoute: Equatable, Sendable {
         ("shopping-item/*/*", { .intent("shopping-item/\($0[1])", tab: .shopping, destination: .shoppingList(id: $0[0])) }),
         ("shopping-clear/*", { .intent("shopping-clear", tab: .shopping, destination: .shoppingList(id: $0[0])) }),
         ("shopping-bottom/*", { .intent("shopping-bottom", tab: .shopping, destination: .shoppingList(id: $0[0])) }),
+        ("shopping-sections/*", { .intent("shopping-sections", tab: .shopping, destination: .shoppingList(id: $0[0])) }),
         ("mealplan-week/*", { .intent("mealplan-week/\($0[0])", tab: .mealPlan) }),
         ("mealplan-add/*", { .intent("mealplan-add/\($0[0])", tab: .mealPlan) }),
         ("mealplan-note/*", { .intent("mealplan-note/\($0[0])", tab: .mealPlan) }),

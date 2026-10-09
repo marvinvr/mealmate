@@ -24,6 +24,11 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   - Row text: `ShoppingListItem.displayText`. Free-text items (no food/unit) with quantity
     0 or 1 show only the note: Mealie's web UI creates them with quantity 1 and its
     `display` would read "1 2 Lemons".
+- "Reorder Sections…" (More menu, `ShoppingSectionOrderSheet`): the list's `labelSettings`
+  in an always-editing `List`; saving renumbers positions 0…n
+  (`ShoppingListLayout.renumbered` / `labelSettingUpdates`, unit tested) and
+  `PUT …/lists/{id}/label-settings`. Optimistic: the list regroups at once, rolls back on
+  failure. Only labels with a setting can be ordered; "No Label" stays last.
 - `ShoppingItemEditor`: quantity, unit, food, note, label (`ShoppingCatalog`, cached
   `shopping.units` / `shopping.labels`).
 - `AddToShoppingListSheet`: adds a recipe's ingredients with a servings scale via
@@ -58,6 +63,6 @@ Shared small views: `PlanningRecipeThumbnail`, `ActionToast` (`PlanningComponent
 ## Verification
 
 Unit: `PlanningTests` (layout, item parsing, weeks, meal ordering, add-to-list model,
-meal plan shopping). UI:
+section order, meal plan shopping). UI:
 `ShoppingUITests`, `MealPlanUITests` (they create and delete "MealMate Test UI …" data).
 Screenshot routes: `shopping-*`, `mealplan-*` in `scripts/README.md`.

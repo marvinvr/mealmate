@@ -337,6 +337,53 @@ struct AddToShoppingListModelTests {
     }
 }
 
+// MARK: - Shopping list section order
+
+struct ShoppingSectionOrderTests {
+    private let produce = MultiPurposeLabel(id: "label-produce", name: "Produce", color: nil)
+    private let dairy = MultiPurposeLabel(id: "label-dairy", name: "Dairy", color: nil)
+    private let bakery = MultiPurposeLabel(id: "label-bakery", name: "Bakery", color: nil)
+
+    private func setting(_ label: MultiPurposeLabel, _ position: Int?) -> ShoppingList.LabelSetting {
+        ShoppingList.LabelSetting(id: "setting-\(label.id)", shoppingListId: nil, labelId: label.id, position: position, label: label)
+    }
+
+    @Test func settingsSortByPositionThenName() {
+        let settings = [setting(produce, 2), setting(dairy, nil), setting(bakery, 2), setting(produce, 0)]
+        let ordered = ShoppingListLayout.orderedLabelSettings(settings)
+        #expect(ordered.map(\.position) == [0, 2, 2, nil])
+        #expect(ordered.map { $0.label?.name } == ["Produce", "Bakery", "Produce", "Dairy"])
+    }
+
+    @Test func renumberingFollowsTheNewOrder() {
+        let moved = [setting(dairy, 5), setting(produce, 0), setting(bakery, 9)]
+        #expect(ShoppingListLayout.renumbered(moved).map(\.position) == [0, 1, 2])
+    }
+
+    @Test func updatesCarryIDsAndFallBackToTheListID() throws {
+        var withList = setting(bakery, 3)
+        withList.shoppingListId = "other"
+        let updates = ShoppingListLayout.labelSettingUpdates([setting(dairy, 1), withList], listID: "list")
+        #expect(updates == [
+            ShoppingListLabelSettingUpdate(id: "setting-label-dairy", shoppingListId: "list", labelId: "label-dairy", position: 0),
+            ShoppingListLabelSettingUpdate(id: "setting-label-bakery", shoppingListId: "other", labelId: "label-bakery", position: 1),
+        ])
+        let json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(updates)) as? [[String: Any]])
+        #expect(Set(json[0].keys) == ["id", "shoppingListId", "labelId", "position"])
+    }
+
+    @Test func renumberedSettingsDriveTheSectionOrder() {
+        func item(_ id: String, _ label: MultiPurposeLabel) -> ShoppingListItem {
+            var item = ShoppingListItem(id: id, shoppingListId: "list", note: id, checked: false)
+            item.label = label
+            return item
+        }
+        let items = [item("milk", dairy), item("apples", produce), item("rolls", bakery)]
+        let reordered = ShoppingListLayout.renumbered([setting(bakery, 2), setting(produce, 0), setting(dairy, 1)])
+        #expect(ShoppingListLayout.sections(for: items, labelSettings: reordered).map(\.title) == ["Bakery", "Produce", "Dairy"])
+    }
+}
+
 // MARK: - Shopping for the meal plan
 
 struct MealPlanShoppingTests {

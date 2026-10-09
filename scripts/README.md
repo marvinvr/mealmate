@@ -100,6 +100,7 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `shopping-add-recipe/<slug>` | Add to Shopping List sheet for a recipe |
 | `shopping-adding/<id>`, `shopping-bottom/<id>` | List with the add bar focused / scrolled to the bottom |
 | `shopping-item/<id>/<itemID>`, `shopping-clear/<id>` | List with the item editor / Clear Checked confirmation |
+| `shopping-sections/<id>` | List with the Reorder Sections sheet |
 | `mealplan-week/<day>` | Week containing that day |
 | `mealplan-add/<day>`, `mealplan-note/<day>` | Entry editor for a recipe / note on that day |
 | `mealplan-entry/<entryID>` | Entry editor for an existing entry |

@@ -123,6 +123,9 @@ Shopping
 - `POST …/lists/{id}/recipe` takes an array (several recipes, each with
   `recipeIncrementQuantity`) and adds scaled ingredients; adding the same recipe again
   raises the reference's `recipeQuantity`. `…/recipe/{recipeID}/delete` removes them again.
+- Section order is per list: `labelSettings` (one per label, created by Mealie for every
+  label). `PUT …/lists/{id}/label-settings` takes `[{id, shoppingListId, labelId, position}]`
+  (setting ids, not label ids) and returns the full list.
 
 Meal plan and other
 

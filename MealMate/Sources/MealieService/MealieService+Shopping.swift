@@ -36,6 +36,13 @@ extension MealieService {
         return try await send(.json(.put, "/api/households/shopping/lists/\(id.pathSegment)", body: body))
     }
 
+    /// `PUT /api/households/shopping/lists/{id}/label-settings`: the list's section (label)
+    /// order. Returns the list with its items and the saved settings.
+    @discardableResult
+    func updateShoppingListLabelSettings(listID: String, settings: [ShoppingListLabelSettingUpdate]) async throws -> ShoppingList {
+        try await send(.json(.put, "/api/households/shopping/lists/\(listID.pathSegment)/label-settings", body: settings))
+    }
+
     /// `DELETE /api/households/shopping/lists/{id}`.
     func deleteShoppingList(id: String) async throws {
         try await perform(.delete("/api/households/shopping/lists/\(id.pathSegment)"))

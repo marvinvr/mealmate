@@ -271,6 +271,38 @@ final class ShoppingListViewModel {
         }
     }
 
+    /// The list's labels in section order ("Reorder Sections").
+    var orderedLabelSettings: [ShoppingList.LabelSetting] {
+        ShoppingListLayout.orderedLabelSettings(list?.labelSettings ?? [])
+    }
+
+    /// Saves a new section order. Optimistic: the list regroups right away and rolls back
+    /// if Mealie rejects it.
+    func reorderSections(_ ordered: [ShoppingList.LabelSetting]) async {
+        guard let original = list?.labelSettings else { return }
+        let updated = ShoppingListLayout.renumbered(ordered)
+        guard updated != ShoppingListLayout.renumbered(orderedLabelSettings) else { return }
+        let body = ShoppingListLayout.labelSettingUpdates(updated, listID: listID)
+        mutationGeneration += 1
+        inFlight += 1
+        defer { inFlight -= 1 }
+        withAnimation(.snappy) { list?.labelSettings = updated }
+        do {
+            let saved = try await mealie.updateShoppingListLabelSettings(listID: listID, settings: body)
+            if let settings = saved.labelSettings, !settings.isEmpty {
+                withAnimation(.snappy) { list?.labelSettings = settings }
+            }
+            persist()
+        } catch {
+            let error = MealieError.wrap(error)
+            withAnimation(.snappy) { list?.labelSettings = original }
+            if error != .cancelled {
+                actionError = error
+                errorFeedback += 1
+            }
+        }
+    }
+
     private func replace(_ item: ShoppingListItem) {
         if let index = items.firstIndex(where: { $0.id == item.id }) {
             items[index] = item

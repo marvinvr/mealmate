@@ -82,6 +82,34 @@ enum ShoppingListLayout {
         return lhs.displayText.localizedStandardCompare(rhs.displayText) == .orderedAscending
     }
 
+    /// A list's label settings in section order: by position, then by name (what
+    /// `sections(for:labelSettings:)` uses), for the "Reorder Sections" sheet.
+    static func orderedLabelSettings(_ settings: [ShoppingList.LabelSetting]) -> [ShoppingList.LabelSetting] {
+        settings.sorted { lhs, rhs in
+            let left = lhs.position ?? Int.max
+            let right = rhs.position ?? Int.max
+            if left != right { return left < right }
+            return (lhs.label?.name ?? "").localizedStandardCompare(rhs.label?.name ?? "") == .orderedAscending
+        }
+    }
+
+    /// `settings` in their new order with consecutive positions (0, 1, 2, …).
+    static func renumbered(_ settings: [ShoppingList.LabelSetting]) -> [ShoppingList.LabelSetting] {
+        settings.enumerated().map { index, setting in
+            var setting = setting
+            setting.position = index
+            return setting
+        }
+    }
+
+    /// Body of `PUT …/lists/{id}/label-settings` for settings in their new order.
+    static func labelSettingUpdates(_ settings: [ShoppingList.LabelSetting], listID: String) -> [ShoppingListLabelSettingUpdate] {
+        renumbered(settings).map {
+            ShoppingListLabelSettingUpdate(id: $0.id, shoppingListId: $0.shoppingListId ?? listID,
+                                           labelId: $0.labelId, position: $0.position ?? 0)
+        }
+    }
+
     private static func sectionOrder(_ lhs: ShoppingSection, _ rhs: ShoppingSection, positions: [String: Int]) -> Bool {
         let leftIsNone = lhs.label == nil
         let rightIsNone = rhs.label == nil

@@ -15,6 +15,7 @@ struct ShoppingListView: View {
     @State private var renaming = false
     @State private var newName = ""
     @State private var scrollTarget: String?
+    @State private var reorderingSections = false
 
     init(listID: String) {
         _model = State(initialValue: ShoppingListViewModel(listID: listID))
@@ -46,6 +47,11 @@ struct ShoppingListView: View {
             .sheet(item: $editingItem) { item in
                 ShoppingItemEditor(item: item, recipeNames: model.recipeNames(for: item)) { edited in
                     Task { await model.save(edited) }
+                }
+            }
+            .sheet(isPresented: $reorderingSections) {
+                ShoppingSectionOrderSheet(settings: model.orderedLabelSettings, counts: sectionCounts) { ordered in
+                    Task { await model.reorderSections(ordered) }
                 }
             }
             .confirmationDialog("Remove all checked items?", isPresented: $confirmsClearChecked, titleVisibility: .visible) {
@@ -263,6 +269,9 @@ struct ShoppingListView: View {
                 }
                 .disabled(model.checkedItems.isEmpty)
                 Divider()
+                Button("Reorder Sections…", systemImage: "arrow.up.arrow.down") {
+                    reorderingSections = true
+                }
                 Button("Rename…", systemImage: "pencil") {
                     newName = model.list?.name ?? ""
                     renaming = true
@@ -272,6 +281,11 @@ struct ShoppingListView: View {
             }
             .disabled(model.phase != .loaded)
         }
+    }
+
+    /// Unchecked items per label id (for the reorder sheet).
+    private var sectionCounts: [String: Int] {
+        Dictionary(model.sections.map { ($0.id, $0.items.count) }, uniquingKeysWith: +)
     }
 
     private var errorBinding: Binding<Bool> {
@@ -292,6 +306,8 @@ struct ShoppingListView: View {
             }
         } else if router.consumeIntent("shopping-clear") != nil {
             confirmsClearChecked = true
+        } else if router.consumeIntent("shopping-sections") != nil {
+            reorderingSections = true
         } else if let intent = router.consumeIntent("shopping-item/") {
             let id = String(intent.dropFirst("shopping-item/".count))
             editingItem = model.items.first { $0.id == id } ?? model.items.first

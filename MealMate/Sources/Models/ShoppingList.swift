@@ -178,3 +178,12 @@ struct ShoppingListAddRecipe: Codable, Hashable, Sendable {
     /// Optional subset of ingredients; `nil` adds all.
     var recipeIngredients: [RecipeIngredient]?
 }
+
+/// Element of the body of `PUT /api/households/shopping/lists/{id}/label-settings`
+/// (`ShoppingListMultiPurposeLabelUpdate`): one label's section position in a list.
+struct ShoppingListLabelSettingUpdate: Codable, Hashable, Sendable {
+    var id: String
+    var shoppingListId: String
+    var labelId: String
+    var position: Int
+}
