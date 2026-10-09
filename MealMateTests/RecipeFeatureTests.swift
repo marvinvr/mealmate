@@ -87,6 +87,14 @@ struct IngredientDisplayTests {
         #expect(IngredientFormatting.text(for: original) == "1 pinch nutmeg")
     }
 
+    @Test func unparsedIngredientIsMainTextNotANote() {
+        // A secondary-styled note would make the whole line look checked off.
+        let parts = IngredientFormatting.parts(for: RecipeIngredient(note: "300g dried penne"))
+        #expect(parts.food == "300g dried penne")
+        #expect(parts.note == nil)
+        #expect(parts.amount == nil)
+    }
+
     @Test func sectionsStartAtTitledItems() {
         let items = [
             RecipeIngredient(note: "a", title: "Dough"), RecipeIngredient(note: "b"),

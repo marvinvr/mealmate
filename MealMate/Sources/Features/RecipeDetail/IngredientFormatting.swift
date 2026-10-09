@@ -46,7 +46,8 @@ enum IngredientFormatting {
                 ?? ingredient.originalText?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
                 ?? [ingredient.quantity.flatMap { $0 > 0 ? quantity($0) : nil }, note]
                     .compactMap { $0 }.joined(separator: " ")
-            return IngredientDisplay(amount: nil, food: nil, note: text.nilIfEmpty, isScaled: false)
+            // Shown as the main text, not as a (secondary) note, or the line looks checked off.
+            return IngredientDisplay(amount: nil, food: text.nilIfEmpty, note: nil, isScaled: false)
         }
 
         let amountValue = ingredient.quantity.map { $0 * scale }
@@ -109,8 +110,9 @@ enum IngredientFormatting {
 struct IngredientDisplay: Hashable, Sendable {
     /// Quantity and unit ("1½ cups"); `nil` for free text.
     var amount: String?
+    /// The food, or the whole line for free text.
     var food: String?
-    /// Note, or the whole line for free text.
+    /// Note ("finely chopped"), shown secondary.
     var note: String?
     /// The amount differs from the recipe because of servings scaling.
     var isScaled: Bool
