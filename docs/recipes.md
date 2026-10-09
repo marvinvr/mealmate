@@ -30,7 +30,7 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   like the filter sheet) and gets `GET /api/recipes/suggestions` results (limit 30), fewest
   missing first, with "Missing: …" / "You have everything" and substitutions per row.
 - `CookPantry` (selected foods, missing-ingredients allowance 0/1/2/3/5, "Count Foods on Hand")
-  is kept in `UserDefaults` per server (`cook.pantry.<server>`); survives sign-out. Results
+  is kept in `UserDefaults` per server (`cook.pantry.<server>`), cleared on sign-out. Results
   reload (debounced) on every change; the last result is cached (`recipes.suggestions`).
 - No selection = no request (see the quirk in `api.md`). Only recipes with parsed ingredients
   (foods linked) can match. Pure logic (`CookSuggestions`: query, texts, allowances) is unit tested.

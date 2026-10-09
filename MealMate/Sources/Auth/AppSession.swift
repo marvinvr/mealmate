@@ -106,6 +106,7 @@ final class AppSession {
             await RecipeImageLoader.shared.removeAll()
         }
         CookingSessionStore.shared.removeAll()
+        CookPantry.removeAll()
         phase = .signedOut
         service = .unconfigured
         currentUser = nil

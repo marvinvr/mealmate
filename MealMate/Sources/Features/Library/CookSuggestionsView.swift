@@ -106,7 +106,7 @@ private struct CookSuggestionsContent: View {
                 Text("Your Ingredients")
                 if model.hasSelection {
                     Text("\(model.pantry.foods.count) selected")
-                        .foregroundStyle(.tint)
+                        .foregroundStyle(.tertiary)
                 }
             }
         } footer: {

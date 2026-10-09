@@ -184,6 +184,13 @@ struct CookPantry: Codable, Hashable, Sendable {
 
     static func storageKey(scope: String) -> String { "cook.pantry.\(scope)" }
 
+    /// Forgets every saved selection (sign-out): the next user on this device starts empty.
+    static func removeAll(from defaults: UserDefaults = .standard) {
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("cook.pantry.") {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     static func load(from defaults: UserDefaults, key: String) -> CookPantry {
         guard let data = defaults.data(forKey: key),
               let pantry = try? JSONDecoder().decode(CookPantry.self, from: data) else { return CookPantry() }
