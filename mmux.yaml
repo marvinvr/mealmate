@@ -1,0 +1,7 @@
+# mmux config for MealMate. Run `mmux` in this directory to open (or reattach to) the session.
+
+processes:
+  # Build origin/main, sign, upload to TestFlight and wait for processing (scripts/README.md).
+  - name: TestFlight
+    cmd: scripts/testflight.sh
+    autostart: false
