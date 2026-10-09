@@ -99,7 +99,7 @@ struct RecipeImage: View {
 
 // MARK: - Loader & cache
 
-/// Memory + disk cache for recipe photos.
+/// Memory + disk cache for recipe photos and user avatars (`UserAvatar`).
 ///
 /// Mealie's media responses send `Cache-Control: no-cache`, so `URLCache` would revalidate
 /// every image on every appearance. Recipe image URLs already change when the photo changes
@@ -107,7 +107,8 @@ struct RecipeImage: View {
 /// disk (`Caches/RecipeImages`) → network, with in-flight requests de-duplicated. A disk hit
 /// older than `revalidationInterval` is shown immediately and refreshed in the background.
 /// Images are decoded and downsampled off the main thread (ImageIO), so scrolling a grid
-/// never decodes WebP on the main thread.
+/// never decodes WebP on the main thread. A 404 is remembered (in memory, until sign-out) so
+/// a missing avatar isn't requested on every appearance.
 actor RecipeImageLoader {
     static let shared = RecipeImageLoader()
 
@@ -122,6 +123,8 @@ actor RecipeImageLoader {
     private let session: URLSession
     private var inFlight: [URL: Task<UIImage?, Never>] = [:]
     private var revalidating: Set<URL> = []
+    /// URLs the server answered with 404 (no avatar / photo). Cleared by `removeAll()`.
+    private var missing: Set<URL> = []
     private var didTrim = false
 
     init() {
@@ -143,27 +146,41 @@ actor RecipeImageLoader {
         memory.image(for: url)
     }
 
-    /// Cached or downloaded image; `nil` when it can't be loaded (placeholder stays).
+    /// Cached or downloaded recipe photo; `nil` when it can't be loaded (placeholder stays).
     func image(for url: URL, size: RecipeImageSize) async -> UIImage? {
+        await image(for: URLRequest(url: url), maxPixelSize: Self.maxPixelSize(for: size))
+    }
+
+    /// Cached or downloaded image for `request` (cache key: its URL, so the URL must change
+    /// when the image does). `nil` when it can't be loaded or the server has none (404).
+    func image(for request: URLRequest, maxPixelSize maxPixel: CGFloat) async -> UIImage? {
+        guard let url = request.url else { return nil }
         if let image = Self.memory.image(for: url) { return image }
+        if missing.contains(url) { return nil }
         if let task = inFlight[url] { return await task.value }
 
         trimDiskIfNeeded()
         let file = fileURL(for: url)
-        let maxPixel = Self.maxPixelSize(for: size)
         let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
             if let data = try? Data(contentsOf: file), let image = Self.decode(data, maxPixelSize: maxPixel) {
                 let age = (try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
                     .map { Date().timeIntervalSince($0) } ?? 0
                 if age > Self.revalidationInterval {
-                    await self.revalidate(url, file: file, maxPixel: maxPixel)
+                    await self.revalidate(request, file: file, maxPixel: maxPixel)
                 }
                 return image
             }
-            guard let data = await Self.download(url, session: session),
-                  let image = Self.decode(data, maxPixelSize: maxPixel) else { return nil }
-            try? data.write(to: file, options: .atomic)
-            return image
+            switch await Self.download(request, session: session) {
+            case .data(let data):
+                guard let image = Self.decode(data, maxPixelSize: maxPixel) else { return nil }
+                try? data.write(to: file, options: .atomic)
+                return image
+            case .missing:
+                await self.markMissing(url)
+                return nil
+            case .failed:
+                return nil
+            }
         }
         inFlight[url] = task
         let image = await task.value
@@ -175,18 +192,19 @@ actor RecipeImageLoader {
     /// Removes all cached images (memory and disk).
     func removeAll() {
         Self.memory.removeAll()
+        missing.removeAll()
         try? FileManager.default.removeItem(at: directory)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
     // MARK: Private
 
-    private func revalidate(_ url: URL, file: URL, maxPixel: CGFloat) {
-        guard !revalidating.contains(url) else { return }
+    private func revalidate(_ request: URLRequest, file: URL, maxPixel: CGFloat) {
+        guard let url = request.url, !revalidating.contains(url) else { return }
         revalidating.insert(url)
         let session = self.session
         Task.detached(priority: .background) {
-            if let data = await Self.download(url, session: session),
+            if case .data(let data) = await Self.download(request, session: session),
                let image = Self.decode(data, maxPixelSize: maxPixel) {
                 try? data.write(to: file, options: .atomic)
                 Self.memory.store(image, for: url)
@@ -200,6 +218,10 @@ actor RecipeImageLoader {
 
     private func finishRevalidation(_ url: URL) {
         revalidating.remove(url)
+    }
+
+    private func markMissing(_ url: URL) {
+        missing.insert(url)
     }
 
     private func fileURL(for url: URL) -> URL {
@@ -229,10 +251,20 @@ actor RecipeImageLoader {
         }
     }
 
-    private static func download(_ url: URL, session: URLSession) async -> Data? {
-        guard let (data, response) = try? await session.data(from: url),
-              let http = response as? HTTPURLResponse, http.statusCode == 200, !data.isEmpty else { return nil }
-        return data
+    private enum Download {
+        case data(Data)
+        /// 404: the server has no such image (e.g. a user without a profile picture).
+        case missing
+        /// Network error, other status or empty body; worth retrying later.
+        case failed
+    }
+
+    private static func download(_ request: URLRequest, session: URLSession) async -> Download {
+        guard let (data, response) = try? await session.data(for: request),
+              let http = response as? HTTPURLResponse else { return .failed }
+        if http.statusCode == 404 { return .missing }
+        guard http.statusCode == 200, !data.isEmpty else { return .failed }
+        return .data(data)
     }
 
     /// Longest edge in pixels. Generous enough for a 3x screen at the use site.

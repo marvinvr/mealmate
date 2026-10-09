@@ -64,9 +64,16 @@ extension MealieService {
         try await send(.get("/api/groups/ai-providers/settings"))
     }
 
-    /// Avatar image URL (`/api/media/users/{id}/profile.webp`, no auth needed).
+    /// Profile picture URL, built like Mealie's web UI:
+    /// `/api/media/users/{id}/profile.webp?cacheKey=<user.cacheKey>`. Mealie sets a new
+    /// `cacheKey` whenever the picture is uploaded, so the URL changes with the picture.
+    /// The file only exists once the user has uploaded one (404 otherwise).
     func userAvatarURL(userID: String, cacheKey: String? = nil) -> URL? {
-        url(path: "/api/media/users/\(userID.pathSegment)/profile.webp",
-            query: cacheKey.map { [URLQueryItem(name: "cacheKey", value: $0)] } ?? [])
+        let query = cacheKey.flatMap { $0.isEmpty ? nil : [URLQueryItem(name: "cacheKey", value: $0)] } ?? []
+        return url(path: "/api/media/users/\(userID.pathSegment)/profile.webp", query: query)
+    }
+
+    func userAvatarURL(for user: User) -> URL? {
+        userAvatarURL(userID: user.id, cacheKey: user.cacheKey)
     }
 }

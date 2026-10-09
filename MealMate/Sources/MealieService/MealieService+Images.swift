@@ -18,9 +18,18 @@ enum RecipeImageSize: String, Sendable, CaseIterable {
     }
 }
 
-// Media URLs. Media endpoints don't require auth, so these URLs work with
-// AsyncImage / URLSession.shared directly.
+// Media URLs. Mealie serves media without auth, but `mediaRequest` adds the bearer token
+// anyway so servers behind an auth proxy (or a future Mealie) still deliver the file.
 extension MealieService {
+    /// `GET` request for a media URL, carrying the bearer token when the service has one.
+    func mediaRequest(_ url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        if let token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
+
     /// `/api/media/recipes/{id}/images/{size}.webp?version=<imageKey>`.
     /// The image key is appended so a changed image isn't served from cache.
     func recipeImageURL(recipeID: String, imageKey: String?, size: RecipeImageSize = .min) -> URL? {

@@ -39,6 +39,23 @@ struct MealieServiceURLTests {
         #expect(url.absoluteString == "https://example.com/mealie/api/media/recipes/abc/images/min-original.webp?version=aB3x")
     }
 
+    @Test func avatarURLUsesCacheKeyLikeMealieWeb() throws {
+        var user = User(id: "1f0c-user")
+        user.cacheKey = "k9Xz"
+        let url = try #require(service.userAvatarURL(for: user))
+        #expect(url.absoluteString == "https://example.com/mealie/api/media/users/1f0c-user/profile.webp?cacheKey=k9Xz")
+        user.cacheKey = ""
+        let plain = try #require(service.userAvatarURL(for: user))
+        #expect(plain.absoluteString == "https://example.com/mealie/api/media/users/1f0c-user/profile.webp")
+    }
+
+    @Test func mediaRequestCarriesBearerToken() throws {
+        let url = try #require(service.userAvatarURL(userID: "1f0c-user"))
+        #expect(service.mediaRequest(url).value(forHTTPHeaderField: "Authorization") == "Bearer t")
+        let anonymous = MealieService(baseURL: URL(string: "https://example.com")!)
+        #expect(anonymous.mediaRequest(url).value(forHTTPHeaderField: "Authorization") == nil)
+    }
+
     @Test func requestCarriesBearerToken() throws {
         let request = try service.makeURLRequest(.get("/api/users/self"))
         #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer t")

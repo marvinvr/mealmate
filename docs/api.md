@@ -79,13 +79,16 @@ on sign-out. Keys are free-form, prefixed with the area (`shopping.list.<id>`).
 Media endpoints need no auth. `recipeImageURL(recipeID:imageKey:size:)` /
 `imageURL(for:size:)` build `/api/media/recipes/{id}/images/{original|min-original|tiny-original}.webp?version=<imageKey>`
 (WebP only, no `.jpg`). `recipe.image` is a short cache key; `null` means no image. Avatars:
-`userAvatarURL` → `/api/media/users/{id}/profile.webp`.
+`userAvatarURL(for:)` → `/api/media/users/{id}/profile.webp?cacheKey=<user.cacheKey>`, exactly
+like Mealie's web UI; uploading a picture sets a new `cacheKey` (default `"1234"`), and a user
+without a picture gets 404. `mediaRequest(_:)` adds the bearer token to a media URL (harmless
+on plain Mealie, needed behind auth proxies).
 
 Mealie sends `Cache-Control: no-cache` (+ ETag) on media, so `URLCache` would revalidate every
 image on every appearance. Recipe photos therefore go through `RecipeImage` /
 `RecipeImageLoader` (`ui.md`), which treats a URL as immutable because `version` changes
-with the photo. Other media (avatars) use `URLSession.shared` with the enlarged
-`URLCache.shared` from `MealMateApp`.
+with the photo. Avatars (`UserAvatar`) use the same loader, keyed by the `cacheKey` URL; a
+404 is remembered until sign-out so a missing picture isn't re-requested.
 
 ## Server Quirks (Mealie v3.28)
 

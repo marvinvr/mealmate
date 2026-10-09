@@ -46,7 +46,11 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
   hero `.original`, cards `.min`, thumbnails `.tiny`; clip with `.recipeImageShape()`. A
   cached `.min` stands in while `.original` loads. `RecipeImageLoader` (actor): memory
   `NSCache` → disk `Caches/RecipeImages` (300 MB, background revalidation after 7 days) →
-  network, de-duplicated, decoded/downsampled off the main thread, cleared on sign-out.
+  network, de-duplicated, decoded/downsampled off the main thread, 404s remembered,
+  cleared on sign-out. Also loads user avatars.
+- `UserAvatar` (`App/AccountButton.swift`): round Mealie profile picture of the signed-in
+  user (toolbar account button, Settings), initials while loading, without a picture or on
+  failure. Settings refreshes `/api/users/self` on open, so a changed picture shows up.
 - `RecipeImagePlaceholder`: muted food tone picked deterministically from a seed.
 - `RecipeCard` (grid: 4:3 photo, serif title, metadata) and `RecipeRow` (list: 56 pt
   thumbnail); `RecipeMetadataLine`. Rows go in a `NavigationLink`; cards inside `List` rows

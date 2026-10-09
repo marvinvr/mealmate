@@ -29,6 +29,8 @@ struct SettingsView: View {
                 }
             }
             .refreshable { await session.refresh() }
+            // Picks up a profile picture (new `cacheKey`) or name changed in Mealie meanwhile.
+            .task { await session.refresh() }
             .confirmationDialog("Sign out of \(serverHost)?", isPresented: $confirmsSignOut, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) {
                     dismiss()
