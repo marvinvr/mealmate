@@ -11,7 +11,12 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
   `TabRoot` = its own `NavigationStack(path:)` + the `AccountButton` toolbar item (avatar,
   opens Settings) + `.navigationDestination(for: AppDestination.self)`. Also hosts the
   Settings sheet, the full-screen cover (cook mode) and `createFlowRouteSheets()` (import /
-  editor sheets requested by routes). Tab bar minimizes on scroll.
+  editor sheets requested by routes). Tab bar minimizes on scroll (on iPad it sits at the
+  top). Regular width (iPad): the Shopping tab is `ShoppingSplitRoot`, a `NavigationSplitView`
+  driven by the same `router.shoppingPath` (typed `[AppDestination]`): its first element
+  (`.shoppingList`) is the sidebar selection, the rest the detail stack, so deep links and
+  switching to a narrow window keep the open list. `MealMateCommands` (`.commands` on the
+  `WindowGroup`) adds menu bar / keyboard shortcuts (⌘1–⌘4, ⌘N, ⇧⌘N, ⌘,).
 - Tab roots (`RecipesView`, `MealPlanView`, `ShoppingListsView`, `LibraryView`) must **not**
   create their own `NavigationStack`. Their toolbar items merge with the account button.
   They keep the default large title and default `.searchable` placement (STYLE.md §8). A
@@ -58,6 +63,8 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
 - `TagChip`: capsule label for tags/categories/tools/filters; selected = accent wash.
 - `UserAvatar` (in `App/AccountButton.swift`).
 - `RecipeFormatting`: times, servings, ratings text.
+- `.readableContentWidth()`: centres a List / ScrollView at `Theme.readableWidth` on wide
+  screens (iPad); no effect at iPhone widths. Use it on task lists and forms.
 - Modifiers: `.screenBackground()` on every screen root (sheets and onboarding too),
   `.recipeImageShape()`, `.surfaceCard()`, `.primaryActionStyle()` for the one prominent button
   of a screen (never `.glassProminent` directly; it carries the contrast-safe fill).

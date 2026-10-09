@@ -30,5 +30,8 @@ struct MealMateApp: App {
                 .environment(session)
                 .environment(router)
         }
+        .commands {
+            MealMateCommands(router: router, session: session)
+        }
     }
 }
