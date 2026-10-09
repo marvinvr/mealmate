@@ -147,10 +147,10 @@ struct SupporterView: View {
                     Text("Payment is charged to your Apple Account. Subscriptions renew automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel them in your Apple Account settings. Family Sharing included.")
                     HStack(spacing: Theme.Spacing.xs) {
                         Link("Privacy Policy", destination: SupporterLinks.privacyPolicy)
-                        Text("·").accessibilityHidden(true)
+                        Text("·").foregroundStyle(.secondary).accessibilityHidden(true)
                         Link("Terms of Use (EULA)", destination: SupporterLinks.termsOfUse)
                     }
-                    .tint(.accentColor)
+                    .foregroundStyle(.tint)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
