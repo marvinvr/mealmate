@@ -88,6 +88,7 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `recipe-comments/<slug>`, `recipe-timeline/<slug>`, `recipe-madeit/<slug>` | Detail with that sheet open |
 | `recipe-add-to-list/<slug>`, `recipe-edit/<slug>`, `recipe-share/<slug>` | Detail with Add to Shopping List / editor / share sheet |
 | `recipe-actions/<slug>` | Detail (recipe actions in place) |
+| `recipe-public-link/<slug>`, `recipe-delete/<slug>` | Detail with the Public Link sheet / delete confirmation (nothing is deleted) |
 | `cook-step/<slug>/<n>`, `cook-ingredients/<slug>`, `cook-done/<slug>` | Cook mode at step n / ingredients sheet / done page |
 | `library-search/<text>` | Library search |
 | `library-all/<category\|tag\|tool\|cookbooks\|favorites>` | Full organizer list / favorites |

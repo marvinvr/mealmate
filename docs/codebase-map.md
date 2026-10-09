@@ -64,7 +64,8 @@ on sign-out.
   internals. `Shopping/PlanningComponents.swift` holds views shared by Shopping and Meal Plan.
 - **App-wide stores** (`.shared` singletons, reset per server/token or on sign-out):
   `RecipeUserData` (favorites, own ratings), `OrganizerStore` (categories, tags, tools,
-  cookbooks), `CookingSessionStore` (servings, check marks, cook step), `RecipeImageLoader`.
+  cookbooks), `CookingSessionStore` (servings, check marks, cook step), `RecipeImageLoader`,
+  `RecipeChanges` (signal that recipes were created/changed/deleted; lists reload).
 - **Shared/**: reusable UI and formatting with no feature knowledge.
 - **ShareExtension/**: compiles `MealieService/`, `Models/`, `KeychainStore`,
   `CredentialStore`, `Features/Import/RecipeImporter.swift`, `Features/Import/ShareImportView.swift`,

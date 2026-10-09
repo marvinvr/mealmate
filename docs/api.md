@@ -106,7 +106,16 @@ Recipes
 - `PATCH …/last-made` does **not** add a timeline event: create one for "Made it".
 - Ratings: `{"rating": null}` is ignored; sending `0` clears the rating.
   `/api/users/self/favorites` and `/ratings` both return `{ratings: [...]}`.
-- Timeline per recipe: `queryFilter=recipe_id="<uuid>"`.
+- Timeline per recipe: `queryFilter=recipe_id="<uuid>"`. Event photo:
+  `PUT /api/recipes/timeline/events/{id}/image` (multipart `image` + `extension`), after the
+  event exists; the event's `image` then reads `"has image"`.
+- Public links: `POST /api/shared/recipes` `{recipeId, expiresAt}`; `GET ?recipe_id=` lists
+  them unpaginated (expired ones included: filter client-side). The page is
+  `<server>/g/<groupSlug>/shared/r/<tokenId>`, so it needs the user's `groupSlug`.
+- `POST /api/recipes/{slug}/duplicate` with `{}` copies everything (assets too) and names it
+  "<name> (1)", "(2)", …
+- Sub-recipe ingredients: `referencedRecipe` set, no food/unit, `display` is only the
+  quantity ("1").
 
 Shopping
 

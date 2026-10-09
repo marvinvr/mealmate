@@ -86,6 +86,8 @@ through `RecipeSheet` + `RecipeSheetView` (`Recipes/RecipeIntegrations.swift`).
 | `ShoppingItemEditor` | Shopping | Quantity, unit, food, note, label of one item |
 | `RecipeFilterSheet` | Recipes | Favorites, categories, tags, tools, foods; applies live |
 | `RecipeCommentsSheet` | RecipeDetail | All comments, add and delete |
+| `MadeItSheet` | RecipeDetail | Date, note, optional photo (camera / library); also from cook mode |
+| `RecipePublicLinkSheet` | RecipeDetail | Public links: create with an expiry, copy, share, revoke |
 
 ## Screen Patterns
 

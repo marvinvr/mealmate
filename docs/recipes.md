@@ -26,12 +26,24 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
 ## Detail and Cook Mode
 
 - `RecipeDetailView` / `RecipeDetailModel`: recipe cached-first (`recipes.detail.<slug>`),
-  comments, timeline, household recipe actions (`recipes.actions`). "Made it" =
-  `markLastMade` + a timeline event. Recipe actions: `post` actions are triggered on the
+  comments, timeline, household recipe actions (`recipes.actions`). "Made it" (`MadeItSheet`,
+  also in cook mode) = `markLastMade` + a timeline event + optional photo upload to the event;
+  a failed photo upload still saves the entry. Recipe actions: `post` actions are triggered on the
   server with the current scale; `link` actions open a URL with Mealie's placeholders
   (`${url}`, `${slug}`, `${scale}`, `${servings}`, …) filled by `RecipeActionLink`.
+- More menu: Duplicate (`POST …/duplicate`, Mealie names the copy "<name> (1)", then it is
+  pushed) and Delete Recipe (confirmation, then pop). Share menu: Public Link…
+  (`RecipePublicLinkSheet`: expiring share tokens, copy / share / revoke).
 - Servings scaling and ingredient text: `IngredientFormatting` (parsed ingredients are rebuilt
   from quantity × scale, unit, food, note; unparsed free-text ones are shown as entered and never scaled).
+  A line linking a sub-recipe (`referencedRecipe`, Mealie's `display` is only "1") shows the
+  scaled amount + recipe name and a button that opens it. Substitutions (Mealie ≥ 3.26) show
+  as "or <food>, <note>" under the line; `RecipeIngredient.substitutes` reads them from the raw
+  JSON the editor sends back unchanged.
+- Attachments (`Recipe.assets`) are listed only when the recipe's `showAssets` setting is on,
+  like the web UI; they open in the browser (media URLs need no auth).
+- `RecipeChanges.shared`: bumped after a create, import, edit, duplicate or delete; every
+  `RecipeCollectionContent` hides deleted IDs and reloads page one.
 - `CookingSessionStore.shared`: servings, checked ingredients and cook step per recipe,
   shared by detail and cook mode, kept 12 h in UserDefaults, cleared on sign-out.
 - `CookModeView` (full screen via `router.present(.cookMode(slug:))`): one step per page with
@@ -61,6 +73,6 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
 
 ## Verification
 
-Unit: `RecipeFeatureTests`, `RecipeEditorTests`. UI: `RecipesUITests`,
+Unit: `RecipeFeatureTests` (incl. public links, sub-recipes, substitutions), `RecipeEditorTests`. UI: `RecipesUITests`,
 `RecipeEditorUITests`. Screenshot routes: `scripts/README.md` (recipes, recipe-, cook-,
 library-, import, editor-).
