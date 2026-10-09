@@ -150,6 +150,9 @@ private struct RecipeDetailScreen: View {
                         if let nutrition = recipe.nutrition, !nutrition.isEmpty {
                             NutritionSection(nutrition: nutrition)
                         }
+                        if recipe.settings?.showAssets == true {
+                            AttachmentsSection(recipe: recipe)
+                        }
                         OrganizersSection(recipe: recipe)
                         if let link = sourceURL(recipe) {
                             SourceLink(url: link)

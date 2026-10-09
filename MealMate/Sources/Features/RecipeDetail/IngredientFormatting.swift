@@ -63,7 +63,7 @@ enum IngredientFormatting {
         }
         let amount = amountParts.filter { !$0.isEmpty }.joined(separator: " ").nilIfEmpty
 
-        var foodName = ingredient.food?.name.nilIfEmpty
+        var foodName = ingredient.food?.name.nilIfEmpty ?? ingredient.linkedRecipe?.displayName
         if plural, ingredient.unit == nil, let pluralName = ingredient.food?.pluralName?.nilIfEmpty {
             foodName = pluralName
         }
@@ -75,9 +75,16 @@ enum IngredientFormatting {
         parts(for: ingredient, scale: scale).text
     }
 
-    /// Parsed = the server knows the food or the unit (so the quantity is meaningful).
+    /// Parsed = the server knows the food, the unit or the linked recipe (so the quantity
+    /// is meaningful).
     static func isParsed(_ ingredient: RecipeIngredient) -> Bool {
-        ingredient.food != nil || ingredient.unit != nil
+        ingredient.food != nil || ingredient.unit != nil || ingredient.linkedRecipe != nil
+    }
+
+    /// "or Pecorino, a little less" lines for an ingredient's substitutes.
+    static func substituteText(_ substitute: RecipeIngredient.Substitute) -> String {
+        guard let note = substitute.note else { return "or \(substitute.name)" }
+        return "or \(substitute.name), \(note)"
     }
 
     private static func unitName(_ unit: IngredientUnit, plural: Bool) -> String {

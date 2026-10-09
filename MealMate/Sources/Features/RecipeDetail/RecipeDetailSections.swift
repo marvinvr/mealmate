@@ -8,6 +8,7 @@ struct IngredientsSection: View {
     let onAddToList: () -> Void
 
     @Environment(AppSession.self) private var session
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
@@ -42,6 +43,7 @@ struct IngredientsSection: View {
                                 scale: model.scale,
                                 isChecked: model.isChecked(entry.index),
                                 isOnHand: entry.item.food?.isOnHand(householdSlug: session.currentUser?.householdSlug) ?? false,
+                                onOpenRecipe: { router.push(.recipe(slug: $0.slug)) },
                                 toggle: { withAnimation(.smooth) { model.toggleIngredient(entry.index) } }
                             )
                         }
@@ -124,27 +126,53 @@ struct IngredientRow: View {
     let isChecked: Bool
     var isOnHand = false
     var font: Font = .body
+    /// Opens the sub-recipe a line links to; `nil` hides the button (cook mode).
+    var onOpenRecipe: ((RecipeSummary) -> Void)?
     let toggle: () -> Void
 
     var body: some View {
         let parts = IngredientFormatting.parts(for: ingredient, scale: scale)
-        Button(action: toggle) {
-            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
-                Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isChecked ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
-                    .contentTransition(.symbolEffect(.replace))
-                    .accessibilityHidden(true)
-                IngredientText(parts: parts, isChecked: isChecked, isOnHand: isOnHand)
-                    .font(font)
+        let substitutes = ingredient.substitutes.map(IngredientFormatting.substituteText)
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+            Button(action: toggle) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
+                    Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isChecked ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
+                        .contentTransition(.symbolEffect(.replace))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        IngredientText(parts: parts, isChecked: isChecked, isOnHand: isOnHand)
+                            .font(font)
+                        ForEach(substitutes, id: \.self) { line in
+                            Text(line)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.vertical, 6)
+                .contentShape(.rect)
             }
-            .padding(.vertical, 6)
-            .contentShape(.rect)
+            .buttonStyle(.plain)
+            .accessibilityLabel(([parts.text + (isOnHand ? ", on hand" : "")] + substitutes).joined(separator: ", "))
+            .accessibilityAddTraits(isChecked ? [.isSelected] : [])
+            .accessibilityHint(isChecked ? "Marks as not done." : "Checks off this ingredient.")
+
+            if let linked = ingredient.linkedRecipe, let onOpenRecipe {
+                Button {
+                    onOpenRecipe(linked)
+                } label: {
+                    Image(systemName: "arrow.forward.circle")
+                        .font(font)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Open \(linked.displayName)")
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(parts.text + (isOnHand ? ", on hand" : ""))
-        .accessibilityAddTraits(isChecked ? [.isSelected] : [])
-        .accessibilityHint(isChecked ? "Marks as not done." : "Checks off this ingredient.")
     }
 }
 
@@ -327,6 +355,57 @@ struct NutritionSection: View {
             Text("Per serving, as entered in the recipe.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Files attached to the recipe (Mealie "assets": PDFs, photos, scans). Opened in the browser.
+struct AttachmentsSection: View {
+    let recipe: Recipe
+
+    @Environment(\.mealie) private var mealie
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        let assets = (recipe.assets ?? []).filter { $0.fileName?.isEmpty == false }
+        if !assets.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                Text("Attachments")
+                    .font(.sectionTitle)
+                    .accessibilityAddTraits(.isHeader)
+                VStack(spacing: 0) {
+                    ForEach(Array(assets.enumerated()), id: \.offset) { index, asset in
+                        if let fileName = asset.fileName, let url = mealie.recipeAssetURL(recipeID: recipe.id, fileName: fileName) {
+                            Button {
+                                openURL(url)
+                            } label: {
+                                HStack(spacing: Theme.Spacing.s) {
+                                    Image(systemName: asset.systemImage)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 24)
+                                        .accessibilityHidden(true)
+                                    Text(asset.name.isEmpty ? fileName : asset.name)
+                                        .foregroundStyle(.primary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.footnote)
+                                        .foregroundStyle(.tertiary)
+                                        .accessibilityHidden(true)
+                                }
+                                .font(.subheadline)
+                                .padding(.vertical, Theme.Spacing.s)
+                                .contentShape(.rect)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Opens the file in your browser.")
+                            if index < assets.count - 1 {
+                                Divider()
+                            }
+                        }
+                    }
+                }
+                .surfaceCard(padding: Theme.Spacing.m)
+            }
         }
     }
 }

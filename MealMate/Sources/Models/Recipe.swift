@@ -135,6 +135,37 @@ struct RecipeIngredient: Codable, Hashable, Sendable {
     }
 }
 
+extension RecipeIngredient {
+    /// The sub-recipe this line uses ("1 × Pizza Dough"), when it links one.
+    var linkedRecipe: RecipeSummary? {
+        guard let recipe = referencedRecipe, !recipe.slug.isEmpty else { return nil }
+        return recipe
+    }
+
+    /// A food that can stand in for this one (Mealie ≥ 3.26 `substitutions`).
+    struct Substitute: Hashable, Sendable {
+        var name: String
+        var note: String?
+    }
+
+    /// Substitutes with a known food name. Read from the raw JSON, which the editor sends back
+    /// unchanged.
+    var substitutes: [Substitute] {
+        (substitutions ?? []).compactMap { value in
+            guard case .object(let object) = value,
+                  case .object(let food)? = object["substituteFood"],
+                  case .string(let name)? = food["name"] else { return nil }
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            var note: String?
+            if case .string(let text)? = object["note"] {
+                note = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : text.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            return Substitute(name: trimmed, note: note)
+        }
+    }
+}
+
 struct RecipeStep: Codable, Hashable, Identifiable, Sendable {
     var id: String?
     var title: String?
@@ -179,6 +210,24 @@ struct RecipeAsset: Codable, Hashable, Sendable {
     /// Material Design icon name, e.g. "mdi-file".
     var icon: String?
     var fileName: String?
+
+    /// SF Symbol for the file type (by extension, then Mealie's icon).
+    var systemImage: String {
+        let ext = (fileName as NSString?)?.pathExtension.lowercased() ?? ""
+        switch ext {
+        case "pdf": return "doc.richtext"
+        case "jpg", "jpeg", "png", "webp", "heic", "gif": return "photo"
+        case "mp4", "mov", "m4v": return "film"
+        default: break
+        }
+        switch icon {
+        case "mdi-file-image": return "photo"
+        case "mdi-file-pdf-box": return "doc.richtext"
+        case "mdi-file-video": return "film"
+        case "mdi-file-code": return "chevron.left.forwardslash.chevron.right"
+        default: return "doc"
+        }
+    }
 }
 
 struct RecipeSettings: Codable, Hashable, Sendable {

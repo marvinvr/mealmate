@@ -268,3 +268,38 @@ struct RecipeLinkTests {
     }
 }
 
+// MARK: - Sub-recipes and substitutions
+
+struct IngredientLinkTests {
+    @Test func linkedRecipeShowsItsNameAndScales() {
+        let ingredient = RecipeIngredient(quantity: 1, note: "", display: "1",
+                                          referencedRecipe: RecipeSummary(id: "r2", slug: "pizza-dough", name: "Pizza Dough"))
+        #expect(ingredient.linkedRecipe?.slug == "pizza-dough")
+        #expect(IngredientFormatting.isParsed(ingredient))
+        let parts = IngredientFormatting.parts(for: ingredient, scale: 2)
+        #expect(parts.amount == "2")
+        #expect(parts.food == "Pizza Dough")
+        #expect(parts.text == "2 Pizza Dough")
+    }
+
+    @Test func emptyReferenceIsNoLink() {
+        let ingredient = RecipeIngredient(quantity: 2, note: "Salt", referencedRecipe: RecipeSummary(id: "", slug: "", name: nil))
+        #expect(ingredient.linkedRecipe == nil)
+        #expect(!IngredientFormatting.isParsed(ingredient))
+    }
+
+    @Test func substitutesReadFromRawJSON() throws {
+        let json = """
+        {"quantity": 50, "food": {"id": "f1", "name": "Parmesan"}, "note": "grated",
+         "substitutions": [
+           {"substituteFoodId": "f2", "note": " a little less ", "substituteFood": {"id": "f2", "name": "Pecorino"}},
+           {"substituteFoodId": "f3", "note": "", "substituteFood": {"id": "f3", "name": "Grana Padano"}},
+           {"substituteFoodId": "f4"}
+         ]}
+        """
+        let ingredient = try MealieJSON.decoder.decode(RecipeIngredient.self, from: Data(json.utf8))
+        let substitutes = ingredient.substitutes
+        #expect(substitutes == [.init(name: "Pecorino", note: "a little less"), .init(name: "Grana Padano", note: nil)])
+        #expect(substitutes.map(IngredientFormatting.substituteText) == ["or Pecorino, a little less", "or Grana Padano"])
+    }
+}
