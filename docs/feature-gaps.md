@@ -18,7 +18,7 @@ Keep this file current when a gap is closed or Mealie adds something user-facing
 | --- | --- | --- | --- | --- | --- |
 | Grid/list, search, sort (name, added, updated, rating, last made, random) | `GET /api/recipes` | high | – | yes | ✅ |
 | Filter by categories, tags, tools, foods (any/all), favorites | `GET /api/recipes` | high | – | yes | ✅ |
-| **"What can I cook?"** recipe finder: pick ingredients you have, recipes ranked by missing foods/tools, with substitutions (v3.26) | `GET /api/recipes/suggestions` | high | M | yes | 🆕 Library → What Can I Cook? |
+| **"What can I cook?"** recipe finder: pick ingredients you have, recipes ranked by missing foods/tools, with substitutions (v3.26) | `GET /api/recipes/suggestions` | high | M | yes | 🆕 Library → What Can I Cook? (foods only; picking owned tools ⏭, no test data) |
 | Filter by household (recipes of other households in the group) | `households=` | low | S | yes | ⏭ most servers have one household; revisit on request |
 | Query-filter builder (relative dates, rating, food labels) | `queryFilter` | low | L | no | ⏭ power-user UI, too heavy for a phone; presets cover the common cases |
 | Household-wide timeline ("what we cooked lately") | `GET /api/recipes/timeline/events` | medium | M | yes | ⏭ nice-to-have; per-recipe history exists |
@@ -91,7 +91,8 @@ Keep this file current when a gap is closed or Mealie adds something user-facing
 | Feature | Mealie API | Value | Effort | Fit | Status |
 | --- | --- | --- | --- | --- | --- |
 | Sign-in (OIDC native, password, API token), account info | `/api/auth/*`, `/api/users/self` | high | – | yes | ✅ |
-| Profile picture | `POST /api/users/{id}/image` | low | S | yes | being built separately (other branch) |
+| Profile picture (shown in the avatar) | `GET /api/media/users/{id}/profile.webp` | medium | S | yes | ✅ |
+| Upload a new profile picture | `POST /api/users/{id}/image` | low | S | yes | ⏭ rarely changed; web UI |
 | Change password, API tokens, profile fields | `PUT /api/users/*` | low | S | ok | ⏭ web UI; OIDC users have no password |
 | Household preferences, members, permissions, invitations | `/api/households/*` | low | M | no | ⏭ admin-ish |
 | Notifiers, webhooks (Apprise, meal plan webhooks) | `/api/households/events/*`, `/webhooks` | low | M | no | ⏭ admin-ish |

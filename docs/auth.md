@@ -82,8 +82,8 @@ and refreshes both in the background (network errors keep the cache).
 
 - `AppSession.signOut()`: clears `CredentialStore`, revokes the minted token
   (`DELETE /api/users/api-tokens/{id}`, best effort, detached), clears `ResponseCache`,
-  `RecipeImageLoader` (memory + disk), `CookingSessionStore` and the saved What Can I Cook? selection (`CookPantry`), resets the router (via
-  `RootView`).
+  `RecipeImageLoader` (memory + disk), `CookingSessionStore` and the saved What Can I Cook?
+  selection (`CookPantry`), resets the router (via `RootView`).
 - Only a token MealMate minted itself (`mintedTokenID` set) is revoked. A pasted API token
   belongs to the user and is never deleted on the server (covered by `OnboardingUITests`).
 - Any authenticated 401 calls the service's `onUnauthorized` → sign-out with a reason shown
