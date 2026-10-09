@@ -10,6 +10,8 @@ struct MealPlanView: View {
     @State private var editor: EditorItem?
     @State private var addRecipeSlug: String?
     @State private var shoppingSlug: String?
+    /// "Add to Shopping List" for the week (or one day).
+    @State private var shopping: ShoppingRequest?
     @State private var deleting: MealPlanEntry?
     /// Scrolls the list to a day's section (today on first appear and after "Today").
     @State private var scrollRequest: ScrollRequest?
@@ -19,6 +21,12 @@ struct MealPlanView: View {
         let id = UUID()
         let day: MealieDay
         let animated: Bool
+    }
+
+    struct ShoppingRequest: Identifiable {
+        let id = UUID()
+        /// `nil` = the shown week.
+        var day: MealieDay?
     }
 
     struct EditorItem: Identifiable {
@@ -76,6 +84,12 @@ struct MealPlanView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Add Week to Shopping List", systemImage: "cart.badge.plus") {
+                    shopping = ShoppingRequest()
+                }
+                .disabled(model.phase != .loaded)
+            }
         }
         .task {
             await model.load(using: mealie)
@@ -113,6 +127,9 @@ struct MealPlanView: View {
         }
         .sheet(item: slugBinding($shoppingSlug)) { item in
             AddToShoppingListSheet(slug: item.id)
+        }
+        .sheet(item: $shopping) { request in
+            MealPlanShoppingSheet(week: model.week, entries: model.entries, day: request.day)
         }
         .alert(isPresented: errorBinding, error: model.actionError) { _ in
             Button("OK", role: .cancel) {}
@@ -166,8 +183,10 @@ struct MealPlanView: View {
                 }
             } header: {
                 DayHeader(day: day, isSuggesting: model.suggestingDays.contains(day),
+                          hasRecipes: (byDay[day] ?? []).contains { MealPlanShopping.recipeID(of: $0) != nil },
                           add: { kind in addEntry(on: day, kind: kind) },
-                          suggest: { type in Task { await model.suggest(on: day, type: type) } })
+                          suggest: { type in Task { await model.suggest(on: day, type: type) } },
+                          shop: { shopping = ShoppingRequest(day: day) })
                     .dropDestination(for: String.self) { items, _ in drop(items, on: day) }
             }
             .id(day.description)
@@ -283,6 +302,12 @@ struct MealPlanView: View {
         } else if let intent = router.consumeIntent("mealplan-suggest/"), let day = MealieDay(string: intent.suffix(after: "mealplan-suggest/")) {
             await model.show(MealPlanWeek(containing: day))
             await model.suggest(on: day, type: .dinner)
+        } else if let intent = router.consumeIntent("mealplan-shop/"), let day = MealieDay(string: intent.suffix(after: "mealplan-shop/")) {
+            await model.show(MealPlanWeek(containing: day))
+            shopping = ShoppingRequest()
+        } else if let intent = router.consumeIntent("mealplan-shop-day/"), let day = MealieDay(string: intent.suffix(after: "mealplan-shop-day/")) {
+            await model.show(MealPlanWeek(containing: day))
+            shopping = ShoppingRequest(day: day)
         } else if let intent = router.consumeIntent("mealplan-entry/"), let id = Int(intent.suffix(after: "mealplan-entry/")) {
             if let entry = model.entries.first(where: { $0.id == id }) {
                 edit(entry)
@@ -355,8 +380,11 @@ struct MealPlanEntryRow: View {
 private struct DayHeader: View {
     let day: MealieDay
     var isSuggesting: Bool
+    /// The day has planned recipes (offers "Add Day to Shopping List").
+    var hasRecipes: Bool
     var add: (MealPlanEntryEditor.Kind) -> Void
     var suggest: (PlanEntryType) -> Void
+    var shop: () -> Void
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -384,6 +412,10 @@ private struct DayHeader: View {
                     }
                 } label: {
                     Label("Suggest a Recipe", systemImage: "sparkles")
+                }
+                if hasRecipes {
+                    Divider()
+                    Button("Add Day to Shopping List…", systemImage: "cart.badge.plus", action: shop)
                 }
             } label: {
                 Image(systemName: "plus.circle")

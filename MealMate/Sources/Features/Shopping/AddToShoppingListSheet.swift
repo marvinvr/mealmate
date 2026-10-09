@@ -46,15 +46,12 @@ final class AddToShoppingListModel {
     let recipe: Recipe
     /// Servings multiplier sent as `recipeIncrementQuantity`.
     var scale: Double
-    private(set) var lists: [ShoppingList] = []
-    var selectedListID: String?
+    /// The list to add to.
+    let destination = ShoppingListChoice()
     /// Indices into `ingredients` that will be added.
     var selection: Set<Int> = []
-    private(set) var listsPhase: Phase = .loading
     private(set) var isAdding = false
     var error: MealieError?
-
-    enum Phase: Equatable { case loading, loaded, failed(MealieError) }
 
     /// Ingredient lines worth adding (non-empty), with their index in the recipe.
     let ingredients: [(index: Int, ingredient: RecipeIngredient)]
@@ -91,42 +88,11 @@ final class AddToShoppingListModel {
         return servings
     }
 
-    var selectedList: ShoppingList? { lists.first { $0.id == selectedListID } }
-
-    var canAdd: Bool { selectedListID != nil && !selection.isEmpty && !isAdding }
+    var canAdd: Bool { destination.selectedListID != nil && !selection.isEmpty && !isAdding }
 
     func load(using mealie: MealieService, lastListID: String?) async {
         self.mealie = mealie
-        if lists.isEmpty, let cached = await mealie.cached([ShoppingListsViewModel.Row].self, key: "shopping.lists") {
-            lists = cached.map(\.list)
-            listsPhase = .loaded
-            pickDefaultList(lastListID)
-        }
-        do {
-            lists = try await mealie.shoppingLists()
-            listsPhase = .loaded
-            pickDefaultList(lastListID)
-        } catch {
-            let error = MealieError.wrap(error)
-            if error != .cancelled, lists.isEmpty { listsPhase = .failed(error) }
-        }
-    }
-
-    private func pickDefaultList(_ lastListID: String?) {
-        if let selectedListID, lists.contains(where: { $0.id == selectedListID }) { return }
-        selectedListID = lists.first { $0.id == lastListID }?.id ?? lists.first?.id
-    }
-
-    func createList(named name: String) async {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        do {
-            let list = try await mealie.createShoppingList(name: name)
-            lists.append(list)
-            selectedListID = list.id
-        } catch {
-            self.error = MealieError.wrap(error)
-        }
+        await destination.load(using: mealie, lastListID: lastListID)
     }
 
     func toggle(_ index: Int) {
@@ -141,7 +107,7 @@ final class AddToShoppingListModel {
 
     /// Adds the selection; returns the number of lines added, or `nil` on failure.
     func add() async -> Int? {
-        guard let listID = selectedListID, !selection.isEmpty else { return nil }
+        guard let listID = destination.selectedListID, !selection.isEmpty else { return nil }
         isAdding = true
         defer { isAdding = false }
         // All lines → let Mealie take the recipe's ingredients; otherwise send the subset.
@@ -166,7 +132,7 @@ private struct AddToShoppingListForm: View {
     @Environment(\.mealie) private var mealie
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("shopping.lastListID") private var lastListID = ""
+    @AppStorage(ShoppingListChoice.lastListKey) private var lastListID = ""
 
     @State private var model: AddToShoppingListModel?
     let recipe: Recipe
@@ -175,8 +141,6 @@ private struct AddToShoppingListForm: View {
     @State private var toast: ActionToast?
     @State private var successFeedback = 0
     @State private var errorFeedback = 0
-    @State private var creatingList = false
-    @State private var newListName = ""
 
     var body: some View {
         NavigationStack {
@@ -217,11 +181,6 @@ private struct AddToShoppingListForm: View {
         .onChange(of: session.currentUser?.householdSlug) { _, slug in
             model?.applyHousehold(slug)
         }
-        .alert("New List", isPresented: $creatingList) {
-            TextField("Name", text: $newListName)
-            Button("Cancel", role: .cancel) {}
-            Button("Create") { Task { await model?.createList(named: newListName) } }
-        }
         .alert(isPresented: errorBinding, error: model?.error) { _ in
             Button("OK", role: .cancel) {}
         } message: { error in
@@ -243,7 +202,7 @@ private struct AddToShoppingListForm: View {
                         .lineLimit(2)
                 }
 
-                listPicker(model)
+                ShoppingListPickerRow(choice: model.destination)
                 servingsStepper(model)
             }
 
@@ -282,32 +241,6 @@ private struct AddToShoppingListForm: View {
     }
 
     @ViewBuilder
-    private func listPicker(_ model: AddToShoppingListModel) -> some View {
-        @Bindable var model = model
-        switch model.listsPhase {
-        case .loading where model.lists.isEmpty:
-            LabeledContent("List") { ProgressView() }
-        case .failed(let error):
-            Label(error.errorDescription ?? "Can't load your lists.", systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.secondary)
-        default:
-            if model.lists.isEmpty {
-                Button("New List…", systemImage: "plus") {
-                    newListName = ""
-                    creatingList = true
-                }
-            } else {
-                Picker("List", selection: $model.selectedListID) {
-                    ForEach(model.lists) { list in
-                        Text(list.displayName).tag(Optional(list.id))
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-        }
-    }
-
-    @ViewBuilder
     private func servingsStepper(_ model: AddToShoppingListModel) -> some View {
         if let base = model.baseServings {
             let servings = (base * model.scale).rounded()
@@ -333,9 +266,9 @@ private struct AddToShoppingListForm: View {
             errorFeedback += 1
             return
         }
-        lastListID = model.selectedListID ?? lastListID
+        lastListID = model.destination.selectedListID ?? lastListID
         successFeedback += 1
-        let listName = model.selectedList?.displayName ?? "your list"
+        let listName = model.destination.selectedList?.displayName ?? "your list"
         toast = ActionToast(message: count == 1 ? "Added 1 item to \(listName)" : "Added \(count) items to \(listName)",
                             duration: .seconds(2))
         try? await Task.sleep(for: .seconds(1.2))

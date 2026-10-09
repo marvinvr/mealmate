@@ -336,3 +336,85 @@ struct AddToShoppingListModelTests {
         #expect(model.selection.count == model.ingredients.count)
     }
 }
+
+// MARK: - Shopping for the meal plan
+
+struct MealPlanShoppingTests {
+    private let calendar: Calendar = {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2
+        cal.timeZone = TimeZone(identifier: "Europe/Zurich")!
+        return cal
+    }()
+    private let monday = MealieDay(year: 2030, month: 1, day: 7)
+    private var week: MealPlanWeek { MealPlanWeek(containing: monday, calendar: calendar) }
+
+    private func day(_ offset: Int) -> MealieDay { monday.adding(days: offset, calendar: calendar) }
+
+    private func recipe(_ id: Int, _ recipeID: String, day: MealieDay, type: PlanEntryType = .dinner) -> MealPlanEntry {
+        MealPlanEntry(id: id, date: day, entryType: type, recipeId: recipeID)
+    }
+
+    private func note(_ id: Int, day: MealieDay) -> MealPlanEntry {
+        MealPlanEntry(id: id, date: day, entryType: .dinner, title: "Leftovers")
+    }
+
+    @Test func offersRecipesByDayWithoutNotesOrOtherWeeks() {
+        let entries = [
+            recipe(1, "soup", day: day(2)),
+            note(2, day: day(2)),
+            recipe(3, "porridge", day: day(2), type: .breakfast),
+            recipe(4, "pasta", day: day(0)),
+            note(5, day: day(4)),
+            recipe(6, "curry", day: day(7)),
+        ]
+        let days = MealPlanShopping.days(entries, in: week)
+        #expect(days.map(\.day) == [day(0), day(2)])
+        #expect(days.last?.entries.map(\.id) == [3, 1])
+    }
+
+    @Test func recipeKnownOnlyFromTheSummaryCounts() {
+        var entry = MealPlanEntry(id: 1, date: monday, entryType: .lunch)
+        #expect(MealPlanShopping.recipeID(of: entry) == nil)
+        entry.recipe = RecipeSummary(id: "r1", slug: "lemon-herb-chicken")
+        #expect(MealPlanShopping.recipeID(of: entry) == "r1")
+    }
+
+    @Test func todayAndLaterStartTicked() {
+        let entries = [recipe(1, "a", day: day(0)), recipe(2, "b", day: day(2)), recipe(3, "c", day: day(3)), recipe(4, "d", day: day(6))]
+        let days = MealPlanShopping.days(entries, in: week)
+        #expect(MealPlanShopping.defaultSelection(days, today: day(2)) == [2, 3, 4])
+        // A past week starts empty, a future week fully ticked.
+        #expect(MealPlanShopping.defaultSelection(days, today: day(9)).isEmpty)
+        #expect(MealPlanShopping.defaultSelection(days, today: day(-3)) == [1, 2, 3, 4])
+    }
+
+    @Test func oneDayTicksOnlyThatDayEvenInThePast() {
+        let entries = [recipe(1, "a", day: day(0)), recipe(2, "b", day: day(0), type: .lunch), recipe(3, "c", day: day(3))]
+        let days = MealPlanShopping.days(entries, in: week)
+        #expect(MealPlanShopping.defaultSelection(days, today: day(2), only: day(0)) == [1, 2])
+    }
+
+    @Test func repeatedRecipesMergeIntoOneScaledRequest() {
+        let entries = [recipe(1, "soup", day: day(0)), recipe(2, "pasta", day: day(1)), recipe(3, "soup", day: day(4)), note(4, day: day(5))]
+        let requests = MealPlanShopping.requests(for: entries)
+        #expect(requests.map(\.recipeId) == ["soup", "pasta"])
+        #expect(requests.map(\.recipeIncrementQuantity) == [2, 1])
+        #expect(requests.allSatisfy { $0.recipeIngredients == nil })
+        #expect(MealPlanShopping.requests(for: [note(1, day: monday)]).isEmpty)
+    }
+
+    @MainActor
+    @Test func modelForOneDayShowsOnlyThatDay() {
+        let entries = [recipe(1, "a", day: day(0)), recipe(2, "b", day: day(3)), note(3, day: day(3))]
+        let model = MealPlanShoppingModel(week: week, entries: entries, day: day(3), today: day(1))
+        #expect(model.days.map(\.day) == [day(3)])
+        #expect(model.selection == [2])
+        model.toggle(2)
+        #expect(model.selection.isEmpty)
+        #expect(!model.canAdd)
+
+        let empty = MealPlanShoppingModel(week: week, entries: [note(3, day: day(3))], day: nil, today: day(1))
+        #expect(empty.days.isEmpty)
+    }
+}

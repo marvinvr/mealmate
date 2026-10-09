@@ -105,6 +105,7 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `mealplan-entry/<entryID>` | Entry editor for an existing entry |
 | `mealplan-suggest/<day>` | Suggests a random dinner (creates a real entry) |
 | `mealplan-add-recipe/<slug>` | Add to Meal Plan sheet for a recipe |
+| `mealplan-shop/<day>`, `mealplan-shop-day/<day>` | Add to Shopping List sheet for the week containing that day / that day only |
 
 **Create and import**
 

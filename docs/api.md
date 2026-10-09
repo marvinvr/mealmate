@@ -120,8 +120,9 @@ Shopping
   `listItems`: a rename without them deletes every item. `renameShoppingList` fetches the list
   and sends its items back.
 - The lists endpoint omits `listItems`: fetch a list by ID for its items.
-- `POST …/lists/{id}/recipe` adds scaled recipe ingredients; `…/recipe/{recipeID}/delete`
-  removes them again.
+- `POST …/lists/{id}/recipe` takes an array (several recipes, each with
+  `recipeIncrementQuantity`) and adds scaled ingredients; adding the same recipe again
+  raises the reference's `recipeQuantity`. `…/recipe/{recipeID}/delete` removes them again.
 
 Meal plan and other
 

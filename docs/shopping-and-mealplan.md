@@ -28,6 +28,9 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   `shopping.units` / `shopping.labels`).
 - `AddToShoppingListSheet`: adds a recipe's ingredients with a servings scale via
   `POST …/lists/{id}/recipe`; last used list preselected; foods marked on hand start unticked.
+- `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by both
+  "add to list" sheets (cached lists, last used preselected via `shopping.lastListID`,
+  "New List…" when there is none).
 
 ## Meal Plan
 
@@ -43,11 +46,18 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   it stays self-contained for a future widget.
 - `MealPlanEntryEditor`: day, meal type, recipe (debounced search) or note.
 - `AddToMealPlanSheet`: a recipe to a day (next 7 days or any date) and meal type.
+- Shop for the plan: the cart button in the toolbar ("Add Week to Shopping List") and
+  "Add Day to Shopping List…" in a day's + menu (days with recipes only) open
+  `MealPlanShoppingSheet`. It lists the shown week's recipe entries by day (notes excluded;
+  day mode shows only that day); today and later start ticked, past days unticked. Rules in
+  `MealPlanShopping` (unit tested): a recipe planned n times becomes one request with
+  `recipeIncrementQuantity` n, all sent in one `POST …/lists/{id}/recipe`.
 
 Shared small views: `PlanningRecipeThumbnail`, `ActionToast` (`PlanningComponents.swift`).
 
 ## Verification
 
-Unit: `PlanningTests` (layout, item parsing, weeks, meal ordering, add-to-list model). UI:
+Unit: `PlanningTests` (layout, item parsing, weeks, meal ordering, add-to-list model,
+meal plan shopping). UI:
 `ShoppingUITests`, `MealPlanUITests` (they create and delete "MealMate Test UI …" data).
 Screenshot routes: `shopping-*`, `mealplan-*` in `scripts/README.md`.

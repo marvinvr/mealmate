@@ -87,6 +87,8 @@ enum AppRoute: Equatable, Sendable {
         ("mealplan-entry/*", { .intent("mealplan-entry/\($0[0])", tab: .mealPlan) }),
         ("mealplan-suggest/*", { .intent("mealplan-suggest/\($0[0])", tab: .mealPlan) }),
         ("mealplan-add-recipe/*", { .intent("mealplan-add-recipe/\($0[0])", tab: .mealPlan) }),
+        ("mealplan-shop/*", { .intent("mealplan-shop/\($0[0])", tab: .mealPlan) }),
+        ("mealplan-shop-day/*", { .intent("mealplan-shop-day/\($0[0])", tab: .mealPlan) }),
         // Create / import sheets (presented by `createFlowRouteSheets()`, see CreateFlowRoutes.swift).
         // `import-state/*` and `share-preview/*` only do something in DEBUG builds.
         ("import", { _ in .intent("create:import", tab: .recipes) }),
