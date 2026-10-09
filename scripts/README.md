@@ -111,6 +111,17 @@ redacted from the output. The `.xcresult` (which records typed text) is deleted
 unless `--keep-results` (then `build/ui-tests.xcresult`, local only). Details:
 `docs/development-workflow.md`.
 
+`SupporterScreenshotTests` buys products from `MealMate.storekit` through `SKTestSession`
+and shoots the supporter sheet, prompt, Settings rows and icon picker for each state
+(non-supporter, Sous Chef, Head Chef with Copper Pot applied, lapsed back to the default
+icon): `screenshots/qa-supporter-*-<appearance>.png`. Set the appearance first (the test
+can't switch it on the iOS 27 simulator) and name it for the files:
+
+```bash
+xcrun simctl ui "$UDID" appearance dark
+TEST_RUNNER_MEALMATE_APPEARANCE=dark scripts/ui-test.sh --derived-data build/DD-<role> "$UDID" SupporterScreenshotTests
+```
+
 ## Routes
 
 The single list of routes. `-MealMateRoute <route>` (DEBUG launch argument) and
@@ -131,6 +142,9 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `signout` | Signs out the stored session (revokes the minted token) |
 | `recipes`, `mealplan`, `shopping`, `library` | Tab |
 | `settings` | Settings sheet |
+| `supporter` | Settings with the supporter sheet on top |
+| `app-icon` | Settings → App Icon picker |
+| `supporter-prompt/<n>` | The supporter prompt as it appears by itself (n = prompt number; 2+ changes the headline) |
 | `recipe/<slug>` | Recipe detail (pushed on Recipes) |
 | `cook/<slug>` | Cook mode (full screen) |
 | `shopping/<id>` | Shopping list (pushed on Shopping) |
