@@ -89,8 +89,23 @@ scripts/screenshot.sh --no-token --derived-data build/DD-<role> "$UDID" onboardi
 
 Installs the already built app (never builds), launches it with the route in light and dark
 and writes `screenshots/<name>-{light,dark}.png` (status bar 9:41). Options: `--no-token`,
-`--delay <s>`, `--only light|dark`, `--app <path>`. Name shots `<area>-<screen>`. Look at
-every screenshot and iterate. They show real server data: never commit them.
+`--delay <s>`, `--only light|dark`, `--app <path>`, `--suffix <text>`, `--width <pt>`. Name
+shots `<area>-<screen>`. Look at every screenshot and iterate. They show real server data:
+never commit them.
+
+**iPad** (the app is universal; check every layout change on an iPad too): create an
+`"iPad Pro 13-inch (M5)"` simulator like above. `simctl` can neither rotate nor resize, so:
+
+```bash
+scripts/sim-orientation.sh --derived-data build/DD-<role> "$UDID" landscape   # or portrait
+scripts/screenshot.sh --derived-data build/DD-<role> --suffix -landscape "$UDID" recipes ipad-recipes
+scripts/screenshot.sh --derived-data build/DD-<role> --width 375 --suffix -narrow "$UDID" recipes ipad-recipes
+```
+
+`sim-orientation.sh` runs the one-line UI test `DeviceOrientationUITests` (XCUIDevice), and
+the orientation sticks. `--width` (DEBUG `-MealMateWindowWidth`, `App/DebugWindow.swift`)
+lays the app out at that width, horizontally compact, like a narrow Split View / Slide Over
+window, and crops the shot; sheets still use the full screen.
 
 ## Debug Routes
 

@@ -21,6 +21,9 @@ struct RootView: View {
         .onChange(of: session.phase) { _, phase in
             if phase == .signedOut { router.reset() }
         }
+        #if DEBUG
+        .debugWindowWidth()
+        #endif
         .onOpenURL { url in
             guard let route = AppRoute(url: url) else { return }
             route.apply(router: router, session: session)

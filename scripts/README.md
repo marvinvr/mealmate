@@ -28,8 +28,23 @@ Output: `screenshots/<name>-light.png` and `screenshots/<name>-dark.png`
 
 Options: `--no-token`, `--derived-data <dir>` (or `MEALMATE_DERIVED_DATA`),
 `--app <path/to/MealMate.app>`, `--delay <seconds>` (or `MEALMATE_SHOT_DELAY`,
-default 4), `--only light|dark`. The status bar is overridden to 9:41 with full
-battery/signal.
+default 4), `--only light|dark`, `--suffix <text>` (appended to the name, e.g.
+`-landscape`), `--width <points>` (iPad: narrow, horizontally compact window like Split
+View / Slide Over, DEBUG `-MealMateWindowWidth`; the shot is cropped to it, at 2x or
+`MEALMATE_SHOT_SCALE`). The status bar is overridden to 9:41 with full battery/signal.
+
+## sim-orientation.sh
+
+Rotates a simulator (iPad landscape screenshots); `simctl` can't, and iPad apps can't rotate
+themselves in windowing modes. Runs the one-line UI test `DeviceOrientationUITests`
+(XCUIDevice); the orientation sticks until changed. No server or token involved. Builds the
+`MealMateUITests` scheme for testing first if the derived data has no `.xctestrun`.
+
+```bash
+scripts/sim-orientation.sh --derived-data build/DD-<role> "$UDID" landscape
+scripts/screenshot.sh --derived-data build/DD-<role> --suffix -landscape "$UDID" recipe/<slug> ipad-recipe
+scripts/sim-orientation.sh --derived-data build/DD-<role> "$UDID" portrait
+```
 
 The token is passed as `SIMCTL_CHILD_MEALMATE_TEST_TOKEN` and never printed.
 Never `set -x` around it, never echo it.

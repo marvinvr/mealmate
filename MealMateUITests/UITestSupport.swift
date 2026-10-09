@@ -46,7 +46,7 @@ class MealMateUITestCase: XCTestCase {
         app.launchEnvironment["MEALMATE_TEST_TOKEN"] = UITestConfig.token
         if let route { app.launchArguments += ["-MealMateRoute", route] }
         app.launch()
-        try wait(app.tabBars.firstMatch, timeout: 15, "Main tabs didn't appear")
+        try wait(tab("Recipes"), timeout: 15, "Main tabs didn't appear")
     }
 
     // MARK: Persisted sign-in (token typed into the UI)
@@ -156,7 +156,11 @@ class MealMateUITestCase: XCTestCase {
     }
 
     func tab(_ title: String) -> XCUIElement {
-        app.tabBars.buttons[title]
+        guard UIDevice.current.userInterfaceIdiom == .pad else { return app.tabBars.buttons[title] }
+        // iPad: the tab bar at the top isn't a UITabBar; its tabs are buttons identified by
+        // their SF Symbol (a back button can carry the same label).
+        let symbols = ["Recipes": "book.pages", "Meal Plan": "calendar", "Shopping": "cart", "Library": "books.vertical"]
+        return app.buttons.matching(NSPredicate(format: "label == %@ AND identifier == %@", title, symbols[title] ?? "")).firstMatch
     }
 
     /// Text containing `substring` (labels of static texts, buttons, cells).
