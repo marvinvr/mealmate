@@ -269,6 +269,11 @@ struct ShoppingListView: View {
                 }
                 .disabled(model.checkedItems.isEmpty)
                 Divider()
+                ShareLink(item: ShoppingListLayout.plainText(title: model.title, sections: model.sections),
+                          subject: Text(model.title)) {
+                    Label("Share as Text", systemImage: "square.and.arrow.up")
+                }
+                .disabled(model.sections.allSatisfy(\.items.isEmpty))
                 Button("Reorder Sections…", systemImage: "arrow.up.arrow.down") {
                     reorderingSections = true
                 }

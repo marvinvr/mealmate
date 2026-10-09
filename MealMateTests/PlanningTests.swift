@@ -37,6 +37,15 @@ struct ShoppingListLayoutTests {
         #expect(sections.last?.id == ShoppingSection.noLabelID)
     }
 
+    @Test func plainTextListsSectionsInOrder() {
+        let sections = ShoppingListLayout.sections(for: [item("1", "Paper towels"), item("2", "Milk", label: dairy), item("3", "Apples", label: produce)],
+                                                   labelSettings: [setting(produce, 0), setting(dairy, 1)])
+        #expect(ShoppingListLayout.plainText(title: "Weekly Shop", sections: sections)
+            == "Weekly Shop\n\nProduce\n• Apples\n\nDairy\n• Milk\n\nNo Label\n• Paper towels")
+        let unlabelled = ShoppingListLayout.sections(for: [item("1", "Paper towels")])
+        #expect(ShoppingListLayout.plainText(title: "Weekly Shop", sections: unlabelled) == "Weekly Shop\n\n• Paper towels")
+    }
+
     @Test func labelsWithoutSettingsSortByName() {
         let items = [item("1", "Rolls", label: bakery), item("2", "Apples", label: produce), item("3", "Milk", label: dairy)]
         #expect(ShoppingListLayout.sections(for: items).map(\.title) == ["Bakery", "Dairy", "Produce"])

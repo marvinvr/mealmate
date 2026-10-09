@@ -19,6 +19,21 @@ enum ShoppingListLayout {
         item.label ?? item.food?.label
     }
 
+    /// The unchecked items as plain text for the share sheet: the list name, then one
+    /// "• item" line per item under its section title. A list with only unlabelled items
+    /// skips the "No Label" heading.
+    static func plainText(title: String, sections: [ShoppingSection]) -> String {
+        let filled = sections.filter { !$0.items.isEmpty }
+        var lines = [title]
+        let showsTitles = !(filled.count == 1 && filled[0].id == ShoppingSection.noLabelID)
+        for section in filled {
+            lines.append("")
+            if showsTitles { lines.append(section.title) }
+            lines += section.items.map { "• " + $0.displayText }
+        }
+        return lines.joined(separator: "\n")
+    }
+
     /// Unchecked items grouped by label.
     ///
     /// Sections follow the list's label order (`labelSettings.position`, as arranged in
