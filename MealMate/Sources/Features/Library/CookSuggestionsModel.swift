@@ -277,7 +277,7 @@ enum CookSuggestions {
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
-    /// `"Ei, Mehl,,Pecorino"` → `["Ei", "Mehl", "Pecorino"]`.
+    /// `"Eggs, Flour,,Lemon"` → `["Eggs", "Flour", "Lemon"]`.
     static func foodNames(from list: String) -> [String] {
         list.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
