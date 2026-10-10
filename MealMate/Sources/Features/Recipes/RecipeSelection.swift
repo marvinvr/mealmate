@@ -1,6 +1,6 @@
 import Foundation
 
-/// Multi-select on the Recipes tab. Long-press starts it with one recipe; taps toggle.
+/// Multi-select on the Recipes tab. Select in the context menu starts it with one recipe; taps toggle.
 struct RecipeSelectionState: Equatable {
     var isActive = false
     /// Selected recipes in the order they were added.

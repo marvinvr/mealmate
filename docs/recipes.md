@@ -15,9 +15,10 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   plain `List` (the grid as rows of `RecipeCard`s, at least 2 per row, larger cards and 4–5
   per row on iPad, 1 at accessibility sizes), so the search field is visible under the large
   title from the start.
-- **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press a recipe to
-  select it (a glass bar at the bottom offers household actions, shopping list, meal
-  plan, favorite, and Share for one recipe). Further taps toggle. The toolbar shows the count,
+- **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press keeps the
+  context menu; Select in that menu selects the recipe (a glass bar below the list offers
+  household actions, shopping list, meal plan, favorite, and Share for one recipe). Further
+  taps toggle. The toolbar shows the count,
   Cancel and Select All (loaded recipes; Select All again clears). The account button hides
   while this is active. List rows keep their swipe actions until selection starts. Library
   lists are unchanged.

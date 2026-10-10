@@ -17,7 +17,7 @@ Keep this file current when a gap is closed or Mealie adds something user-facing
 | Feature | Mealie API | Value | Effort | Fit | Status |
 | --- | --- | --- | --- | --- | --- |
 | Grid/list, search, sort (name, added, updated, rating, last made, random) | `GET /api/recipes` | high | – | yes | ✅ |
-| Multi-select on the Recipes tab: run a household action, add ingredients to a list, plan the meal, favorite | existing recipe, shopping and meal-plan endpoints | high | M | yes | 🆕 long-press; partial failures stay on screen |
+| Multi-select on the Recipes tab: run a household action, add ingredients to a list, plan the meal, favorite | existing recipe, shopping and meal-plan endpoints | high | M | yes | 🆕 Select in the context menu; partial failures stay on screen |
 | Filter by categories, tags, tools, foods (any/all), favorites | `GET /api/recipes` | high | – | yes | ✅ |
 | **"What can I cook?"** recipe finder: pick ingredients you have, recipes ranked by missing foods/tools, with substitutions (v3.26) | `GET /api/recipes/suggestions` | high | M | yes | 🆕 Library → What Can I Cook? (foods only; picking owned tools ⏭, no test data) |
 | Filter by household (recipes of other households in the group) | `households=` | low | S | yes | ⏭ most servers have one household; revisit on request |
