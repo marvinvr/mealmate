@@ -15,6 +15,21 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   plain `List` (the grid as rows of `RecipeCard`s, at least 2 per row, larger cards and 4–5
   per row on iPad, 1 at accessibility sizes), so the search field is visible under the large
   title from the start.
+- **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press a recipe to
+  select it (a glass bar at the bottom offers household actions, shopping list, meal
+  plan, favorite, and Share for one recipe). Further taps toggle. The toolbar shows the count,
+  Cancel and Select All (loaded recipes; Select All again clears). The account button hides
+  while this is active. List rows keep their swipe actions until selection starts. Library
+  lists are unchanged.
+- Bulk runs (`RecipeBulkJob`) report a summary and every failure; cancelling stops before the
+  next recipe and still lists what already failed. Household `post` actions call
+  `triggerRecipeAction` once per recipe at scale 1 (servings as written). `link` actions open
+  one recipe. Shopping uses one `POST …/lists/{id}/recipe` for the whole selection (if that
+  request fails, every recipe is reported failed — the endpoint doesn't say which one). Meal
+  plan creates one entry per recipe for the chosen day and meal. Closing the summary leaves
+  selection mode. Screenshot routes: `recipes-select`, `recipes-select-list`,
+  `recipes-select-shopping`, `recipes-select-plan`, `recipes-select-running`,
+  `recipes-select-result` (the last two don't touch the server).
 - `RecipeFilterSheet` applies live; active filters show as removable chips (`ActiveFilterBar`).
   Foods are search-first: selected foods first, then server results (`foods(search:)`,
   250 ms debounce) as you type; nothing else is listed before typing.

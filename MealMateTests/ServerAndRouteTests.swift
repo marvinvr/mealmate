@@ -96,6 +96,9 @@ struct AppRouteTests {
         #expect(AppRoute(string: "mealplan-shop/2030-01-07") == .intent("mealplan-shop/2030-01-07", tab: .mealPlan))
         #expect(AppRoute(string: "mealplan-shop-day/2030-01-07") == .intent("mealplan-shop-day/2030-01-07", tab: .mealPlan))
         #expect(AppRoute(string: "shopping-sections/abc") == .intent("shopping-sections", tab: .shopping, destination: .shoppingList(id: "abc")))
+        #expect(AppRoute(string: "recipes-select") == .intent("recipes-select", tab: .recipes))
+        #expect(AppRoute(string: "recipes-select-list") == .intent("recipes-select-list", tab: .recipes))
+        #expect(AppRoute(string: "recipes-select-result") == .intent("recipes-select-result", tab: .recipes))
         #expect(AppRoute(string: "nope") == nil)
         #expect(AppRoute(string: "recipe") == nil)
     }

@@ -266,15 +266,24 @@ final class RecipeDetailModel {
 /// (`${url}`, `${id}`, `${slug}`, `${name}`, `${scale}`/`${recipe_scale}`, `${servings}`).
 enum RecipeActionLink {
     static func url(template: String, recipe: Recipe, recipeURL: URL?, scale: Double, servings: Double) -> URL? {
+        url(template: template, id: recipe.id, slug: recipe.slug, name: recipe.displayName, recipeURL: recipeURL, scale: scale, servings: servings)
+    }
+
+    /// Same placeholders, from a list row (`RecipeSummary` has no full ingredient list).
+    static func url(template: String, summary: RecipeSummary, recipeURL: URL?, scale: Double, servings: Double) -> URL? {
+        url(template: template, id: summary.id, slug: summary.slug, name: summary.displayName, recipeURL: recipeURL, scale: scale, servings: servings)
+    }
+
+    static func url(template: String, id: String, slug: String, name: String, recipeURL: URL?, scale: Double, servings: Double) -> URL? {
         func encoded(_ value: String) -> String {
             value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&=+?#"))) ?? value
         }
         let number: (Double) -> String = { $0.formatted(.number.precision(.fractionLength(0...2)).grouping(.never).locale(Locale(identifier: "en_US_POSIX"))) }
         let replacements: [String: String] = [
             "url": recipeURL?.absoluteString ?? "",
-            "id": recipe.id,
-            "slug": recipe.slug,
-            "name": recipe.displayName,
+            "id": id,
+            "slug": slug,
+            "name": name,
             "scale": number(scale),
             "recipe_scale": number(scale),
             "servings": number(servings),

@@ -45,27 +45,40 @@ struct MainTabView: View {
     }
 }
 
+/// Set by the Recipes tab while multi-select is active, so Cancel and Select All aren't crowded
+/// by the account button. Preferences flow up to `TabRoot`; the button lives outside the screen.
+struct AccountButtonHiddenKey: PreferenceKey {
+    static let defaultValue = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
 /// NavigationStack + shared toolbar/destinations for one tab.
 private struct TabRoot<Content: View>: View {
     @Binding var path: NavigationPath
     @ViewBuilder var content: Content
+    @State private var hidesAccountButton = false
 
     var body: some View {
         NavigationStack(path: $path) {
             content
-                .tabRootChrome()
+                .onPreferenceChange(AccountButtonHiddenKey.self) { hidesAccountButton = $0 }
+                .tabRootChrome(hidesAccountButton: hidesAccountButton)
         }
     }
 }
 
 private extension View {
     /// The account button and the `AppDestination` destinations every tab root gets.
-    func tabRootChrome() -> some View {
+    func tabRootChrome(hidesAccountButton: Bool = false) -> some View {
         toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                AccountButton()
+            if !hidesAccountButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    AccountButton()
+                }
+                .sharedBackgroundVisibility(.hidden)
             }
-            .sharedBackgroundVisibility(.hidden)
         }
         .navigationDestination(for: AppDestination.self) { destination in
             AppDestinationView(destination: destination)

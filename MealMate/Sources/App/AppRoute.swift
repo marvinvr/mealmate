@@ -61,6 +61,13 @@ enum AppRoute: Equatable, Sendable {
         ("recipes-new", { _ in .intent("recipes-new", tab: .recipes) }),
         ("recipes-import", { _ in .intent("recipes-import", tab: .recipes) }),
         ("recipes-error", { _ in .intent("recipes-error", tab: .recipes) }),
+        // Multi-select on the Recipes tab (the screen selects the first recipes once they load).
+        ("recipes-select", { _ in .intent("recipes-select", tab: .recipes) }),
+        ("recipes-select-list", { _ in .intent("recipes-select-list", tab: .recipes) }),
+        ("recipes-select-shopping", { _ in .intent("recipes-select-shopping", tab: .recipes) }),
+        ("recipes-select-plan", { _ in .intent("recipes-select-plan", tab: .recipes) }),
+        ("recipes-select-running", { _ in .intent("recipes-select-running", tab: .recipes) }),
+        ("recipes-select-result", { _ in .intent("recipes-select-result", tab: .recipes) }),
         ("recipe-scaled/*", { .intent("recipe-scaled", tab: .recipes, destination: .recipe(slug: $0[0])) }),
         ("recipe-cooking/*", { .intent("recipe-cooking", tab: .recipes, destination: .recipe(slug: $0[0])) }),
         ("recipe-steps/*", { .intent("recipe-steps", tab: .recipes, destination: .recipe(slug: $0[0])) }),

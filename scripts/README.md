@@ -160,6 +160,9 @@ DEBUG do nothing in Release; the harness-only ones (`onboarding`, `login`,
 | `recipes-sort/<sort>`, `recipes-search/<text>` | Sorted list / search results (or empty search) |
 | `recipes-error` | First-load error state (DEBUG) |
 | `recipes-new`, `recipes-import` | Editor / import sheet from the Recipes "+" menu |
+| `recipes-select`, `recipes-select-list` | Recipes tab in selection mode (first recipes selected), grid or list |
+| `recipes-select-shopping`, `recipes-select-plan` | Selection with Add to Shopping List / Add to Meal Plan open |
+| `recipes-select-running`, `recipes-select-result` | Bulk progress / a partial-failure summary (no server writes) |
 | `recipe-scaled/<slug>`, `recipe-cooking/<slug>` | Detail with servings ×2 / first three ingredients checked |
 | `recipe-steps/<slug>`, `recipe-notes/<slug>`, `recipe-history/<slug>` | Detail scrolled to a section |
 | `recipe-comments/<slug>`, `recipe-timeline/<slug>`, `recipe-madeit/<slug>` | Detail with that sheet open |

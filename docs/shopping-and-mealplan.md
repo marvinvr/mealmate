@@ -38,6 +38,8 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   `shopping.units` / `shopping.labels`).
 - `AddToShoppingListSheet`: adds a recipe's ingredients with a servings scale via
   `POST …/lists/{id}/recipe`; last used list preselected; foods marked on hand start unticked.
+  The Recipes tab's multi-select uses the same endpoint with one body entry per recipe
+  (every ingredient, servings as written) and reports a failed request against each recipe.
 - `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by both
   "add to list" sheets (cached lists, last used preselected via `shopping.lastListID`,
   "New List…" when there is none).
@@ -56,6 +58,8 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   it stays self-contained for a future widget.
 - `MealPlanEntryEditor`: day, meal type, recipe (debounced search) or note.
 - `AddToMealPlanSheet`: a recipe to a day (next 7 days or any date) and meal type.
+  Multi-select on the Recipes tab plans each selected recipe for one day and meal, one
+  `POST /api/households/mealplans` per recipe, and keeps going when one of them fails.
 - Shop for the plan: the cart button in the toolbar ("Add Week to Shopping List") and
   "Add Day to Shopping List…" in a day's + menu (days with recipes only) open
   `MealPlanShoppingSheet`. It lists the shown week's recipe entries by day (notes excluded;

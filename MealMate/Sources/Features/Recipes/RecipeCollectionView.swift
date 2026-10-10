@@ -22,6 +22,9 @@ struct RecipeCollectionContent: View {
     var header: AnyView?
     @Binding var sheet: RecipeSheet?
     @Binding var toast: RecipeToast?
+    /// Set on the Recipes tab. Long-press starts selection; taps toggle while it is active.
+    /// Library lists leave this `nil` and keep the context menu.
+    var selection: Binding<RecipeSelectionState>? = nil
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -89,14 +92,10 @@ struct RecipeCollectionContent: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.grid) {
                     ForEach(row) { recipe in
                         // A Button, not a NavigationLink: links inside List rows get a chevron.
-                        Button {
-                            router.push(.recipe(slug: recipe.slug))
-                        } label: {
-                            RecipeCard(recipe: recipe, isFavorite: userData.isFavorite(recipe.id))
+                        recipeControl(recipe) {
+                            gridCard(recipe)
                         }
-                        .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .contextMenu { RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast) }
                         .onAppear { model.itemAppeared(recipe) }
                     }
                     ForEach(row.count..<max(columns, row.count), id: \.self) { _ in
@@ -135,30 +134,10 @@ struct RecipeCollectionContent: View {
                     .listRowBackground(Color.clear)
             }
             ForEach(model.items) { recipe in
-                NavigationLink(value: AppDestination.recipe(slug: recipe.slug)) {
-                    RecipeRow(recipe: recipe, isFavorite: userData.isFavorite(recipe.id))
-                }
-                .listRowBackground(Color.clear)
-                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-                .contextMenu { RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast) }
-                .swipeActions(edge: .leading) {
-                    FavoriteSwipeButton(recipe: recipe, toast: $toast)
-                }
-                .swipeActions(edge: .trailing) {
-                    Button {
-                        sheet = .addToShoppingList(slug: recipe.slug)
-                    } label: {
-                        Label("Add to List", systemImage: "cart.badge.plus")
-                    }
-                    .tint(Color(.systemGray))
-                    Button {
-                        sheet = .addToMealPlan(recipe)
-                    } label: {
-                        Label("Plan", systemImage: "calendar.badge.plus")
-                    }
-                    .tint(Color(.systemGray2))
-                }
-                .onAppear { model.itemAppeared(recipe) }
+                listRow(recipe)
+                    .listRowBackground(Color.clear)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                    .onAppear { model.itemAppeared(recipe) }
             }
             pagingFooter
                 .listRowSeparator(.hidden)
@@ -171,6 +150,126 @@ struct RecipeCollectionContent: View {
         }
         .refreshable { await model.refresh() }
         .screenBackground()
+    }
+
+    // MARK: Selection
+
+    private var isSelecting: Bool { selection?.wrappedValue.isActive == true }
+
+    private func gridCard(_ recipe: RecipeSummary) -> some View {
+        let selected = selection?.wrappedValue.contains(recipe.id) == true
+        return RecipeCard(recipe: recipe, isFavorite: userData.isFavorite(recipe.id))
+            .overlay(alignment: .topTrailing) {
+                if isSelecting {
+                    RecipeSelectionMark(isSelected: selected, onPhoto: true)
+                        .padding(Theme.Spacing.xs)
+                }
+            }
+    }
+
+    private func listLabel(_ recipe: RecipeSummary) -> some View {
+        let selected = selection?.wrappedValue.contains(recipe.id) == true
+        return HStack(spacing: Theme.Spacing.s) {
+            if isSelecting {
+                RecipeSelectionMark(isSelected: selected, onPhoto: false)
+            }
+            RecipeRow(recipe: recipe, isFavorite: userData.isFavorite(recipe.id))
+            if selection != nil, !isSelecting {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary.opacity(0.6))
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// Library keeps a `NavigationLink` (chevron, context menu, swipes). The Recipes tab uses a
+    /// button so a long-press enters selection; swipe actions stay until selection is active.
+    @ViewBuilder
+    private func listRow(_ recipe: RecipeSummary) -> some View {
+        if selection == nil {
+            NavigationLink(value: AppDestination.recipe(slug: recipe.slug)) {
+                RecipeRow(recipe: recipe, isFavorite: userData.isFavorite(recipe.id))
+            }
+            .contextMenu { RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast) }
+            .swipeActions(edge: .leading) {
+                FavoriteSwipeButton(recipe: recipe, toast: $toast)
+            }
+            .swipeActions(edge: .trailing) {
+                listPlanSwipe(recipe)
+            }
+        } else if isSelecting {
+            recipeControl(recipe) { listLabel(recipe) }
+        } else {
+            recipeControl(recipe) { listLabel(recipe) }
+                .swipeActions(edge: .leading) {
+                    FavoriteSwipeButton(recipe: recipe, toast: $toast)
+                }
+                .swipeActions(edge: .trailing) {
+                    listPlanSwipe(recipe)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func listPlanSwipe(_ recipe: RecipeSummary) -> some View {
+        Button {
+            sheet = .addToShoppingList(slug: recipe.slug)
+        } label: {
+            Label("Add to List", systemImage: "cart.badge.plus")
+        }
+        .tint(Color(.systemGray))
+        Button {
+            sheet = .addToMealPlan(recipe)
+        } label: {
+            Label("Plan", systemImage: "calendar.badge.plus")
+        }
+        .tint(Color(.systemGray2))
+    }
+
+    /// Opens the recipe, or toggles selection. On the Recipes tab a long-press enters selection
+    /// instead of the context menu (those actions move to the selection bar).
+    private func recipeControl<Label: View>(_ recipe: RecipeSummary, @ViewBuilder label: () -> Label) -> some View {
+        let selecting = isSelecting
+        let selected = selection?.wrappedValue.contains(recipe.id) == true
+        let favorite = userData.isFavorite(recipe.id)
+        return RecipePressable(
+            onTap: { handleTap(recipe) },
+            onLongPress: selection == nil ? nil : { handleLongPress(recipe) },
+            label: label()
+        )
+        .modifier(RecipeContextMenuAttachment(enabled: selection == nil, recipe: recipe, sheet: $sheet, toast: $toast))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel(for: recipe, favorite: favorite, selecting: selecting, selected: selected))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityHint(selection == nil ? "" : (selecting ? "Toggles whether this recipe is selected." : "Long press to select recipes."))
+        .modifier(RecipeSelectAction(enabled: selection != nil) { handleLongPress(recipe) })
+    }
+
+    private func accessibilityLabel(for recipe: RecipeSummary, favorite: Bool, selecting: Bool, selected: Bool) -> String {
+        var label = recipe.accessibilitySummary
+        if favorite { label += ", favorite" }
+        if selecting { label += selected ? ", selected" : ", not selected" }
+        return label
+    }
+
+    private func handleTap(_ recipe: RecipeSummary) {
+        if let selection, selection.wrappedValue.isActive {
+            withAnimation(.snappy) { selection.wrappedValue.toggle(recipe) }
+        } else {
+            router.push(.recipe(slug: recipe.slug))
+        }
+    }
+
+    private func handleLongPress(_ recipe: RecipeSummary) {
+        guard let selection else { return }
+        withAnimation(.snappy) {
+            if selection.wrappedValue.isActive {
+                selection.wrappedValue.toggle(recipe)
+            } else {
+                selection.wrappedValue.begin(with: recipe)
+            }
+        }
     }
 
     @ViewBuilder
@@ -320,5 +419,81 @@ private struct FavoriteSwipeButton: View {
             Label(isFavorite ? "Unfavorite" : "Favorite", systemImage: isFavorite ? "heart.slash" : "heart")
         }
         .tint(.accentColor)
+    }
+}
+
+// MARK: - Press handling
+
+/// A tappable recipe whose long-press is optional. The tap that ends a long-press is swallowed
+/// so entering selection doesn't also open the recipe.
+private struct RecipePressable<Label: View>: View {
+    var onTap: () -> Void
+    var onLongPress: (() -> Void)?
+    var label: Label
+    @State private var ignoreTap = false
+
+    var body: some View {
+        Button(action: tap) { label }
+            .buttonStyle(.plain)
+            .modifier(LongPressAttachment(action: onLongPress) {
+                ignoreTap = true
+                onLongPress?()
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(400))
+                    ignoreTap = false
+                }
+            })
+    }
+
+    private func tap() {
+        if ignoreTap {
+            ignoreTap = false
+            return
+        }
+        onTap()
+    }
+}
+
+private struct LongPressAttachment: ViewModifier {
+    var action: (() -> Void)?
+    var perform: () -> Void
+
+    func body(content: Content) -> some View {
+        if action != nil {
+            content.onLongPressGesture(minimumDuration: 0.45, perform: perform)
+        } else {
+            content
+        }
+    }
+}
+
+/// Context menu only where selection isn't offered (library). On the Recipes tab the long-press
+/// is selection, and the menu's actions live in the selection bar.
+private struct RecipeContextMenuAttachment: ViewModifier {
+    var enabled: Bool
+    let recipe: RecipeSummary
+    @Binding var sheet: RecipeSheet?
+    @Binding var toast: RecipeToast?
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.contextMenu { RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast) }
+        } else {
+            content
+        }
+    }
+}
+
+/// VoiceOver "Select" on the Recipes tab. Absent on library lists, which have no selection mode.
+private struct RecipeSelectAction: ViewModifier {
+    var enabled: Bool
+    var action: () -> Void
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.accessibilityAction(named: Text("Select"), action)
+        } else {
+            content
+        }
     }
 }
