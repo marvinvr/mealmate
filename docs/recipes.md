@@ -17,8 +17,8 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   title from the start.
 - **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press keeps the
   context menu; Select in that menu selects the recipe (a glass bar below the list offers
-  household actions, shopping list, meal plan, favorite, and Share for one recipe). Further
-  taps toggle. The toolbar shows the count,
+  the household action by its title, or an Actions menu when there are several, plus shopping
+  list, meal plan, favorite, and Share for one recipe). Further taps toggle. The toolbar shows the count,
   Cancel and Select All (loaded recipes; Select All again clears). The account button hides
   while this is active. List rows keep their swipe actions until selection starts. Library
   lists are unchanged.

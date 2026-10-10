@@ -144,7 +144,11 @@ private struct RecipesScreen: View {
                     .controlSize(.small)
                     .accessibilityLabel("Loading recipe actions")
                     .frame(maxWidth: .infinity, minHeight: 44)
-            } else if !applicableActions.isEmpty {
+            } else if applicableActions.count == 1, let action = applicableActions.first {
+                selectionBarButton(action.title, systemImage: action.isLink ? "arrow.up.forward.app" : "paperplane") {
+                    run(action)
+                }
+            } else if applicableActions.count > 1 {
                 Menu {
                     ForEach(applicableActions) { action in
                         Button {

@@ -217,6 +217,7 @@ struct RecipeBulkShoppingSheet: View {
             }
             Section {
                 ShoppingListPickerRow(choice: choice)
+                NewShoppingListButton(choice: choice, onCreated: add)
             } footer: {
                 Text("Adds every ingredient, at the servings each recipe is written for.")
             }

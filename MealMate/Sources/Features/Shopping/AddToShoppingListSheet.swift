@@ -207,6 +207,9 @@ private struct AddToShoppingListForm: View {
                 }
 
                 ShoppingListPickerRow(choice: model.destination)
+                NewShoppingListButton(choice: model.destination) {
+                    Task { await add() }
+                }
                 servingsStepper(model)
             }
 

@@ -40,9 +40,9 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   `POST …/lists/{id}/recipe`; last used list preselected; foods marked on hand start unticked.
   The Recipes tab's multi-select uses the same endpoint with one body entry per recipe
   (every ingredient, servings as written) and reports a failed request against each recipe.
-- `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by both
-  "add to list" sheets (cached lists, last used preselected via `shopping.lastListID`,
-  "New List…" when there is none).
+- `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by the
+  add-to-list sheets (cached lists, last used preselected via `shopping.lastListID`).
+  "New List…" asks for a name, `POST /api/households/shopping/lists`, then adds to that list.
 
 ## Meal Plan
 

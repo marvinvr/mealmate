@@ -22,7 +22,8 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
   The Recipes tab hides that button while multi-select is active (`AccountButtonHiddenKey`),
   so Cancel, the count and Select All fit. On iPhone the count is the inline title; on iPad
   it stays a large title under the top tab bar. A glass bar below the list holds the bulk
-  actions (Actions, List, Plan, favorite, and Share for one recipe).
+  actions (the one household action by name, or Actions when there are several; List, Plan,
+  favorite, and Share for one recipe).
   They keep the default large title and default `.searchable` placement (STYLE.md §8). A
   screen that needs search must not put its primary grid in a `ScrollView`: the Recipes grid
   is a plain `List` of card rows, which shows the field under the large title right away.

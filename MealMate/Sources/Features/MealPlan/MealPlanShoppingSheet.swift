@@ -87,6 +87,9 @@ struct MealPlanShoppingSheet: View {
         Form {
             Section {
                 ShoppingListPickerRow(choice: model.destination)
+                NewShoppingListButton(choice: model.destination) {
+                    Task { await add() }
+                }
             } footer: {
                 Text("Adds each recipe’s ingredients as written, once per planned meal.")
             }
