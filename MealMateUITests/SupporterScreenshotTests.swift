@@ -3,7 +3,7 @@ import XCTest
 
 /// Supporter tier states in the real app, with purchases from the local `MealMate.storekit`
 /// through `SKTestSession` (apps started by `simctl launch` don't get the scheme's StoreKit
-/// configuration). Walks non-supporter → tip → subscribed (Copper Pot applied) → lapsed → a
+/// configuration). Walks non-supporter → Espresso tip → Brunch tip → subscribed (Copper Pot applied) → lapsed → a
 /// retired Sous Chef subscription, and writes `screenshots/qa-supporter-[ipad-]*-<appearance>.png`. `XCUIDevice.appearance` doesn't
 /// switch the iOS 27 simulator, so set it first and pass its name for the file names:
 ///
@@ -36,8 +36,12 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         snapshotHomeScreen("default")
         stateArguments = []
 
-        // A tip: the food icons unlock, the subscription icons stay locked.
+        // The Espresso tip: a supporter, but every icon stays locked.
         try session.buyProduct(productIdentifier: "tip.espresso")
+        try shoot("espresso", sheet: true, icons: true)
+
+        // A tip from Brunch up: the food icons unlock, the subscription icons stay locked.
+        try session.buyProduct(productIdentifier: "tip.brunch")
         try shoot("tip", sheet: true, icons: true)
         try open("app-icon", waitFor: "Ramen")
         app.buttons["Ramen"].tap()
@@ -80,7 +84,7 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         let fresh = ["-supporter.status", "", "-supporter.isSubscribed", "0"]
         for busy in ["none", "headchef.monthly", "tip.espresso", "restore"] {
             stateArguments = fresh + (busy == "none" ? [] : ["-supporter.debugBusy", busy])
-            try open("supporter", waitFor: "App Icons")
+            try open("supporter", waitFor: "Restore Purchases")
             app.swipeUp()
             if busy == "restore" { app.swipeUp(); app.swipeUp() }
             snapshot("supporter-\(device)busy-\(busy)-\(appearance)")
@@ -102,7 +106,7 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         try open("settings", waitFor: "App Icon")
         snapshot("supporter-\(device)settings-\(state)-\(appearance)")
         if sheet {
-            try open("supporter", waitFor: "App Icons")
+            try open("supporter", waitFor: "Restore Purchases")
             snapshot("supporter-\(device)sheet-\(state)-\(appearance)")
             app.swipeUp()
             snapshot("supporter-\(device)sheet-\(state)-middle-\(appearance)")

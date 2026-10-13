@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings → App Icon. The default icon, the food icons (any tip or subscription) and the
+/// Settings → App Icon. The default icon, the food icons (subscription or a tip from Brunch up) and the
 /// subscription icons, each in their own section. Locked icons open the supporter sheet instead of applying.
 struct AppIconPickerView: View {
     @Environment(SupporterStore.self) private var store
@@ -19,9 +19,9 @@ struct AppIconPickerView: View {
             } header: {
                 Text("Supporter")
             } footer: {
-                Text(store.isSupporter
+                Text(store.hasFoodIcons
                      ? "Yours for good. Thank you for supporting MealMate."
-                     : "Any tip or subscription unlocks these for good.")
+                     : "The subscription or a tip from Brunch up unlocks these for good.")
             }
             Section {
                 grid(MealMateAppIcon.subscriptionIcons)
@@ -60,7 +60,7 @@ struct AppIconPickerView: View {
     }
 
     private func tile(_ icon: MealMateAppIcon, size: CGFloat) -> some View {
-        let available = icon.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed)
+        let available = icon.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed)
         let selected = current == icon
         return Button {
             guard available else {

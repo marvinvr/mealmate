@@ -32,6 +32,9 @@ Connect must use the same IDs (full listing in [App Store Connect](#app-store-co
 - Subscriptions are Family Sharing enabled; tips (consumables) can't be.
 - Tips are consumables so they can be given again. App Store Connect is the source of truth
   for prices; the `.storekit` file mirrors the USD prices.
+- **Espresso is a thank-you only:** it makes someone a supporter but unlocks no icon. Brunch,
+  Dinner Party and Feast (and the subscription) unlock the food icons
+  (`SupporterProduct.unlocksFoodIcons`).
 - The sheet shows prices from StoreKit (`displayPrice`, localized per storefront); names and
   plan copy are the app's own (English like the rest of the UI). The App Store Connect
   names/descriptions appear in the purchase sheet, receipts and the subscription settings.
@@ -43,9 +46,15 @@ into the environment and started in the root `.task`.
 
 - **Any verified purchase ever ⇒ supporter forever.** `SupporterStatus.merging` folds a
   `Transaction.all` read into the cached status (`isSupporter`, `supporterSince`, `tipCount`,
-  UserDefaults `supporter.status`) and only ever adds: an empty history read (offline, sandbox
+  `hasFoodIcons`, UserDefaults `supporter.status`) and only ever adds: an empty history read (offline, sandbox
   hiccup), a lapsed subscription or a refund never downgrades it on this device. A fresh
   install resolves it from the history again (refunded transactions don't count there).
+- **Food icons** (`hasFoodIcons`, `SupporterStore.hasFoodIcons`): set by any subscription (also a
+  retired or lapsed one) or a tip from Brunch up, ever; monotonic like `isSupporter`. Not by the
+  Espresso tip. Caches from before the flag decode with it off and the next history read sets it
+  again. No grandfathering for Espresso: until this change MealMate was only on TestFlight, so
+  every Espresso tip so far was a free sandbox purchase. A tester with only an Espresso tip and a
+  food icon set goes back to the default icon (the guard below).
 - **Subscribed** (`isSubscribed`, `activeSubscription`) comes from
   `Transaction.currentEntitlements` (`SupporterStatus.activeSubscription`: a subscription that
   isn't revoked, upgraded away or expired, retired `souschef.*` included). It can go away.
@@ -66,8 +75,8 @@ into the environment and started in the root `.task`.
 food icons, `Design/make-icon.swift` the subscription icons (see `STYLE.md` §12).
 
 - **Default** (Salad, shown as "MealMate"): free.
-- **Food icons** (any tip or subscription, for good): Grain Bowl, Spaghetti, Shakshuka, Ramen,
-  Margherita.
+- **Food icons** (any subscription or a tip from Brunch up, for good; not the Espresso tip):
+  Grain Bowl, Spaghetti, Shakshuka, Ramen, Margherita.
 - **Subscription icons** (only while a subscription is active): Copper Pot, Midnight Kitchen.
 - Alternates live in `MealMate/Resources/AppIcons.xcassets` (app target only, so the share
   extension doesn't carry them), registered via `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`
@@ -79,26 +88,42 @@ food icons, `Design/make-icon.swift` the subscription icons (see `STYLE.md` §12
   when the current one is no longer included (`MealMateAppIcon.fallback`): only once
   entitlements were read this launch, when the subscription state changes, and when the app
   becomes active (`setAlternateIconName` needs an active app). iOS shows its usual "You have
-  changed the icon" alert; there is no public API to suppress it. Supporter status and the food
-  icons stay.
+  changed the icon" alert; there is no public API to suppress it. Supporter status and unlocked
+  food icons stay.
 - Adding an icon: draw it in one of the scripts, add a `MealMateAppIcon` case, add the name to
   `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`, `xcodegen generate`.
 
 ## UI
 
-- **`SupporterView`** (one sheet, `.presentationSizing(.page)` on iPad): header (pitch, or
-  "Thank You" + "You're subscribed" / "You're a supporter" + "Supporter since … · n tips"), the
-  icon strip (`SupporterIconShowcase`, locked tiles before a purchase, tap to apply after), the
-  **Recurring** section: one "MealMate Supporter" card with what it includes (food icons for good,
-  the two subscription icons while subscribed, keeping MealMate free) and two equal-width price
-  buttons ("$2.99 / month", "$24.99 / year") plus "Yearly saves n%"; right below it the
-  subscription terms (charged to the Apple Account, auto-renewal, how to cancel, Family Sharing)
-  with the Privacy Policy (`PRIVACY.md` on GitHub) and Terms of Use (Apple's standard EULA)
-  links, as App Review requires them at the subscription options. Then tips (2 columns, 4 on
-  iPad), Restore Purchases and Manage Subscription (`manageSubscriptionsSheet`) while
-  subscribed.
-  Subscribed (a retired Sous Chef plan included): the card shows "Active", the billing period and
-  Manage Subscription instead of the price buttons (switching periods goes through it).
+- **`SupporterView`** (one sheet, `.presentationSizing(.page)` on iPad, max 560 pt wide), laid
+  out like Dusk's Supporter page. One spacing scale (`SupporterLayout`): 32 pt between sections,
+  10 pt from a section label to its first card and between stacked cards, cards inset 16 pt; all
+  text in a section (uppercase footnote label, card content, caption footnote, the icon strip's
+  first tile) starts on that one 16 pt column. Close is the system close button in the toolbar
+  (leading, STYLE.md §8), so scrolled content passes under the bar.
+  - Header: heart in a 14% accent circle, "Support MealMate" / prompt headline / "Thank You",
+    the pitch or thank-you, "Supporter since … · n tips".
+  - **App icons** (`SupporterIconShowcase`): "Supporter Perk — App Icons" / "Your App Icons", a
+    strip with the default and food icons, a hairline, then the subscription icons. Tiles are
+    sized so a sixth one is cut in half at the edge (it shows the strip scrolls); the strip bleeds
+    to the screen edge. Locked tiles carry a white lock on a dark disc (`AppIconImage`, also in
+    the picker); unlocked ones apply on tap.
+  - **Recurring:** one "MealMate Supporter" card: checkmark perks (the five food icons, yours to
+    keep; two subscriber exclusives with inline thumbnails; keeps MealMate free) and two
+    equal-width price buttons ("$2.99 / month", "$24.99 / year") with "Billed monthly" /
+    "Saves n%" under each. Right below: the subscription terms (charged to the Apple Account,
+    auto-renewal, how to cancel, the subscription icons only while active, Family Sharing) and
+    the Privacy Policy (`PRIVACY.md` on GitHub) and Terms of Use (Apple's standard EULA) links,
+    as App Review requires them at the subscription options. Subscribed (a retired Sous Chef
+    plan included): an "Active" badge and accent outline, the billing period and Manage
+    Subscription (`manageSubscriptionsSheet`) instead of the price buttons.
+  - **One-Time** ("Support Again" for supporters): one full-width row per tip with the name, the
+    app's own description (`SupporterProduct.tipDescription`), from Brunch up "Includes the five
+    food icons" (one line; the footnote says they're yours to keep), and the price on the right; footnote "A tip is a one-time
+    thank-you…".
+  - Footer: everything stays free, Restore Purchases (and Manage Subscription while subscribed
+    but the products can't load).
+  - Busy buttons keep their size: `busyOverlay` hides the label and overlays a small spinner.
 - **Settings**: the first section holds the supporter row (opens the sheet; "Thank You for
   Subscribing" / "Thank You for Your Support" for supporters) and the **App Icon** row, which
   pushes `AppIconPickerView` (default / Supporter / Subscription sections; a locked tile opens
@@ -131,11 +156,12 @@ onboarding) and only signed-in days count.
 
 ## Testing
 
-- **Unit tests** (`MealMateTests/SupporterTests.swift`): status merging and the active
-  subscription (retired levels included), icon availability and the lapse fallback, the old
+- **Unit tests** (`MealMateTests/SupporterTests.swift`): status merging (Espresso vs. Brunch and
+  up, the cache from before `hasFoodIcons`) and the active subscription (retired levels included), icon availability and the lapse fallback, the old
   cache key, the prompt ladder and usage days, the `.storekit` file vs. the catalog, and
   StoreKit flows through `SKTestSession` with `MealMate.storekit` (bundled into the test target):
-  load the offered catalog, buy every tip (and one again), subscribe, a Sous Chef subscriber
+  load the offered catalog, buy every tip (and one again; Espresso alone unlocks no icon, also
+  after a reinstall), subscribe, a Sous Chef subscriber
   keeps every perk and moves to the current subscription, lapse (`oneRenewalEveryTwoSeconds` +
   auto-renew off), fresh-install resolution, refund keeps the cached status.
 - **By hand in the simulator:** run from Xcode; the `MealMate` scheme's Run action attaches
@@ -199,8 +225,9 @@ Consumables aren't Family Sharing eligible.
 - Review notes (paste for each product):
 
   > MealMate is free; every feature works without purchases. These optional purchases only
-  > support development: any tip or the subscription unlocks five alternate app icons for good;
-  > the subscription additionally unlocks two more icons while it is active. To find them: sign
+  > support development: the subscription or a tip from Brunch up unlocks five alternate app
+  > icons for good; the subscription additionally unlocks two more icons while it is active.
+  > The Espresso tip is a thank-you only and unlocks nothing. To find them: sign
   > in (demo server credentials are in the app review notes), tap the avatar at the top right
   > to open Settings, then "Support MealMate" at the top. The App Icon row below it shows the
   > icons. Restore Purchases and Manage Subscription are in the same sheet.

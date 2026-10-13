@@ -48,6 +48,8 @@ final class SupporterStore {
     private(set) var lastErrorMessage: String?
 
     var isSupporter: Bool { status.isSupporter }
+    /// The five food icons: a subscription or a tip from Brunch up, ever (not the Espresso tip).
+    var hasFoodIcons: Bool { status.hasFoodIcons || isSubscribed }
     var hasProducts: Bool { !(subscriptionProducts.isEmpty && tipProducts.isEmpty) }
 
     @ObservationIgnored private let defaults: UserDefaults

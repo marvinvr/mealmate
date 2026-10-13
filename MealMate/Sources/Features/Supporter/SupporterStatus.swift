@@ -30,6 +30,10 @@ enum SupporterProduct: String, CaseIterable, Sendable {
         }
     }
 
+    /// Unlocks the five food icons for good: the subscription and every tip from Brunch up. The
+    /// Espresso tip is a thank-you only.
+    var unlocksFoodIcons: Bool { self != .tipEspresso }
+
     /// A retired subscription: honoured, no longer sold.
     var isLegacy: Bool { self == .legacySousChefMonthly || self == .legacySousChefYearly }
     var isYearly: Bool { self == .yearly || self == .legacySousChefYearly }
@@ -47,6 +51,17 @@ enum SupporterProduct: String, CaseIterable, Sendable {
         case .tipBrunch: "Brunch"
         case .tipDinnerParty: "Dinner Party"
         case .tipFeast: "Feast"
+        }
+    }
+
+    /// The line under a tip's name in the sheet (same as its App Store Connect description).
+    var tipDescription: String? {
+        switch self {
+        case .tipEspresso: "A quick thank-you."
+        case .tipBrunch: "A generous thank-you."
+        case .tipDinnerParty: "Thanks for keeping MealMate going."
+        case .tipFeast: "Wow. Thank you, truly."
+        case .monthly, .yearly, .legacySousChefMonthly, .legacySousChefYearly: nil
         }
     }
 }
@@ -72,11 +87,31 @@ struct SupporterEntitlementRecord: Equatable, Sendable {
 ///
 /// Monotonic: any verified purchase ever makes someone a supporter for good, and a history read
 /// can only add evidence, never take it away (an empty read offline or in a sandbox hiccup must
-/// not downgrade a supporter).
+/// not downgrade a supporter). The food icons follow the same rule but need more than the
+/// Espresso tip (`SupporterProduct.unlocksFoodIcons`).
 struct SupporterStatus: Equatable, Sendable, Codable {
     var isSupporter = false
     var supporterSince: Date?
     var tipCount = 0
+    /// A subscription or a tip from Brunch up, ever.
+    var hasFoodIcons = false
+
+    init(isSupporter: Bool = false, supporterSince: Date? = nil, tipCount: Int = 0, hasFoodIcons: Bool = false) {
+        self.isSupporter = isSupporter
+        self.supporterSince = supporterSince
+        self.tipCount = tipCount
+        self.hasFoodIcons = hasFoodIcons
+    }
+
+    /// Caches from before `hasFoodIcons` decode with it off; the next history read sets it again
+    /// for anyone with a subscription or a tip from Brunch up.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        isSupporter = try container.decode(Bool.self, forKey: .isSupporter)
+        supporterSince = try container.decodeIfPresent(Date.self, forKey: .supporterSince)
+        tipCount = try container.decode(Int.self, forKey: .tipCount)
+        hasFoodIcons = try container.decodeIfPresent(Bool.self, forKey: .hasFoodIcons) ?? false
+    }
 
     /// Folds a `Transaction.all` read (plus whether a subscription is active right now) into the
     /// cached status. Revoked (refunded) transactions don't add evidence.
@@ -88,8 +123,12 @@ struct SupporterStatus: Equatable, Sendable, Codable {
             result.isSupporter = true
             result.supporterSince = min(result.supporterSince ?? record.purchaseDate, record.purchaseDate)
             if !product.isSubscription { tips += max(record.quantity, 1) }
+            if product.unlocksFoodIcons { result.hasFoodIcons = true }
         }
-        if isSubscribed { result.isSupporter = true }
+        if isSubscribed {
+            result.isSupporter = true
+            result.hasFoodIcons = true
+        }
         result.tipCount = max(tipCount, tips)
         return result
     }

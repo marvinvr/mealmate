@@ -22,19 +22,15 @@ struct SupporterView: View {
 
     @Environment(SupporterStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var showsManageSubscriptions = false
-
-    private var isRegular: Bool { horizontalSizeClass == .regular }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: Theme.Spacing.xxl) {
+                VStack(spacing: SupporterLayout.sectionSpacing) {
                     header
                     SupporterIconShowcase()
-                    plans
-                    tips
+                    purchaseSections
                     if context.isPrompt {
                         Button("Maybe Later") { dismiss() }
                             .buttonStyle(.glass)
@@ -43,21 +39,23 @@ struct SupporterView: View {
                     }
                     footer
                 }
-                .padding(.horizontal, Theme.Spacing.screen)
-                .padding(.top, Theme.Spacing.xs)
-                .padding(.bottom, Theme.Spacing.xxl)
-                .frame(maxWidth: isRegular ? 820 : 560)
+                .padding(.horizontal, SupporterLayout.pageInset)
+                .padding(.top, Theme.Spacing.xxs)
+                .padding(.bottom, 36)
+                .frame(maxWidth: 560)
                 .frame(maxWidth: .infinity)
             }
             .screenBackground()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // A toolbar button, so scrolled content passes under the bar.
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", systemImage: "xmark") { dismiss() }
+                    Button(role: .close) { dismiss() }
                 }
             }
         }
         .presentationSizing(.page)
+        .presentationDragIndicator(.visible)
         .manageSubscriptionsSheet(isPresented: $showsManageSubscriptions)
         .sensoryFeedback(.success, trigger: store.completedPurchaseCount)
         .task {
@@ -68,28 +66,31 @@ struct SupporterView: View {
     // MARK: - Header
 
     private var header: some View {
-        VStack(spacing: Theme.Spacing.s) {
-            Image(systemName: store.isSupporter ? "heart.fill" : "heart")
+        VStack(spacing: 0) {
+            Image(systemName: "heart.fill")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.tint)
-                .frame(width: 60, height: 60)
-                .background(Color.accentColor.opacity(0.16), in: .circle)
+                .frame(width: 64, height: 64)
+                .background(Color.accentColor.opacity(0.14), in: .circle)
+                .padding(.bottom, Theme.Spacing.m)
                 .accessibilityHidden(true)
             Text(headline)
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
+                .padding(.bottom, Theme.Spacing.xs)
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 520)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
             if let supporterDetail {
                 Text(supporterDetail)
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                    .padding(.top, 10)
             }
         }
-        .padding(.top, Theme.Spacing.s)
         .animation(.smooth, value: store.isSupporter)
     }
 
@@ -119,34 +120,32 @@ struct SupporterView: View {
         return text
     }
 
-    // MARK: - Subscription
+    // MARK: - Purchases
 
     @ViewBuilder
-    private var plans: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SupporterSectionHeader(title: "Recurring")
-            if store.hasProducts || store.isSubscribed {
-                SupporterSubscriptionCard(showsManage: $showsManageSubscriptions)
-                // App Review wants the terms right at the subscription options: period and price
-                // on every button, renewal terms, Privacy Policy and Terms of Use (EULA).
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. Family Sharing included.")
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Link("Privacy Policy", destination: SupporterLinks.privacyPolicy)
-                        Text("·").foregroundStyle(.secondary).accessibilityHidden(true)
-                        Link("Terms of Use (EULA)", destination: SupporterLinks.termsOfUse)
+    private var purchaseSections: some View {
+        if !store.hasProducts && !store.isSubscribed {
+            productsPlaceholder
+        } else {
+            VStack(alignment: .leading, spacing: SupporterLayout.sectionSpacing) {
+                VStack(alignment: .leading, spacing: SupporterLayout.labelSpacing) {
+                    SupporterSectionLabel(title: "Recurring")
+                    SupporterSubscriptionCard(showsManage: $showsManageSubscriptions)
+                    // App Review wants the terms right at the subscription options: period and
+                    // price on every button, renewal terms, Privacy Policy and Terms of Use (EULA).
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        SupporterFootnote(text: "Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. Copper Pot and Midnight Kitchen are included while the subscription is active. Family Sharing included.")
+                        SupporterLegalLinks()
                     }
-                    .foregroundStyle(.tint)
+                    .padding(.top, 2)
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            } else {
-                productsPlaceholder
-            }
-            if let error = store.lastErrorMessage {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                tips
+                if let error = store.lastErrorMessage {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, SupporterLayout.cardInset)
+                }
             }
         }
     }
@@ -156,36 +155,32 @@ struct SupporterView: View {
         if store.productsUnavailable {
             VStack(spacing: Theme.Spacing.s) {
                 Text("The App Store options couldn’t be loaded right now.")
-                    .font(.subheadline)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
                 Button("Try Again") { Task { await store.loadProducts() } }
-                    .buttonStyle(.bordered)
+                    .font(.subheadline.weight(.medium))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
             }
-            .frame(maxWidth: .infinity)
-            .surfaceCard()
+            .padding(.vertical, Theme.Spacing.s)
         } else {
             ProgressView()
-                .frame(maxWidth: .infinity, minHeight: 120)
+                .padding(.vertical, Theme.Spacing.xl)
         }
     }
-
-    // MARK: - Tips
 
     @ViewBuilder
     private var tips: some View {
         if !store.tipProducts.isEmpty {
-            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                SupporterSectionHeader(title: store.isSupporter ? "Leave Another Tip" : "One-Time Tip")
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.s),
-                                         count: isRegular ? 4 : 2),
-                          spacing: Theme.Spacing.s) {
+            VStack(alignment: .leading, spacing: SupporterLayout.labelSpacing) {
+                SupporterSectionLabel(title: store.isSupporter ? "Support Again" : "One-Time")
+                VStack(spacing: SupporterLayout.rowSpacing) {
                     ForEach(store.tipProducts, id: \.id) { product in
-                        SupporterTipButton(product: product)
+                        SupporterTipRow(product: product)
                     }
                 }
-                Text("A tip is a one-time thank-you. It makes you a supporter for good, with all five food icons.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SupporterFootnote(text: "A tip is a one-time thank-you and can be given again anytime. From Brunch up it includes the five food icons, yours to keep.")
+                    .padding(.top, 2)
             }
         }
     }
@@ -194,24 +189,30 @@ struct SupporterView: View {
 
     private var footer: some View {
         VStack(spacing: Theme.Spacing.m) {
-            Text("Supporting changes nothing about what MealMate can do: every feature is free for everyone.")
-                .font(.footnote)
+            Text("Everything in MealMate stays free either way: supporting unlocks app icons and keeps development going.")
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            HStack(spacing: Theme.Spacing.l) {
-                if store.isSubscribed {
-                    Button("Manage Subscription") { showsManageSubscriptions = true }
-                }
-                Button {
-                    Task { await store.restorePurchases() }
-                } label: {
-                    Text("Restore Purchases")
-                        .busyOverlay(store.isRestoring)
-                }
-                .disabled(store.isRestoring)
+            // The subscription card carries Manage Subscription; this is the fallback while the
+            // products can't load.
+            if store.isSubscribed && store.subscriptionProducts.isEmpty {
+                Button("Manage Subscription") { showsManageSubscriptions = true }
+                    .font(.subheadline)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+            }
+            Button {
+                Task { await store.restorePurchases() }
+            } label: {
+                Text("Restore Purchases")
+                    .busyOverlay(store.isRestoring)
             }
             .font(.subheadline)
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+            .disabled(store.isRestoring)
         }
+        .padding(.horizontal, SupporterLayout.cardInset)
     }
 }
 
@@ -221,76 +222,127 @@ enum SupporterLinks {
     static let termsOfUse = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 }
 
-// MARK: - Section header
+// MARK: - Layout
 
-private struct SupporterSectionHeader: View {
+/// One spacing scale for the sheet, so every section, card and footnote keeps the same rhythm.
+/// All text in a section (label, card content, footnote, the icon strip's first tile) starts on
+/// one column, `pageInset + cardInset` from the edge, like an inset grouped list.
+enum SupporterLayout {
+    /// Between the sheet's sections (header, icons, subscription, tips, footer).
+    static let sectionSpacing = Theme.Spacing.xxl
+    /// Between a section label and its first card.
+    static let labelSpacing: CGFloat = 10
+    /// Between stacked cards in one section.
+    static let rowSpacing: CGFloat = 10
+    /// Horizontal page margin; the icon strip bleeds past it to the edge.
+    static let pageInset = Theme.Spacing.screen
+    /// Text inset inside every card, shared by section labels and footnotes.
+    static let cardInset = Theme.Spacing.m
+    static let cornerRadius = Theme.Radius.card
+    /// The subscription card.
+    static let featureCornerRadius: CGFloat = 22
+}
+
+private extension View {
+    /// Surface fill and hairline shared by every card on the sheet.
+    func supporterCard(cornerRadius: CGFloat = SupporterLayout.cornerRadius, stroke: Color? = nil) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        return background(.mealMateSurface, in: shape)
+            .overlay { shape.strokeBorder(stroke ?? Color.primary.opacity(0.05), lineWidth: 1) }
+            .contentShape(shape)
+    }
+}
+
+// MARK: - Section label and footnote
+
+/// Small uppercase label above a section's cards, on the cards' text column.
+private struct SupporterSectionLabel: View {
     let title: String
 
     var body: some View {
         Text(title)
-            .font(.sectionTitle)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .font(.footnote.weight(.semibold))
+            .textCase(.uppercase)
+            .tracking(0.6)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, SupporterLayout.cardInset)
             .accessibilityAddTraits(.isHeader)
+    }
+}
+
+private struct SupporterFootnote: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineSpacing(1)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, SupporterLayout.cardInset)
+    }
+}
+
+private struct SupporterLegalLinks: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Link("Privacy Policy", destination: SupporterLinks.privacyPolicy)
+            Text("·").accessibilityHidden(true)
+            Link("Terms of Use (EULA)", destination: SupporterLinks.termsOfUse)
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(.tint)
+        .padding(.horizontal, SupporterLayout.cardInset)
     }
 }
 
 // MARK: - Subscription card
 
-/// The one subscription: what it includes, then its two billing periods side by side. While
-/// subscribed (a retired Sous Chef plan included) it shows the billing period and Manage
-/// Subscription instead; switching periods goes through Manage Subscription.
+/// The one subscription: what it includes, then its two billing periods side by side, each with a
+/// short line under it. While subscribed (a retired Sous Chef plan included) it shows the billing
+/// period and Manage Subscription instead; switching periods goes through Manage Subscription.
 private struct SupporterSubscriptionCard: View {
     @Binding var showsManage: Bool
 
     @Environment(SupporterStore.self) private var store
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("MealMate Supporter")
-                        .font(.title3.bold())
+                        .font(.headline.bold())
                     Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: Theme.Spacing.xs)
                 if store.isSubscribed {
                     Text("Active")
-                        .font(.caption.weight(.semibold))
+                        .font(.caption2.bold())
+                        .textCase(.uppercase)
+                        .tracking(0.5)
                         .foregroundStyle(.tint)
                         .padding(.horizontal, Theme.Spacing.xs)
-                        .padding(.vertical, Theme.Spacing.xxs)
-                        .background(Color.accentColor.opacity(0.16), in: .capsule)
+                        .padding(.vertical, 3)
+                        .background(Color.accentColor.opacity(0.14), in: .capsule)
                 }
             }
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                perk("app.badge", "Five food icons, yours for good")
-                perk("sparkles", "Copper Pot and Midnight Kitchen while subscribed")
-                perk("heart", "Keeps MealMate free, ad-free and independent")
-            }
-
-            HStack(spacing: Theme.Spacing.s) {
-                ForEach(MealMateAppIcon.subscriptionIcons) { icon in
-                    HStack(spacing: Theme.Spacing.xs) {
-                        AppIconImage(icon: icon, size: 36)
-                        Text(icon.displayName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
+            VStack(alignment: .leading, spacing: 10) {
+                perk("The five food icons, yours to keep")
+                subscriptionIconsPerk
+                perk("Keeps MealMate free, ad-free and independent")
             }
 
             actions
+                .padding(.top, 2)
         }
-        .surfaceCard()
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(store.isSubscribed ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.06),
-                              lineWidth: store.isSubscribed ? 1.5 : 0.5)
-        }
+        .padding(.horizontal, SupporterLayout.cardInset)
+        .padding(.vertical, 18)
+        .supporterCard(cornerRadius: SupporterLayout.featureCornerRadius,
+                       stroke: store.isSubscribed ? Color.accentColor.opacity(0.45) : nil)
     }
 
     private var subtitle: String {
@@ -299,45 +351,62 @@ private struct SupporterSubscriptionCard: View {
         return current.isYearly ? "Billed yearly" : "Billed monthly"
     }
 
-    private func perk(_ symbol: String, _ text: String) -> some View {
-        Label {
+    private func perk(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            SupporterCheckmark()
             Text(text)
-        } icon: {
-            Image(systemName: symbol)
-                .foregroundStyle(.tint)
+                .font(.footnote)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.subheadline)
+    }
+
+    private var subscriptionIconsPerk: some View {
+        HStack(alignment: .center, spacing: 10) {
+            SupporterCheckmark()
+            Text("Two subscriber exclusives")
+                .font(.footnote)
+            HStack(spacing: 6) {
+                ForEach(MealMateAppIcon.subscriptionIcons) { icon in
+                    AppIconImage(icon: icon, size: 28)
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Two subscriber exclusives: "
+            + MealMateAppIcon.subscriptionIcons.map(\.displayName).formatted(.list(type: .and)))
     }
 
     @ViewBuilder
     private var actions: some View {
         if store.isSubscribed {
             Button("Manage Subscription") { showsManage = true }
+                .font(.subheadline.weight(.semibold))
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)
         } else if !store.subscriptionProducts.isEmpty {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Theme.Spacing.s) { priceButtons }
-                    VStack(spacing: Theme.Spacing.xs) { priceButtons }
-                }
-                if let savings {
-                    Text(savings)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 10) { priceOptions }
+                VStack(spacing: Theme.Spacing.s) { priceOptions }
             }
         }
     }
 
+    /// Each period's button with a short line under it, so both columns keep the same height and
+    /// the savings sit under the yearly price.
     @ViewBuilder
-    private var priceButtons: some View {
+    private var priceOptions: some View {
         ForEach(store.subscriptionProducts, id: \.id) { product in
-            SupporterPriceButton(product: product)
+            let isYearly = SupporterProduct(rawValue: product.id)?.isYearly == true
+            VStack(spacing: 6) {
+                SupporterPriceButton(product: product)
+                Text(isYearly ? (savings ?? "Billed yearly") : "Billed monthly")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
-    /// "Yearly saves 30%." from the monthly and yearly prices.
+    /// "Saves 30%" from the monthly and yearly prices.
     private var savings: String? {
         let products = store.subscriptionProducts
         guard let monthly = products.first(where: { $0.id == SupporterProduct.monthly.rawValue }),
@@ -345,7 +414,17 @@ private struct SupporterSubscriptionCard: View {
               monthly.price > 0 else { return nil }
         let ratio = (yearly.price / (monthly.price * 12) as NSDecimalNumber).doubleValue
         let percent = Int(((1 - ratio) * 100).rounded())
-        return percent > 0 ? "Yearly saves \(percent)%." : nil
+        return percent > 0 ? "Saves \(percent)%" : nil
+    }
+}
+
+private struct SupporterCheckmark: View {
+    var body: some View {
+        Image(systemName: "checkmark")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.tint)
+            .frame(width: 14)
+            .accessibilityHidden(true)
     }
 }
 
@@ -370,7 +449,7 @@ private struct SupporterPriceButton: View {
         .controlSize(.large)
         .tint(.accentColor)
         .disabled(store.purchasingProductID != nil)
-        .accessibilityLabel("\(kind?.displayName ?? product.displayName), \(product.displayPrice)")
+        .accessibilityLabel("MealMate Supporter \(kind?.displayName ?? product.displayName), \(product.displayPrice) per \(kind?.isYearly == true ? "year" : "month")")
     }
 }
 
@@ -391,89 +470,118 @@ extension View {
     }
 }
 
-// MARK: - Tip button
+// MARK: - Tip row
 
-private struct SupporterTipButton: View {
+/// One tip: name, description and, from Brunch up, the food icons; the price on the right. The
+/// spinner overlays the price, so the row never shifts while buying.
+private struct SupporterTipRow: View {
     let product: Product
     @Environment(SupporterStore.self) private var store
 
     private var kind: SupporterProduct? { SupporterProduct(rawValue: product.id) }
+    private var name: String { kind?.displayName ?? product.displayName }
 
     var body: some View {
         Button {
             Task { await store.purchase(product) }
         } label: {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Image(systemName: symbol)
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-                    .frame(height: 28)
-                Text(kind?.displayName ?? product.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+            HStack(alignment: .center, spacing: Theme.Spacing.s) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(name)
+                        .font(.subheadline.weight(.semibold))
+                    if let description = kind?.tipDescription {
+                        Text(description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    if kind?.unlocksFoodIcons == true {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Image(systemName: "checkmark")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.tint)
+                            Text("Includes the five food icons")
+                                .font(.caption)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.top, Theme.Spacing.xxs)
+                    }
+                }
+                Spacer(minLength: 0)
                 Text(product.displayPrice)
+                    .font(.callout.weight(.semibold))
                     .monospacedDigit()
-                    .busyOverlay(store.purchasingProductID == product.id, alignment: .leading)
-                    .font(.subheadline)
-                .foregroundStyle(.secondary)
+                    .busyOverlay(store.purchasingProductID == product.id, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .surfaceCard(padding: Theme.Spacing.m)
-            .contentShape(.rect(cornerRadius: Theme.Radius.card))
+            .foregroundStyle(.primary)
+            .padding(.horizontal, SupporterLayout.cardInset)
+            .padding(.vertical, 14)
+            .supporterCard()
         }
         .buttonStyle(.plain)
         .disabled(store.purchasingProductID != nil)
-        .accessibilityLabel("\(kind?.displayName ?? product.displayName) tip, \(product.displayPrice)")
-    }
-
-    private var symbol: String {
-        switch kind {
-        case .tipEspresso: "cup.and.saucer"
-        case .tipBrunch: "frying.pan"
-        case .tipDinnerParty: "wineglass"
-        case .tipFeast: "fork.knife"
-        default: "heart"
-        }
+        .accessibilityLabel("\(name) tip, \(product.displayPrice)"
+            + (kind?.unlocksFoodIcons == true ? ", includes the five food icons" : ""))
     }
 }
 
 // MARK: - Icon showcase
 
-/// The food icons and the two subscription icons in one strip. Before a purchase it shows
-/// what supporting includes (locked tiles); afterwards a tap applies an icon.
+/// Every app icon in one strip: the default and the food icons, then the subscription icons after
+/// a hairline. Before a purchase it shows what supporting includes (locked tiles); unlocked tiles
+/// apply on tap.
 struct SupporterIconShowcase: View {
     @Environment(SupporterStore.self) private var store
     @State private var current: MealMateAppIcon = .default
+    @State private var stripWidth: CGFloat = 0
 
-    private static let tileSize: CGFloat = 64
+    private static let tileSpacing: CGFloat = 14
+    /// The strip bleeds this far past the content column, so tiles scroll out under the edge.
+    private static let edgeInset = SupporterLayout.pageInset
+    /// Where the label, caption and first tile start: the text column of the cards below.
+    private static let textInset = SupporterLayout.cardInset
+
+    /// Five tiles fit and a sixth is cut in half at the trailing edge: the cut tile shows the
+    /// strip scrolls. A fixed size can land exactly on the edge on some devices and look complete.
+    private var tileSize: CGFloat {
+        guard stripWidth > 0 else { return 60 }
+        return max(52, (stripWidth - Self.edgeInset - Self.textInset - 5 * Self.tileSpacing) / 5.5)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SupporterSectionHeader(title: "App Icons")
+        VStack(alignment: .leading, spacing: SupporterLayout.labelSpacing) {
+            SupporterSectionLabel(title: store.hasFoodIcons ? "Your App Icons" : "Supporter Perk — App Icons")
             ScrollView(.horizontal) {
-                HStack(alignment: .top, spacing: Theme.Spacing.m) {
-                    ForEach(MealMateAppIcon.allCases.filter { $0 != .default }) { icon in
+                HStack(alignment: .top, spacing: Self.tileSpacing) {
+                    ForEach(MealMateAppIcon.allCases.filter { $0.requirement != .subscription }) { icon in
+                        tile(icon)
+                    }
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.25))
+                        .frame(width: 1, height: tileSize * 0.8)
+                        .padding(.top, tileSize * 0.1)
+                        .accessibilityHidden(true)
+                    ForEach(MealMateAppIcon.subscriptionIcons) { icon in
                         tile(icon)
                     }
                 }
                 .scrollTargetLayout()
-                .padding(.vertical, Theme.Spacing.xxs)
+                .padding(.vertical, 2)
             }
             .scrollIndicators(.hidden)
             .scrollTargetBehavior(.viewAligned)
-            .contentMargins(.horizontal, Theme.Spacing.screen, for: .scrollContent)
-            .padding(.horizontal, -Theme.Spacing.screen)
-            Text(caption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .contentMargins(.leading, Self.edgeInset + Self.textInset, for: .scrollContent)
+            .contentMargins(.trailing, Self.edgeInset, for: .scrollContent)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { stripWidth = $0 }
+            .padding(.horizontal, -Self.edgeInset)
+            SupporterFootnote(text: caption)
         }
         .trackingAppIcon($current)
     }
 
     private func tile(_ icon: MealMateAppIcon) -> some View {
-        let available = icon.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed)
+        let available = icon.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed)
         return Button {
             guard available else { return }
             Task {
@@ -481,15 +589,14 @@ struct SupporterIconShowcase: View {
                 current = .current
             }
         } label: {
-            VStack(spacing: Theme.Spacing.xs) {
-                AppIconImage(icon: icon, size: Self.tileSize, isSelected: current == icon,
-                             isLocked: !available)
+            VStack(spacing: 6) {
+                AppIconImage(icon: icon, size: tileSize, isSelected: current == icon, isLocked: !available)
                 Text(icon.displayName)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(icon.requirement == .subscription ? .primary : .secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                    .frame(width: Self.tileSize + 8)
+                    .frame(width: tileSize + Self.tileSpacing - 2)
             }
         }
         .buttonStyle(.plain)
@@ -498,9 +605,10 @@ struct SupporterIconShowcase: View {
     }
 
     private var caption: String {
-        if store.isSubscribed { return "Tap an icon to use it on your Home Screen." }
-        if store.isSupporter { return "Tap an icon to use it. Copper Pot and Midnight Kitchen come with the subscription." }
-        return "Any tip or subscription unlocks the five food icons for good. Copper Pot and Midnight Kitchen come with the subscription."
+        let exclusives = "Copper Pot and Midnight Kitchen come with the subscription"
+        if store.isSubscribed { return "Tap an icon to use it." }
+        if store.hasFoodIcons { return "Tap an icon to use it. \(exclusives)." }
+        return "The subscription unlocks all seven icons, a tip from Brunch up the five food icons."
     }
 }
 
@@ -521,23 +629,18 @@ struct AppIconImage: View {
             .frame(width: size, height: size)
             .clipShape(shape)
             .overlay {
-                shape.strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-            }
-            .overlay {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: size * 0.225 + 4, style: .continuous)
-                        .strokeBorder(.tint, lineWidth: 2)
-                        .padding(-4)
-                }
+                shape.strokeBorder(isSelected ? Color.accentColor : Color.primary.opacity(0.08),
+                                   lineWidth: isSelected ? 2 : 0.5)
             }
             .overlay(alignment: .bottomTrailing) {
                 if isLocked {
+                    // White on a dark disc reads on light and dark artwork, in either appearance.
                     Image(systemName: "lock.fill")
-                        .font(.system(size: max(size * 0.16, 9), weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .font(.system(size: max(size * 0.14, 8), weight: .semibold))
+                        .foregroundStyle(.white)
                         .padding(size * 0.08)
-                        .background(.thinMaterial, in: .circle)
-                        .offset(x: 3, y: 3)
+                        .background(Color.black.opacity(0.55), in: .circle)
+                        .padding(3)
                 }
             }
             .accessibilityHidden(true)

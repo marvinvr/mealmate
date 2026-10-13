@@ -75,6 +75,9 @@ Warm neutrals instead of the system's cool greys: food photos look better on a p
 
 - Spacing scale (`Theme.Spacing`): `xxs 4 · xs 8 · s 12 · m 16 · l 20 · xl 24 · xxl 32 · xxxl 48`.
   Screen margin `screen` = 20, grid gap `grid` = 16. Sections in detail screens are `xxl` apart.
+  The supporter sheet layers its own scale on top (`SupporterLayout` in `SupporterView.swift`):
+  sections `xxl` apart, 10 pt from a small uppercase section label to its card and between cards,
+  every text line in a section on one column 16 pt inside the cards, like an inset grouped list.
 - Radii (`Theme.Radius`, always `.continuous`): `thumbnail 10`, `card 16`, `large 24`.
   Chips and buttons: `.capsule`.
 - No shadows on content. Separation comes from whitespace, surface tone and the image hairline.

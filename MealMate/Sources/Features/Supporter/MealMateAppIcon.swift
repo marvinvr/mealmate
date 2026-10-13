@@ -1,8 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// The app icons. The default (a salad) is free; five food icons are a thank-you for any tip or
-/// subscription, for good; two are subscription icons that only stay on while it is active.
+/// The app icons. The default (a salad) is free; five food icons are a thank-you for the
+/// subscription or a tip from Brunch up, for good; two are subscription icons that only stay on while it is active.
 ///
 /// `alternateIconName` must match an `AppIcon<Name>.appiconset` in `AppIcons.xcassets` listed
 /// in `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` (`project.yml`). The artwork and the
@@ -21,7 +21,7 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     enum Requirement: Sendable {
         /// Free for everyone.
         case free
-        /// Any tip or subscription, ever.
+        /// A subscription or a tip from Brunch up, ever (`SupporterStore.hasFoodIcons`).
         case supporter
         /// Only while a subscription is active.
         case subscription
@@ -72,19 +72,19 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     static var foodIcons: [MealMateAppIcon] { allCases.filter { $0.requirement == .supporter } }
     static var subscriptionIcons: [MealMateAppIcon] { allCases.filter { $0.requirement == .subscription } }
 
-    func isAvailable(isSupporter: Bool, isSubscribed: Bool) -> Bool {
+    func isAvailable(hasFoodIcons: Bool, isSubscribed: Bool) -> Bool {
         switch requirement {
         case .free: true
-        case .supporter: isSupporter || isSubscribed
+        case .supporter: hasFoodIcons || isSubscribed
         case .subscription: isSubscribed
         }
     }
 
     /// The icon to switch to because `current` is no longer included, or nil to keep it.
-    /// Supporter status never goes away, so in practice this only falls back from a subscription
-    /// icon after the subscription lapsed.
-    static func fallback(for current: MealMateAppIcon, isSupporter: Bool, isSubscribed: Bool) -> MealMateAppIcon? {
-        current.isAvailable(isSupporter: isSupporter, isSubscribed: isSubscribed) ? nil : .default
+    /// The food icons never go away once unlocked, so in practice this falls back from a
+    /// subscription icon after the subscription lapsed, or from a food icon set without them.
+    static func fallback(for current: MealMateAppIcon, hasFoodIcons: Bool, isSubscribed: Bool) -> MealMateAppIcon? {
+        current.isAvailable(hasFoodIcons: hasFoodIcons, isSubscribed: isSubscribed) ? nil : .default
     }
 
     // MARK: - Applying
@@ -117,7 +117,7 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// Puts the default icon back when the current one is no longer included (the subscription
-/// lapsed or was refunded) or no longer exists (a retired icon). Supporter status and the food
+/// lapsed or was refunded) or no longer exists (a retired icon). Supporter status and unlocked food
 /// icons are untouched. Runs once StoreKit
 /// has confirmed the entitlements this launch, and again whenever the subscription state changes
 /// or the app becomes active (`setAlternateIconName` only works while active).
@@ -139,7 +139,7 @@ private struct AppIconEntitlementGuard: ViewModifier {
             return
         }
         guard store.hasResolvedEntitlements,
-              let fallback = MealMateAppIcon.fallback(for: .current, isSupporter: store.isSupporter,
+              let fallback = MealMateAppIcon.fallback(for: .current, hasFoodIcons: store.hasFoodIcons,
                                                       isSubscribed: store.isSubscribed) else { return }
         Task { try? await MealMateAppIcon.select(fallback) }
     }

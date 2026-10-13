@@ -27,6 +27,35 @@ struct SupporterStatusTests {
         #expect(legacy.isSupporter)
     }
 
+    @Test func espressoIsAThankYouOnly() {
+        let espresso = SupporterStatus().merging(history: [.init(productID: "tip.espresso", purchaseDate: june, quantity: 3)],
+                                                 isSubscribed: false)
+        #expect(espresso.isSupporter)
+        #expect(!espresso.hasFoodIcons)
+        #expect(SupporterProduct.allCases.filter { !$0.unlocksFoodIcons } == [.tipEspresso])
+
+        // Brunch and up, and any subscription (also retired, also lapsed), unlock the food icons for good.
+        for id in ["tip.brunch", "tip.dinnerparty", "tip.feast", "headchef.monthly", "headchef.yearly", "souschef.monthly"] {
+            #expect(espresso.merging(history: [.init(productID: id, purchaseDate: june)], isSubscribed: false).hasFoodIcons)
+        }
+        #expect(SupporterStatus().merging(history: [], isSubscribed: true).hasFoodIcons)
+        // Refunded purchases don't unlock them, and once unlocked an empty read keeps them.
+        #expect(!SupporterStatus().merging(history: [.init(productID: "tip.feast", purchaseDate: june, isRevoked: true)],
+                                           isSubscribed: false).hasFoodIcons)
+        let unlocked = SupporterStatus(isSupporter: true, supporterSince: june, tipCount: 1, hasFoodIcons: true)
+        #expect(unlocked.merging(history: [], isSubscribed: false).hasFoodIcons)
+    }
+
+    @Test func cacheFromBeforeTheFoodIconFlagStillDecodes() throws {
+        let old = #"{"isSupporter":true,"supporterSince":800000000,"tipCount":2}"#
+        let status = try JSONDecoder().decode(SupporterStatus.self, from: Data(old.utf8))
+        #expect(status.isSupporter)
+        #expect(status.tipCount == 2)
+        #expect(!status.hasFoodIcons)
+        let roundTrip = try JSONDecoder().decode(SupporterStatus.self, from: JSONEncoder().encode(SupporterStatus(isSupporter: true, hasFoodIcons: true)))
+        #expect(roundTrip.hasFoodIcons)
+    }
+
     @Test func statusNeverDowngrades() {
         let supporter = SupporterStatus(isSupporter: true, supporterSince: march, tipCount: 3)
         // An empty history read (offline, sandbox hiccup) or a lapsed subscription keeps everything.
@@ -54,6 +83,7 @@ struct SupporterStatusTests {
         let status = SupporterStatus().merging(history: history, isSubscribed: true)
         #expect(status.tipCount == 3)
         #expect(status.supporterSince == march)
+        #expect(status.hasFoodIcons)
     }
 
     @Test func activeSubscriptionIsTheLiveOneIncludingRetiredLevels() {
@@ -109,24 +139,26 @@ private final class BundleToken {}
 
 struct AppIconEntitlementTests {
     @Test func iconsUnlockBySupportAndSubscription() {
-        #expect(MealMateAppIcon.default.isAvailable(isSupporter: false, isSubscribed: false))
-        #expect(!MealMateAppIcon.ramen.isAvailable(isSupporter: false, isSubscribed: false))
-        // Food icons: any tip or subscription.
-        #expect(MealMateAppIcon.ramen.isAvailable(isSupporter: true, isSubscribed: false))
-        #expect(MealMateAppIcon.grainBowl.isAvailable(isSupporter: false, isSubscribed: true))
+        #expect(MealMateAppIcon.default.isAvailable(hasFoodIcons: false, isSubscribed: false))
+        #expect(!MealMateAppIcon.ramen.isAvailable(hasFoodIcons: false, isSubscribed: false))
+        // Food icons: a subscription or a tip from Brunch up.
+        #expect(MealMateAppIcon.ramen.isAvailable(hasFoodIcons: true, isSubscribed: false))
+        #expect(MealMateAppIcon.grainBowl.isAvailable(hasFoodIcons: false, isSubscribed: true))
         // Subscription icons: only while subscribed, tips don't unlock them.
-        #expect(!MealMateAppIcon.copperPot.isAvailable(isSupporter: true, isSubscribed: false))
-        #expect(MealMateAppIcon.midnightKitchen.isAvailable(isSupporter: true, isSubscribed: true))
+        #expect(!MealMateAppIcon.copperPot.isAvailable(hasFoodIcons: true, isSubscribed: false))
+        #expect(MealMateAppIcon.midnightKitchen.isAvailable(hasFoodIcons: true, isSubscribed: true))
         #expect(MealMateAppIcon.foodIcons == [.grainBowl, .spaghetti, .shakshuka, .ramen, .margherita])
         #expect(MealMateAppIcon.subscriptionIcons == [.copperPot, .midnightKitchen])
     }
 
     @Test func lapsedSubscriptionFallsBackToTheDefaultIcon() {
-        #expect(MealMateAppIcon.fallback(for: .copperPot, isSupporter: true, isSubscribed: false) == .default)
-        #expect(MealMateAppIcon.fallback(for: .copperPot, isSupporter: true, isSubscribed: true) == nil)
-        // Food icons stay after a subscription ends: supporter status is for good.
-        #expect(MealMateAppIcon.fallback(for: .margherita, isSupporter: true, isSubscribed: false) == nil)
-        #expect(MealMateAppIcon.fallback(for: .default, isSupporter: false, isSubscribed: false) == nil)
+        #expect(MealMateAppIcon.fallback(for: .copperPot, hasFoodIcons: true, isSubscribed: false) == .default)
+        #expect(MealMateAppIcon.fallback(for: .copperPot, hasFoodIcons: true, isSubscribed: true) == nil)
+        // Food icons stay after a subscription ends: they're unlocked for good.
+        #expect(MealMateAppIcon.fallback(for: .margherita, hasFoodIcons: true, isSubscribed: false) == nil)
+        #expect(MealMateAppIcon.fallback(for: .default, hasFoodIcons: false, isSubscribed: false) == nil)
+        // Without them (only an Espresso tip), a food icon goes back to the default.
+        #expect(MealMateAppIcon.fallback(for: .ramen, hasFoodIcons: false, isSubscribed: false) == .default)
     }
 
     @Test func everyIconHasDistinctAssetNames() {
@@ -303,6 +335,9 @@ final class SupporterStoreKitTests {
         for (index, tip) in [SupporterProduct.tipEspresso, .tipBrunch, .tipDinnerParty, .tipFeast].enumerated() {
             try await buy(tip, store: store)
             #expect(store.status.tipCount == index + 1)
+            #expect(store.isSupporter)
+            // Espresso is a thank-you only; Brunch is the first tip with the food icons.
+            #expect(store.hasFoodIcons == (tip != .tipEspresso))
         }
         // Finished consumables can be bought again and stay in the history.
         try await buy(.tipEspresso, store: store)
@@ -311,8 +346,23 @@ final class SupporterStoreKitTests {
         #expect(!store.isSubscribed)
         #expect(store.status.supporterSince != nil)
         // Tips unlock the food icons, not the subscription icons.
-        #expect(MealMateAppIcon.shakshuka.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed))
-        #expect(!MealMateAppIcon.copperPot.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed))
+        #expect(MealMateAppIcon.shakshuka.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
+        #expect(!MealMateAppIcon.copperPot.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
+    }
+
+    @Test func anEspressoTipUnlocksNoIcons() async throws {
+        let store = await makeStore()
+        try await buy(.tipEspresso, store: store)
+        #expect(store.isSupporter)
+        #expect(!store.hasFoodIcons)
+        for icon in MealMateAppIcon.allCases {
+            #expect(icon.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == (icon == .default))
+        }
+        // Also after a reinstall, from the history.
+        defaults.removePersistentDomain(forName: defaultsName)
+        let reinstalled = await makeStore()
+        #expect(reinstalled.isSupporter)
+        #expect(!reinstalled.hasFoodIcons)
     }
 
     @Test func subscribingUnlocksEveryIcon() async throws {
@@ -322,7 +372,7 @@ final class SupporterStoreKitTests {
         #expect(store.activeSubscription == .monthly)
         #expect(store.isSupporter)
         for icon in MealMateAppIcon.allCases {
-            #expect(icon.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed))
+            #expect(icon.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
         }
     }
 
@@ -331,7 +381,7 @@ final class SupporterStoreKitTests {
         try await buy(.legacySousChefMonthly, store: store)
         #expect(store.isSubscribed)
         #expect(store.activeSubscription == .legacySousChefMonthly)
-        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, isSupporter: store.isSupporter, isSubscribed: store.isSubscribed) == nil)
+        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == nil)
 
         // Moving to the current subscription (the higher level) starts right away.
         try await buy(.yearly, store: store)
@@ -357,8 +407,8 @@ final class SupporterStoreKitTests {
         #expect(!store.isSubscribed)
         #expect(store.activeSubscription == nil)
         #expect(store.isSupporter)
-        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, isSupporter: store.isSupporter, isSubscribed: store.isSubscribed) == .default)
-        #expect(MealMateAppIcon.fallback(for: .ramen, isSupporter: store.isSupporter, isSubscribed: store.isSubscribed) == nil)
+        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == .default)
+        #expect(MealMateAppIcon.fallback(for: .ramen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == nil)
     }
 
     @Test func historyRestoresStatusOnAFreshInstall() async throws {
@@ -370,6 +420,7 @@ final class SupporterStoreKitTests {
         defaults.removePersistentDomain(forName: defaultsName)
         let reinstalled = await makeStore()
         #expect(reinstalled.isSupporter)
+        #expect(reinstalled.hasFoodIcons)
         #expect(reinstalled.status.tipCount == 1)
         #expect(reinstalled.isSubscribed)
         #expect(reinstalled.activeSubscription == .yearly)
