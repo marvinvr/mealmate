@@ -73,6 +73,20 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         try shoot("legacy", sheet: true, icons: true)
     }
 
+    /// The buy buttons while a purchase is in flight (`-supporter.debugBusy`, DEBUG only: a real
+    /// in-app purchase from a UI test asks for a sandbox Apple Account). Busy buttons keep their
+    /// size, a spinner replaces the label.
+    func testPurchasingState() throws {
+        let fresh = ["-supporter.status", "", "-supporter.isSubscribed", "0"]
+        for busy in ["none", "headchef.monthly", "tip.espresso", "restore"] {
+            stateArguments = fresh + (busy == "none" ? [] : ["-supporter.debugBusy", busy])
+            try open("supporter", waitFor: "App Icons")
+            app.swipeUp()
+            if busy == "restore" { app.swipeUp(); app.swipeUp() }
+            snapshot("supporter-\(device)busy-\(busy)-\(appearance)")
+        }
+    }
+
     // MARK: Helpers
 
     private var appearance: String {

@@ -146,7 +146,9 @@ onboarding) and only signed-in days count.
   n), `app-icon` (picker). Apps launched by `scripts/screenshot.sh` (`simctl launch`) don't get
   the scheme's StoreKit configuration, so the sheet shows its "couldn't be loaded" state there;
   the purchase states come from `SupporterScreenshotTests` (UI test that drives
-  `SKTestSession`, see `scripts/README.md`).
+  `SKTestSession`, see `scripts/README.md`). Busy buttons: DEBUG launch argument
+  `-supporter.debugBusy <productID|restore>`; they keep their size (`busyOverlay` hides the
+  label and overlays a small spinner).
 
 ## App Store Connect
 

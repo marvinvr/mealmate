@@ -114,7 +114,10 @@ unless `--keep-results` (then `build/ui-tests.xcresult`, local only). Details:
 `SupporterScreenshotTests` buys products from `MealMate.storekit` through `SKTestSession`
 and shoots the supporter sheet, prompt, Settings rows and icon picker for each state
 (non-supporter, tip, subscribed with Copper Pot applied, lapsed back to the default icon, a
-retired Sous Chef subscription): `screenshots/qa-supporter-*-<appearance>.png`. Set the appearance first (the test
+retired Sous Chef subscription): `screenshots/qa-supporter-*-<appearance>.png`.
+`testPurchasingState` shoots the buy buttons while busy (`qa-supporter-busy-*`) through the
+DEBUG launch argument `-supporter.debugBusy <productID|restore>` (a real purchase from a UI test
+asks for a sandbox Apple Account). Set the appearance first (the test
 can't switch it on the iOS 27 simulator) and name it for the files:
 
 ```bash

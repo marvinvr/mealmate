@@ -205,11 +205,8 @@ struct SupporterView: View {
                 Button {
                     Task { await store.restorePurchases() }
                 } label: {
-                    if store.isRestoring {
-                        ProgressView()
-                    } else {
-                        Text("Restore Purchases")
-                    }
+                    Text("Restore Purchases")
+                        .busyOverlay(store.isRestoring)
                 }
                 .disabled(store.isRestoring)
             }
@@ -362,16 +359,11 @@ private struct SupporterPriceButton: View {
         Button {
             Task { await store.purchase(product) }
         } label: {
-            ZStack {
-                Text("\(product.displayPrice) / \(kind?.isYearly == true ? "year" : "month")")
-                    .monospacedDigit()
-                    .opacity(store.purchasingProductID == product.id ? 0 : 1)
-                if store.purchasingProductID == product.id {
-                    ProgressView()
-                }
-            }
-            .font(.subheadline.weight(.semibold))
-            .frame(maxWidth: .infinity)
+            Text("\(product.displayPrice) / \(kind?.isYearly == true ? "year" : "month")")
+                .monospacedDigit()
+                .busyOverlay(store.purchasingProductID == product.id)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)
@@ -379,6 +371,23 @@ private struct SupporterPriceButton: View {
         .tint(.accentColor)
         .disabled(store.purchasingProductID != nil)
         .accessibilityLabel("\(kind?.displayName ?? product.displayName), \(product.displayPrice)")
+    }
+}
+
+// MARK: - Busy state
+
+extension View {
+    /// Swaps the view for a small spinner without changing its size: the view stays in the layout
+    /// (hidden) and the spinner is an overlay, so a button keeps exactly its frame while busy.
+    func busyOverlay(_ isBusy: Bool, alignment: Alignment = .center) -> some View {
+        opacity(isBusy ? 0 : 1)
+            .overlay(alignment: alignment) {
+                if isBusy {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .controlSize(.small)
+                }
+            }
     }
 }
 
@@ -404,15 +413,10 @@ private struct SupporterTipButton: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                ZStack(alignment: .leading) {
-                    Text(product.displayPrice)
-                        .monospacedDigit()
-                        .opacity(store.purchasingProductID == product.id ? 0 : 1)
-                    if store.purchasingProductID == product.id {
-                        ProgressView().controlSize(.small)
-                    }
-                }
-                .font(.subheadline)
+                Text(product.displayPrice)
+                    .monospacedDigit()
+                    .busyOverlay(store.purchasingProductID == product.id, alignment: .leading)
+                    .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

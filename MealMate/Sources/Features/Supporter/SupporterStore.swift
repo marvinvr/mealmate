@@ -61,6 +61,13 @@ final class SupporterStore {
         isSubscribed = defaults.object(forKey: Keys.isSubscribed) != nil
             ? defaults.bool(forKey: Keys.isSubscribed)
             : defaults.integer(forKey: Keys.legacyActiveTier) > 0
+        #if DEBUG
+        // `-supporter.debugBusy <productID|restore>`: show that purchase (or Restore Purchases) as
+        // in flight, for screenshots of the busy buttons (SupporterScreenshotTests).
+        if let busy = defaults.string(forKey: "supporter.debugBusy") {
+            if busy == "restore" { isRestoring = true } else { purchasingProductID = busy }
+        }
+        #endif
     }
 
     /// Starts the transaction listener, finishes leftovers, reconciles entitlements and loads
