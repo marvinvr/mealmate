@@ -34,7 +34,7 @@ ShareExtension/        MealMateShare: ShareViewController hosting ShareImportVie
 MealMateTests/         Swift Testing; Fixtures/ = anonymized JSON responses
 MealMateUITests/       XCUITest flows against a real server (scripts/ui-test.sh)
 scripts/               screenshot.sh, ui-test.sh + README (route list, harness)
-Design/                make-icon.swift (app icon generator)
+Design/                make-icon-variants.swift, make-icon.swift (app icon generators)
 ```
 
 ## App Lifetime

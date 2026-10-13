@@ -14,9 +14,9 @@ enum SupporterViewContext: Equatable {
     }
 }
 
-/// The supporter sheet: the pitch, the two subscription levels side by side with what each
-/// includes, one-time tips, the icons, and a thank-you once someone has chipped in. Purchases
-/// happen right here; the header turns into the thank-you on success.
+/// The supporter sheet: the pitch, the icons, the subscription (monthly or yearly) with what it
+/// includes, one-time tips, and a thank-you once someone has chipped in. Purchases happen right
+/// here; the header turns into the thank-you on success.
 struct SupporterView: View {
     let context: SupporterViewContext
 
@@ -102,16 +102,13 @@ struct SupporterView: View {
     }
 
     private var message: String {
-        switch store.activeTier {
-        case .headChef:
-            return "You’re a Head Chef. Thank you for keeping MealMate free, independent and well looked after."
-        case .sousChef:
-            return "You’re a Sous Chef. Thank you for keeping MealMate free, independent and well looked after."
-        case .none where store.isSupporter:
-            return "You’re a supporter. Thank you for helping keep MealMate free and independent."
-        case .none:
-            return "MealMate is free and independent: no ads, no tracking, made by one person. If it has earned a spot in your kitchen, you can chip in. Everything stays free either way."
+        if store.isSubscribed {
+            return "You’re subscribed. Thank you for keeping MealMate free, independent and well looked after."
         }
+        if store.isSupporter {
+            return "You’re a supporter. Thank you for helping keep MealMate free and independent."
+        }
+        return "MealMate is free and independent: no ads, no tracking, made by one person. If it has earned a spot in your kitchen, you can chip in. Everything stays free either way."
     }
 
     private var supporterDetail: String? {
@@ -122,29 +119,18 @@ struct SupporterView: View {
         return text
     }
 
-    // MARK: - Plans
+    // MARK: - Subscription
 
     @ViewBuilder
     private var plans: some View {
-        let layout = isRegular
-            ? AnyLayout(HStackLayout(alignment: .top, spacing: Theme.Spacing.m))
-            : AnyLayout(VStackLayout(spacing: Theme.Spacing.m))
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SupporterSectionHeader(title: store.hasActiveSubscription ? "Your Subscription" : "Monthly or Yearly")
-            if store.hasProducts {
-                layout {
-                    // A Head Chef sees their own plan first.
-                    ForEach(store.isHeadChef ? [SupporterTier.headChef, .sousChef] : [.sousChef, .headChef],
-                            id: \.self) { tier in
-                        SupporterPlanCard(tier: tier,
-                                          products: tier == .headChef ? store.headChefProducts : store.sousChefProducts,
-                                          showsManage: $showsManageSubscriptions)
-                    }
-                }
+            SupporterSectionHeader(title: "Recurring")
+            if store.hasProducts || store.isSubscribed {
+                SupporterSubscriptionCard(showsManage: $showsManageSubscriptions)
                 // App Review wants the terms right at the subscription options: period and price
                 // on every button, renewal terms, Privacy Policy and Terms of Use (EULA).
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Payment is charged to your Apple Account. Subscriptions renew automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel them in your Apple Account settings. Family Sharing included.")
+                    Text("Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. Family Sharing included.")
                     HStack(spacing: Theme.Spacing.xs) {
                         Link("Privacy Policy", destination: SupporterLinks.privacyPolicy)
                         Text("·").foregroundStyle(.secondary).accessibilityHidden(true)
@@ -197,7 +183,7 @@ struct SupporterView: View {
                         SupporterTipButton(product: product)
                     }
                 }
-                Text("A tip is a one-time thank-you. It makes you a supporter for good, with all six supporter icons.")
+                Text("A tip is a one-time thank-you. It makes you a supporter for good, with all five food icons.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -213,7 +199,7 @@ struct SupporterView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             HStack(spacing: Theme.Spacing.l) {
-                if store.hasActiveSubscription {
+                if store.isSubscribed {
                     Button("Manage Subscription") { showsManageSubscriptions = true }
                 }
                 Button {
@@ -251,124 +237,95 @@ private struct SupporterSectionHeader: View {
     }
 }
 
-// MARK: - Plan card
+// MARK: - Subscription card
 
-/// One subscription level: what it includes, then its monthly and yearly price. Shows "Your
-/// Plan" while active; Sous Chef subscribers see Head Chef as an upgrade, Head Chefs see Sous
-/// Chef as included (switching down goes through Manage Subscription).
-private struct SupporterPlanCard: View {
-    let tier: SupporterTier
-    let products: [Product]
+/// The one subscription: what it includes, then its two billing periods side by side. While
+/// subscribed (a retired Sous Chef plan included) it shows the billing period and Manage
+/// Subscription instead; switching periods goes through Manage Subscription.
+private struct SupporterSubscriptionCard: View {
     @Binding var showsManage: Bool
 
     @Environment(SupporterStore.self) private var store
-
-    private var isCurrent: Bool { store.activeTier == tier }
-    private var isIncluded: Bool { store.activeTier > tier }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                    Text(tier.title)
+                    Text("MealMate Supporter")
                         .font(.title3.bold())
-                    Text(tagline)
+                    Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.xs)
-                if isCurrent {
-                    badge("Your Plan")
-                } else if isIncluded {
-                    badge("Included")
+                if store.isSubscribed {
+                    Text("Active")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .padding(.horizontal, Theme.Spacing.xs)
+                        .padding(.vertical, Theme.Spacing.xxs)
+                        .background(Color.accentColor.opacity(0.16), in: .capsule)
                 }
             }
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                ForEach(perks, id: \.text) { perk in
-                    Label {
-                        Text(perk.text)
-                    } icon: {
-                        Image(systemName: perk.symbol)
-                            .foregroundStyle(.tint)
-                    }
-                    .font(.subheadline)
-                }
+                perk("app.badge", "Five food icons, yours for good")
+                perk("sparkles", "Copper Pot and Midnight Kitchen while subscribed")
+                perk("heart", "Keeps MealMate free, ad-free and independent")
             }
 
-            if tier == .headChef {
-                HStack(spacing: Theme.Spacing.s) {
-                    ForEach(MealMateAppIcon.headChefIcons) { icon in
-                        HStack(spacing: Theme.Spacing.xs) {
-                            AppIconImage(icon: icon, size: 36)
-                            Text(icon.displayName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+            HStack(spacing: Theme.Spacing.s) {
+                ForEach(MealMateAppIcon.subscriptionIcons) { icon in
+                    HStack(spacing: Theme.Spacing.xs) {
+                        AppIconImage(icon: icon, size: 36)
+                        Text(icon.displayName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
 
-            Spacer(minLength: 0)
             actions
         }
         .surfaceCard()
         .overlay {
             RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(isCurrent ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.06),
-                              lineWidth: isCurrent ? 1.5 : 0.5)
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-    }
-
-    private var tagline: String {
-        switch tier {
-        case .headChef: "The biggest help, with two exclusive icons."
-        default: "Keep MealMate cooking."
+                .strokeBorder(store.isSubscribed ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.06),
+                              lineWidth: store.isSubscribed ? 1.5 : 0.5)
         }
     }
 
-    private struct Perk { let symbol: String; let text: String }
+    private var subtitle: String {
+        guard store.isSubscribed else { return "Monthly or yearly. Cancel anytime." }
+        guard let current = store.activeSubscription else { return "Thank you for subscribing." }
+        return current.isYearly ? "Billed yearly" : "Billed monthly"
+    }
 
-    private var perks: [Perk] {
-        switch tier {
-        case .headChef:
-            [Perk(symbol: "checkmark.circle", text: "Everything in Sous Chef"),
-             Perk(symbol: "sparkles", text: "Two Head Chef icons, yours while the subscription is active")]
-        default:
-            [Perk(symbol: "app.badge", text: "Six alternate app icons, yours for good"),
-             Perk(symbol: "heart", text: "Helps keep MealMate free, ad-free and independent")]
+    private func perk(_ symbol: String, _ text: String) -> some View {
+        Label {
+            Text(text)
+        } icon: {
+            Image(systemName: symbol)
+                .foregroundStyle(.tint)
         }
+        .font(.subheadline)
     }
 
     @ViewBuilder
     private var actions: some View {
-        if isCurrent {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                if let current = store.activeSubscriptionID.flatMap(SupporterProduct.init(rawValue:)) {
-                    Text(current.isYearly ? "Billed yearly" : "Billed monthly")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                Button("Manage Subscription") { showsManage = true }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-            }
-        } else if isIncluded {
-            Text("Part of your Head Chef subscription. Switch levels in Manage Subscription.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        } else if !products.isEmpty {
+        if store.isSubscribed {
+            Button("Manage Subscription") { showsManage = true }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+        } else if !store.subscriptionProducts.isEmpty {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Theme.Spacing.xs) { priceButtons }
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) { priceButtons }
+                    HStack(spacing: Theme.Spacing.s) { priceButtons }
+                    VStack(spacing: Theme.Spacing.xs) { priceButtons }
                 }
                 if let savings {
-                    Text(store.activeTier == .sousChef && tier == .headChef
-                         ? "Upgrading starts right away; App Store prorates what’s left. \(savings)"
-                         : savings)
+                    Text(savings)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -378,32 +335,24 @@ private struct SupporterPlanCard: View {
 
     @ViewBuilder
     private var priceButtons: some View {
-        ForEach(products, id: \.id) { product in
+        ForEach(store.subscriptionProducts, id: \.id) { product in
             SupporterPriceButton(product: product)
         }
     }
 
-    /// "Yearly saves 37%." from the monthly and yearly prices.
+    /// "Yearly saves 30%." from the monthly and yearly prices.
     private var savings: String? {
-        guard let monthly = products.first(where: { SupporterProduct(rawValue: $0.id)?.isYearly == false }),
-              let yearly = products.first(where: { SupporterProduct(rawValue: $0.id)?.isYearly == true }),
+        let products = store.subscriptionProducts
+        guard let monthly = products.first(where: { $0.id == SupporterProduct.monthly.rawValue }),
+              let yearly = products.first(where: { $0.id == SupporterProduct.yearly.rawValue }),
               monthly.price > 0 else { return nil }
         let ratio = (yearly.price / (monthly.price * 12) as NSDecimalNumber).doubleValue
         let percent = Int(((1 - ratio) * 100).rounded())
         return percent > 0 ? "Yearly saves \(percent)%." : nil
     }
-
-    private func badge(_ text: String) -> some View {
-        Text(text)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.tint)
-            .padding(.horizontal, Theme.Spacing.xs)
-            .padding(.vertical, Theme.Spacing.xxs)
-            .background(Color.accentColor.opacity(0.16), in: .capsule)
-    }
 }
 
-/// "$1.99 / month" as a capsule; a spinner while this product is being bought.
+/// "$2.99 / month" as an equal-width capsule; a spinner while this product is being bought.
 private struct SupporterPriceButton: View {
     let product: Product
     @Environment(SupporterStore.self) private var store
@@ -422,13 +371,14 @@ private struct SupporterPriceButton: View {
                 }
             }
             .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, Theme.Spacing.xxs)
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)
+        .controlSize(.large)
         .tint(.accentColor)
         .disabled(store.purchasingProductID != nil)
-        .accessibilityLabel("\(kind?.tier?.title ?? "") \(kind?.isYearly == true ? "yearly" : "monthly"), \(product.displayPrice)")
+        .accessibilityLabel("\(kind?.displayName ?? product.displayName), \(product.displayPrice)")
     }
 }
 
@@ -487,7 +437,7 @@ private struct SupporterTipButton: View {
 
 // MARK: - Icon showcase
 
-/// The supporter icons and the two Head Chef icons in one strip. Before a purchase it shows
+/// The food icons and the two subscription icons in one strip. Before a purchase it shows
 /// what supporting includes (locked tiles); afterwards a tap applies an icon.
 struct SupporterIconShowcase: View {
     @Environment(SupporterStore.self) private var store
@@ -519,7 +469,7 @@ struct SupporterIconShowcase: View {
     }
 
     private func tile(_ icon: MealMateAppIcon) -> some View {
-        let available = icon.isAvailable(isSupporter: store.isSupporter, tier: store.activeTier)
+        let available = icon.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed)
         return Button {
             guard available else { return }
             Task {
@@ -544,9 +494,9 @@ struct SupporterIconShowcase: View {
     }
 
     private var caption: String {
-        if store.isHeadChef { return "Tap an icon to use it on your Home Screen." }
-        if store.isSupporter { return "Tap an icon to use it. Copper Pot and Midnight Kitchen come with Head Chef." }
-        return "Any tip or subscription unlocks six icons for good. Copper Pot and Midnight Kitchen come with Head Chef."
+        if store.isSubscribed { return "Tap an icon to use it on your Home Screen." }
+        if store.isSupporter { return "Tap an icon to use it. Copper Pot and Midnight Kitchen come with the subscription." }
+        return "Any tip or subscription unlocks the five food icons for good. Copper Pot and Midnight Kitchen come with the subscription."
     }
 }
 

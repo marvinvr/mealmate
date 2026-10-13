@@ -9,28 +9,32 @@ optional way to chip in, with cosmetic thanks only (app icons and a thank-you). 
 `SupporterProduct` (`SupporterStatus.swift`) is the catalog; the `.storekit` file and App Store
 Connect must use the same IDs (full listing in [App Store Connect](#app-store-connect)).
 
-| ID | Type | Level | USD |
-| --- | --- | --- | --- |
-| `souschef.monthly` | Auto-renewable, group "MealMate Supporter" | Sous Chef (2) | 1.99 / month |
-| `souschef.yearly` | Auto-renewable, same group | Sous Chef (2) | 14.99 / year |
-| `headchef.monthly` | Auto-renewable, same group | Head Chef (1, highest) | 4.99 / month |
-| `headchef.yearly` | Auto-renewable, same group | Head Chef (1, highest) | 39.99 / year |
-| `tip.espresso` | Consumable | – | 2.99 |
-| `tip.brunch` | Consumable | – | 9.99 |
-| `tip.dinnerparty` | Consumable | – | 19.99 |
-| `tip.feast` | Consumable | – | 49.99 |
+| ID | Type | Level | USD | Offered |
+| --- | --- | --- | --- | --- |
+| `headchef.monthly` | Auto-renewable, group "MealMate Supporter" | 1 | 2.99 / month | yes |
+| `headchef.yearly` | Auto-renewable, same group | 1 | 24.99 / year | yes |
+| `souschef.monthly` | Auto-renewable, same group | 2 | 1.99 / month | retired |
+| `souschef.yearly` | Auto-renewable, same group | 2 | 14.99 / year | retired |
+| `tip.espresso` | Consumable | – | 2.99 | yes |
+| `tip.brunch` | Consumable | – | 9.99 | yes |
+| `tip.dinnerparty` | Consumable | – | 19.99 | yes |
+| `tip.feast` | Consumable | – | 49.99 | yes |
 
+- **One subscription, two billing periods** ("MealMate Supporter", monthly or yearly). It reuses
+  the `headchef.*` IDs of the earlier two-level setup (Sous Chef / Head Chef), which already sit
+  at the top level of the group. Monthly ↔ yearly is a crossgrade at the next renewal.
+- **Retired:** `souschef.*`. The sheet doesn't offer them (`SupporterProduct.offeredIDs`), but an
+  active one still counts as subscribed with every subscription perk, and buying the current
+  subscription from it is an immediate upgrade (it's the higher level). Keep them in the
+  `.storekit` file and the catalog (`isLegacy`) as long as anyone might still renew one.
 - `supporter.*` IDs are taken by Dusk in the same developer account (product IDs are unique
-  across all apps), hence `souschef.*`.
-- Both levels share one group, so Sous Chef → Head Chef is an immediate upgrade (prorated by
-  the App Store) and Head Chef → Sous Chef a downgrade at the next renewal. Subscriptions are
-  Family Sharing enabled; tips (consumables) can't be.
+  across all apps), hence the chef names.
+- Subscriptions are Family Sharing enabled; tips (consumables) can't be.
 - Tips are consumables so they can be given again. App Store Connect is the source of truth
   for prices; the `.storekit` file mirrors the USD prices.
 - The sheet shows prices from StoreKit (`displayPrice`, localized per storefront); names and
-  plan copy are the app's own (`SupporterProduct.displayName`, English like the rest of the
-  UI). The App Store Connect names/descriptions appear in the purchase sheet, receipts and the
-  subscription settings.
+  plan copy are the app's own (English like the rest of the UI). The App Store Connect
+  names/descriptions appear in the purchase sheet, receipts and the subscription settings.
 
 ## Status Rules
 
@@ -42,10 +46,12 @@ into the environment and started in the root `.task`.
   UserDefaults `supporter.status`) and only ever adds: an empty history read (offline, sandbox
   hiccup), a lapsed subscription or a refund never downgrades it on this device. A fresh
   install resolves it from the history again (refunded transactions don't count there).
-- **Active level** (`activeTier`: none / Sous Chef / Head Chef) comes from
-  `Transaction.currentEntitlements` (`SupporterStatus.activeTier`: highest level that isn't
-  revoked, upgraded away or expired). It can go down. Cached (`supporter.activeTier`) only so the
-  UI is right on launch; `hasResolvedEntitlements` says whether it was read this launch.
+- **Subscribed** (`isSubscribed`, `activeSubscription`) comes from
+  `Transaction.currentEntitlements` (`SupporterStatus.activeSubscription`: a subscription that
+  isn't revoked, upgraded away or expired, retired `souschef.*` included). It can go away.
+  Cached (`supporter.isSubscribed`) only so the UI is right on launch; the old
+  `supporter.activeTier` cache (0 / 1 / 2) is read once as a fallback and removed.
+  `hasResolvedEntitlements` says whether entitlements were read this launch.
 - `SKIncludeConsumableInAppPurchaseHistory` = `true` in `Info.plist` keeps finished tips in
   `Transaction.all`. Don't remove it: reinstall and second-device recognition of tippers
   depend on it.
@@ -56,40 +62,47 @@ into the environment and started in the root `.task`.
 
 ## Perks: App Icons
 
-`MealMateAppIcon` lists the icons, `Design/make-icon.swift` draws them (see `STYLE.md` §12).
+`MealMateAppIcon` lists the icons; `Design/make-icon-variants.swift` draws the default and the
+food icons, `Design/make-icon.swift` the subscription icons (see `STYLE.md` §12).
 
-- **Default** (MealMate): free.
-- **Supporter** (any tip or subscription, for good): Mono, Dark, Herb, Tomato, Pastel, Wood.
-- **Head Chef** (only while that subscription is active): Copper Pot, Midnight Kitchen.
+- **Default** (Salad, shown as "MealMate"): free.
+- **Food icons** (any tip or subscription, for good): Grain Bowl, Spaghetti, Shakshuka, Ramen,
+  Margherita.
+- **Subscription icons** (only while a subscription is active): Copper Pot, Midnight Kitchen.
 - Alternates live in `MealMate/Resources/AppIcons.xcassets` (app target only, so the share
   extension doesn't carry them), registered via `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`
   in `project.yml`. Previews for the picker: `IconPreview<Name>` imagesets (light + dark).
+- Retired with this setup: Mono, Dark, Herb, Tomato, Pastel, Wood. If the home screen still
+  names one of them (`MealMateAppIcon.currentIsRetired`), the guard below switches to the default
+  the next time the app is active.
 - **Lapse:** `appIconEntitlementGuard()` (on the root view) switches back to the default icon
   when the current one is no longer included (`MealMateAppIcon.fallback`): only once
-  entitlements were read this launch, when the level changes, and when the app becomes active
-  (`setAlternateIconName` needs an active app). iOS shows its usual "You have changed the icon"
-  alert; there is no public API to suppress it. Supporter status and supporter icons stay.
-- Adding an icon: draw it in `make-icon.swift`, add a `MealMateAppIcon` case, add the name to
+  entitlements were read this launch, when the subscription state changes, and when the app
+  becomes active (`setAlternateIconName` needs an active app). iOS shows its usual "You have
+  changed the icon" alert; there is no public API to suppress it. Supporter status and the food
+  icons stay.
+- Adding an icon: draw it in one of the scripts, add a `MealMateAppIcon` case, add the name to
   `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`, `xcodegen generate`.
 
 ## UI
 
 - **`SupporterView`** (one sheet, `.presentationSizing(.page)` on iPad): header (pitch, or
-  "Thank You" + level + "Supporter since … · n tips"), the icon strip (`SupporterIconShowcase`,
-  locked tiles before a purchase, tap to apply after), the two plan cards (Sous Chef and Head
-  Chef with what each includes and monthly / yearly price buttons; side by side in regular
-  width), right below them the subscription terms (charged to the Apple Account, auto-renewal,
-  how to cancel, Family Sharing) with the Privacy Policy (`PRIVACY.md` on GitHub) and Terms of
-  Use (Apple's standard EULA) links, as App Review requires them at the subscription options;
-  every price button shows price and period ("$1.99 / month"). Then tips (2 columns, 4 on
+  "Thank You" + "You're subscribed" / "You're a supporter" + "Supporter since … · n tips"), the
+  icon strip (`SupporterIconShowcase`, locked tiles before a purchase, tap to apply after), the
+  **Recurring** section: one "MealMate Supporter" card with what it includes (food icons for good,
+  the two subscription icons while subscribed, keeping MealMate free) and two equal-width price
+  buttons ("$2.99 / month", "$24.99 / year") plus "Yearly saves n%"; right below it the
+  subscription terms (charged to the Apple Account, auto-renewal, how to cancel, Family Sharing)
+  with the Privacy Policy (`PRIVACY.md` on GitHub) and Terms of Use (Apple's standard EULA)
+  links, as App Review requires them at the subscription options. Then tips (2 columns, 4 on
   iPad), Restore Purchases and Manage Subscription (`manageSubscriptionsSheet`) while
   subscribed.
-  Plan states: active level shows "Your Plan" + billing period + Manage Subscription; a Sous
-  Chef sees Head Chef as an upgrade; a Head Chef sees Sous Chef as "Included" (switching down
-  goes through Manage Subscription).
-- **Settings**: the first section holds the supporter row (opens the sheet; "Thank You, Head
-  Chef" etc. for supporters) and the **App Icon** row, which pushes `AppIconPickerView`
-  (default / Supporter / Head Chef sections; a locked tile opens the sheet).
+  Subscribed (a retired Sous Chef plan included): the card shows "Active", the billing period and
+  Manage Subscription instead of the price buttons (switching periods goes through it).
+- **Settings**: the first section holds the supporter row (opens the sheet; "Thank You for
+  Subscribing" / "Thank You for Your Support" for supporters) and the **App Icon** row, which
+  pushes `AppIconPickerView` (default / Supporter / Subscription sections; a locked tile opens
+  the sheet).
 - Copy: calm, no guilt, no countdowns or "last chance"; every surface says everything stays free.
 
 ## Prompt Ladder
@@ -118,12 +131,13 @@ onboarding) and only signed-in days count.
 
 ## Testing
 
-- **Unit tests** (`MealMateTests/SupporterTests.swift`): status merging and active level, icon
-  availability and the lapse fallback, the prompt ladder and usage days, the `.storekit` file
-  vs. the catalog, and StoreKit flows through `SKTestSession` with `MealMate.storekit` (bundled
-  into the test target): load the catalog, buy every tip (and one again), Sous Chef → Head Chef
-  upgrade, downgrade at renewal, Head Chef lapse (`expireSubscription`), fresh-install
-  resolution + Restore Purchases, refund keeps the cached status.
+- **Unit tests** (`MealMateTests/SupporterTests.swift`): status merging and the active
+  subscription (retired levels included), icon availability and the lapse fallback, the old
+  cache key, the prompt ladder and usage days, the `.storekit` file vs. the catalog, and
+  StoreKit flows through `SKTestSession` with `MealMate.storekit` (bundled into the test target):
+  load the offered catalog, buy every tip (and one again), subscribe, a Sous Chef subscriber
+  keeps every perk and moves to the current subscription, lapse (`oneRenewalEveryTwoSeconds` +
+  auto-renew off), fresh-install resolution, refund keeps the cached status.
 - **By hand in the simulator:** run from Xcode; the `MealMate` scheme's Run action attaches
   `MealMate.storekit` (`project.yml`), so products load locally and Xcode's
   Debug → StoreKit → Manage Transactions can expire, refund or delete purchases. Local runs
@@ -143,29 +157,27 @@ Everything the maintainer enters by hand. IDs must match exactly.
 - Reference name: **MealMate Supporter**
 - Group display name (localization), EN and DE: **MealMate Supporter**; app name display: the
   app's name.
-- Levels (top = highest): **Level 1: Head Chef** (`headchef.monthly`, `headchef.yearly`),
-  **Level 2: Sous Chef** (`souschef.monthly`, `souschef.yearly`). Same-level monthly ↔ yearly
-  is a crossgrade.
-- **Family Sharing: on** for all four subscriptions (can't be turned off once on).
+- Levels (top = highest): **Level 1** `headchef.monthly`, `headchef.yearly` (the subscription);
+  **Level 2** `souschef.monthly`, `souschef.yearly` (retired, removed from sale). Monthly ↔
+  yearly is a crossgrade.
+- **Family Sharing: on** for all subscriptions (can't be turned off once on).
 - No introductory or promotional offers.
 
 ### Auto-renewable subscriptions
 
-| Product ID | Reference name | Duration | USD (tier) | Level |
-| --- | --- | --- | --- | --- |
-| `souschef.monthly` | Sous Chef – Monthly | 1 month | 1.99 | 2 |
-| `souschef.yearly` | Sous Chef – Yearly | 1 year | 14.99 | 2 |
-| `headchef.monthly` | Head Chef – Monthly | 1 month | 4.99 | 1 |
-| `headchef.yearly` | Head Chef – Yearly | 1 year | 39.99 | 1 |
+| Product ID | Reference name | Duration | USD | Level | Status |
+| --- | --- | --- | --- | --- | --- |
+| `headchef.monthly` | Supporter – Monthly | 1 month | 2.99 | 1 | on sale |
+| `headchef.yearly` | Supporter – Yearly | 1 year | 24.99 | 1 | on sale |
+| `souschef.monthly` | Sous Chef – Monthly (retired) | 1 month | 1.99 | 2 | removed from sale |
+| `souschef.yearly` | Sous Chef – Yearly (retired) | 1 year | 14.99 | 2 | removed from sale |
 
-Localizations (display name ≤ 30, description ≤ 45 characters):
+Localizations of the offered ones (display name ≤ 30, description ≤ 45 characters):
 
 | Product ID | EN display name | EN description | DE display name | DE description |
 | --- | --- | --- | --- | --- |
-| `souschef.monthly` | Sous Chef Monthly | Six app icons and a big thank-you. | Sous Chef monatlich | Sechs App-Icons und ein herzliches Danke. |
-| `souschef.yearly` | Sous Chef Yearly | Six app icons and a big thank-you. | Sous Chef jährlich | Sechs App-Icons und ein herzliches Danke. |
-| `headchef.monthly` | Head Chef Monthly | All icons, incl. two Head Chef exclusives. | Head Chef monatlich | Alle App-Icons plus zwei exklusive. |
-| `headchef.yearly` | Head Chef Yearly | All icons, incl. two Head Chef exclusives. | Head Chef jährlich | Alle App-Icons plus zwei exklusive. |
+| `headchef.monthly` | Supporter Monthly | All app icons and a big thank-you. | Supporter monatlich | Alle App-Icons und ein herzliches Danke. |
+| `headchef.yearly` | Supporter Yearly | All app icons and a big thank-you. | Supporter jährlich | Alle App-Icons und ein herzliches Danke. |
 
 ### Consumables (tips)
 
@@ -185,8 +197,8 @@ Consumables aren't Family Sharing eligible.
 - Review notes (paste for each product):
 
   > MealMate is free; every feature works without purchases. These optional purchases only
-  > support development: any tip or subscription unlocks six alternate app icons, the Head
-  > Chef subscription additionally two exclusive icons while it is active. To find them: sign
+  > support development: any tip or the subscription unlocks five alternate app icons for good;
+  > the subscription additionally unlocks two more icons while it is active. To find them: sign
   > in (demo server credentials are in the app review notes), tap the avatar at the top right
   > to open Settings, then "Support MealMate" at the top. The App Icon row below it shows the
   > icons. Restore Purchases and Manage Subscription are in the same sheet.
@@ -194,9 +206,10 @@ Consumables aren't Family Sharing eligible.
 ### Before submitting
 
 1. Paid Apps agreement, tax and banking active.
-2. Create the group, the four subscriptions and four consumables above, with prices,
-   localizations, review screenshot and notes.
-3. App Store listing: privacy policy URL (`PRIVACY.md`) and, because of the subscriptions, a
+2. The group, the two offered subscriptions and four consumables above, with prices,
+   localizations, review screenshot and notes; the retired Sous Chef products removed from sale
+   (or deleted, if they were never submitted).
+3. App Store listing: privacy policy URL (`PRIVACY.md`) and, because of the subscription, a
    Terms of Use (EULA) link: Apple's standard EULA is fine (the app links it). Add the purchase
    note to the description if desired.
 4. Submit the in-app purchases together with the app version that first contains them.

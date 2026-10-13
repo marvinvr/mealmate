@@ -1,23 +1,23 @@
 #!/usr/bin/env swift
-// MealMate app icon generator.
+// MealMate subscription app icons: Copper Pot and Midnight Kitchen.
 //
 // Usage:  swift Design/make-icon.swift [resources-dir]
 // Default resources dir: MealMate/Resources
 //
+// The default icon and the food icons come from Design/make-icon-variants.swift.
+//
 // Run from the repo root. Every icon is 1024x1024 in three appearances:
 //   <Name>.png         light, opaque, no alpha channel
-//   <Name>-dark.png    dark appearance (the primary is transparent: the system supplies the backdrop)
+//   <Name>-dark.png    dark appearance
 //   <Name>-tinted.png  tinted appearance (grayscale mark on black, the system tints it)
 //
 // Writes:
-//   Assets.xcassets/AppIcon.appiconset          the primary (free) icon
-//   AppIcons.xcassets/AppIcon<Variant>.appiconset  alternate icons (supporter perk, see docs/supporter.md)
-//   AppIcons.xcassets/IconPreview<Variant>.imageset  384px previews for the in-app icon picker
-//                                                   (light + dark), including IconPreviewDefault
+//   AppIcons.xcassets/AppIcon<Variant>.appiconset    alternate icons (subscription perk, see docs/supporter.md)
+//   AppIcons.xcassets/IconPreview<Variant>.imageset  384px previews for the in-app icon picker (light + dark)
 //
 // The mark: ingredients prepped before cooking, seen from above. One larger prep bowl and two small bowls,
-// each holding a single prepared ingredient (herbs, paprika, saffron), on a soft ground. Alternates keep the
-// composition and change ground, bowl material and palette.
+// each holding a single prepared ingredient (herbs, paprika, saffron), on a soft ground. Each icon changes
+// ground, bowl material and palette.
 
 import AppKit
 import CoreGraphics
@@ -59,7 +59,7 @@ enum Ground {
 
 /// What the bowls are made of.
 enum BowlStyle {
-    /// Plain glazed ceramic (the primary icon). `sheen` adds a soft glaze highlight at the upper left.
+    /// Plain glazed ceramic. `sheen` adds a soft glaze highlight at the upper left.
     case ceramic(sheen: CGFloat)
     /// Speckled stoneware.
     case stoneware(speck: RGB, sheen: CGFloat)
@@ -93,7 +93,7 @@ struct Palette {
     var vignette: CGFloat = 0
 }
 
-/// The primary icon's palettes. Alternates start from these.
+/// The original prep-bowl palettes. The icons start from these.
 enum Base {
     static let light = Palette(
         ground: .linear(RGB(0xEFE9DC), RGB(0xE6DECD)),
@@ -121,156 +121,13 @@ enum Base {
 // MARK: - Variants
 
 struct Variant {
-    /// Asset name suffix: "" for the primary `AppIcon`, otherwise `AppIcon<suffix>` / `IconPreview<suffix>`.
+    /// Asset name suffix: `AppIcon<suffix>` / `IconPreview<suffix>`.
     let suffix: String
     let palette: (Appearance) -> Palette
 }
 
-let primary = Variant(suffix: "") { appearance in
-    switch appearance {
-    case .light: Base.light
-    case .dark: Base.dark
-    case .tinted: Base.tinted
-    }
-}
-
-/// Cream ceramic bowls for coloured grounds; contents as in the primary.
-func creamBowls(on ground: Ground, shadow: RGB, sheen: CGFloat = 0.18) -> Palette {
-    var p = Base.light
-    p.ground = ground
-    p.shadow = shadow
-    p.bowl = .ceramic(sheen: sheen)
-    return p
-}
-
 let alternates: [Variant] = [
-    // Graphite and paper: the composition in greyscale.
-    Variant(suffix: "Mono") { appearance in
-        switch appearance {
-        case .light:
-            return Palette(
-                ground: .linear(RGB(0xECECEA), RGB(0xDDDDDA)),
-                bowlRim: RGB(0xFFFFFF), bowlInside: RGB(0xF1F1EF),
-                shadow: RGB(0x202020, alpha: 0.22),
-                herb: RGB(0x5C5C5A), herbDark: RGB(0x3E3E3C), herbLight: RGB(0x80807D),
-                paprika: RGB(0x2E2E2D), paprikaLight: RGB(0x575755),
-                saffron: RGB(0xA3A3A0), saffronLight: RGB(0xC4C4C1),
-                bowl: .ceramic(sheen: 0.2))
-        case .dark:
-            return Palette(
-                ground: .linear(RGB(0x232323), RGB(0x1A1A1A)),
-                bowlRim: RGB(0x3B3B3B), bowlInside: RGB(0x2B2B2B),
-                shadow: RGB(0x000000, alpha: 0.45),
-                herb: RGB(0xB5B5B5), herbDark: RGB(0x8F8F8F), herbLight: RGB(0xD6D6D6),
-                paprika: RGB(0xE4E4E4), paprikaLight: RGB(0xF7F7F7),
-                saffron: RGB(0x7A7A7A), saffronLight: RGB(0x9C9C9C),
-                bowl: .ceramic(sheen: 0.1))
-        case .tinted:
-            return Base.tinted
-        }
-    },
-    // Charcoal ground, speckled dark stoneware, bright ingredients.
-    Variant(suffix: "Dark") { appearance in
-        var p = Base.dark
-        switch appearance {
-        case .light:
-            p.ground = .radial(RGB(0x34322F), RGB(0x1F1E1C))
-            p.bowlRim = RGB(0x4A4743); p.bowlInside = RGB(0x33312E)
-            p.shadow = RGB(0x000000, alpha: 0.55)
-            p.bowl = .stoneware(speck: RGB(0x1A1918), sheen: 0.14)
-        case .dark:
-            p.ground = .radial(RGB(0x23221F), RGB(0x121211))
-            p.bowlRim = RGB(0x403D39); p.bowlInside = RGB(0x2B2926)
-            p.shadow = RGB(0x000000, alpha: 0.6)
-            p.bowl = .stoneware(speck: RGB(0x151413), sheen: 0.1)
-        case .tinted:
-            p = Base.tinted
-            p.bowl = .stoneware(speck: RGB(0x2A2A2A), sheen: 0)
-        }
-        return p
-    },
-    // Rosemary ground: the app's accent as the whole field.
-    Variant(suffix: "Herb") { appearance in
-        switch appearance {
-        case .light:
-            var p = creamBowls(on: .radial(RGB(0x6A8D5F), RGB(0x46663F)), shadow: RGB(0x1E2E19, alpha: 0.4))
-            p.herb = RGB(0x5E8C4B); p.herbDark = RGB(0x46723A); p.herbLight = RGB(0x88B26F)
-            return p
-        case .dark:
-            var p = Base.dark
-            p.ground = .radial(RGB(0x30432B), RGB(0x1B2618))
-            p.bowlRim = RGB(0x4A4D44); p.bowlInside = RGB(0x33352F)
-            p.shadow = RGB(0x000000, alpha: 0.5)
-            p.bowl = .ceramic(sheen: 0.1)
-            return p
-        case .tinted:
-            return Base.tinted
-        }
-    },
-    // Warm tomato red with cream bowls.
-    Variant(suffix: "Tomato") { appearance in
-        switch appearance {
-        case .light:
-            var p = creamBowls(on: .radial(RGB(0xDA6449), RGB(0xB2402B)), shadow: RGB(0x4A140A, alpha: 0.38))
-            p.paprika = RGB(0xA9472C); p.paprikaLight = RGB(0xCF6E4C)
-            return p
-        case .dark:
-            var p = Base.dark
-            p.ground = .radial(RGB(0x5C2419), RGB(0x34120C))
-            p.bowlRim = RGB(0x4E4541); p.bowlInside = RGB(0x36302D)
-            p.shadow = RGB(0x000000, alpha: 0.5)
-            p.bowl = .ceramic(sheen: 0.1)
-            return p
-        case .tinted:
-            return Base.tinted
-        }
-    },
-    // Soft blush ground, pastel glazed bowls.
-    Variant(suffix: "Pastel") { appearance in
-        switch appearance {
-        case .light:
-            return Palette(
-                ground: .linear(RGB(0xF7E1DA), RGB(0xEFD0CB)),
-                bowlRim: RGB(0xCFE6D7), bowlInside: RGB(0xEAF4EE),
-                shadow: RGB(0x7A4A50, alpha: 0.28),
-                herb: RGB(0x98C287), herbDark: RGB(0x7CAA6C), herbLight: RGB(0xB7D8A6),
-                paprika: RGB(0xE79A86), paprikaLight: RGB(0xF4BBA9),
-                saffron: RGB(0xF2CC7C), saffronLight: RGB(0xF8E0A6),
-                bowl: .ceramic(sheen: 0.3))
-        case .dark:
-            return Palette(
-                ground: .linear(RGB(0x3E2F35), RGB(0x31252A)),
-                bowlRim: RGB(0x56685D), bowlInside: RGB(0x46564C),
-                shadow: RGB(0x000000, alpha: 0.4),
-                herb: RGB(0x9CC68B), herbDark: RGB(0x80AE70), herbLight: RGB(0xBADBAA),
-                paprika: RGB(0xE9A08C), paprikaLight: RGB(0xF4BEAD),
-                saffron: RGB(0xF0CE84), saffronLight: RGB(0xF7E0A8),
-                bowl: .ceramic(sheen: 0.15))
-        case .tinted:
-            return Base.tinted
-        }
-    },
-    // Oak cutting board.
-    Variant(suffix: "Wood") { appearance in
-        switch appearance {
-        case .light:
-            var p = creamBowls(on: .wood(base: RGB(0xC48F5A), light: RGB(0xD9AA74), dark: RGB(0x8E5C33)),
-                               shadow: RGB(0x3A2210, alpha: 0.42))
-            p.vignette = 0.18
-            return p
-        case .dark:
-            var p = Base.dark
-            p.ground = .wood(base: RGB(0x4E3322), light: RGB(0x60412C), dark: RGB(0x2E1D12))
-            p.bowlRim = RGB(0x4A4540); p.bowlInside = RGB(0x33302C)
-            p.shadow = RGB(0x000000, alpha: 0.55)
-            p.bowl = .ceramic(sheen: 0.1)
-            p.vignette = 0.25
-            return p
-        case .tinted:
-            return Base.tinted
-        }
-    },
-    // Head Chef: polished copper on a deep warm ground.
+    // Polished copper on a deep warm ground.
     Variant(suffix: "CopperPot") { appearance in
         switch appearance {
         case .light, .dark:
@@ -289,7 +146,7 @@ let alternates: [Variant] = [
             return p
         }
     },
-    // Head Chef: midnight blue-black, dark ceramic with gilded rims, a little gold dust.
+    // Midnight blue-black, dark ceramic with gilded rims, a little gold dust.
     Variant(suffix: "MidnightKitchen") { appearance in
         switch appearance {
         case .light, .dark:
@@ -865,7 +722,7 @@ let alternatesCatalog = resources.appendingPathComponent("AppIcons.xcassets")
 try fm.createDirectory(at: alternatesCatalog, withIntermediateDirectories: true)
 try writeJSON("{\n  \"info\": {\n    \"author\": \"xcode\",\n    \"version\": 1\n  }\n}\n", to: alternatesCatalog)
 
-for variant in [primary] + alternates {
+for variant in alternates {
     let iconName = "AppIcon" + variant.suffix
     let iconDir = variant.suffix.isEmpty
         ? resources.appendingPathComponent("Assets.xcassets/AppIcon.appiconset")

@@ -1,25 +1,30 @@
 import SwiftUI
 import UIKit
 
-/// The app icons. The default is free; the alternates are a thank-you for supporters, and two
-/// are Head Chef exclusives that only stay on while that subscription is active.
+/// The app icons. The default (a salad) is free; five food icons are a thank-you for any tip or
+/// subscription, for good; two are subscription icons that only stay on while it is active.
 ///
 /// `alternateIconName` must match an `AppIcon<Name>.appiconset` in `AppIcons.xcassets` listed
 /// in `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` (`project.yml`). The artwork and the
-/// `IconPreview<Name>` images come from `Design/make-icon.swift`.
+/// `IconPreview<Name>` images come from `Design/make-icon-variants.swift` (default and food
+/// icons) and `Design/make-icon.swift` (subscription icons).
 enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     case `default`
-    case mono
-    case dark
-    case herb
-    case tomato
-    case pastel
-    case wood
+    case grainBowl
+    case spaghetti
+    case shakshuka
+    case ramen
+    case margherita
     case copperPot
     case midnightKitchen
 
     enum Requirement: Sendable {
-        case free, supporter, headChef
+        /// Free for everyone.
+        case free
+        /// Any tip or subscription, ever.
+        case supporter
+        /// Only while a subscription is active.
+        case subscription
     }
 
     var id: String { rawValue }
@@ -27,12 +32,11 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .default: "MealMate"
-        case .mono: "Mono"
-        case .dark: "Dark"
-        case .herb: "Herb"
-        case .tomato: "Tomato"
-        case .pastel: "Pastel"
-        case .wood: "Wood"
+        case .grainBowl: "Grain Bowl"
+        case .spaghetti: "Spaghetti"
+        case .shakshuka: "Shakshuka"
+        case .ramen: "Ramen"
+        case .margherita: "Margherita"
         case .copperPot: "Copper Pot"
         case .midnightKitchen: "Midnight Kitchen"
         }
@@ -42,12 +46,11 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     var alternateIconName: String? {
         switch self {
         case .default: nil
-        case .mono: "AppIconMono"
-        case .dark: "AppIconDark"
-        case .herb: "AppIconHerb"
-        case .tomato: "AppIconTomato"
-        case .pastel: "AppIconPastel"
-        case .wood: "AppIconWood"
+        case .grainBowl: "AppIconGrainBowl"
+        case .spaghetti: "AppIconSpaghetti"
+        case .shakshuka: "AppIconShakshuka"
+        case .ramen: "AppIconRamen"
+        case .margherita: "AppIconMargherita"
         case .copperPot: "AppIconCopperPot"
         case .midnightKitchen: "AppIconMidnightKitchen"
         }
@@ -61,30 +64,38 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     var requirement: Requirement {
         switch self {
         case .default: .free
-        case .copperPot, .midnightKitchen: .headChef
-        default: .supporter
+        case .copperPot, .midnightKitchen: .subscription
+        case .grainBowl, .spaghetti, .shakshuka, .ramen, .margherita: .supporter
         }
     }
 
-    static var supporterIcons: [MealMateAppIcon] { allCases.filter { $0.requirement != .headChef } }
-    static var headChefIcons: [MealMateAppIcon] { allCases.filter { $0.requirement == .headChef } }
+    static var foodIcons: [MealMateAppIcon] { allCases.filter { $0.requirement == .supporter } }
+    static var subscriptionIcons: [MealMateAppIcon] { allCases.filter { $0.requirement == .subscription } }
 
-    func isAvailable(isSupporter: Bool, tier: SupporterTier) -> Bool {
+    func isAvailable(isSupporter: Bool, isSubscribed: Bool) -> Bool {
         switch requirement {
         case .free: true
-        case .supporter: isSupporter
-        case .headChef: tier == .headChef
+        case .supporter: isSupporter || isSubscribed
+        case .subscription: isSubscribed
         }
     }
 
     /// The icon to switch to because `current` is no longer included, or nil to keep it.
-    /// Supporter status never goes away, so in practice this only falls back from a Head Chef
-    /// icon after that subscription lapsed.
-    static func fallback(for current: MealMateAppIcon, isSupporter: Bool, tier: SupporterTier) -> MealMateAppIcon? {
-        current.isAvailable(isSupporter: isSupporter, tier: tier) ? nil : .default
+    /// Supporter status never goes away, so in practice this only falls back from a subscription
+    /// icon after the subscription lapsed.
+    static func fallback(for current: MealMateAppIcon, isSupporter: Bool, isSubscribed: Bool) -> MealMateAppIcon? {
+        current.isAvailable(isSupporter: isSupporter, isSubscribed: isSubscribed) ? nil : .default
     }
 
     // MARK: - Applying
+
+    /// The home screen shows an icon this version no longer ships (Mono, Dark, Herb, Tomato,
+    /// Pastel, Wood before the food icons replaced them).
+    @MainActor
+    static var currentIsRetired: Bool {
+        guard let name = UIApplication.shared.alternateIconName else { return false }
+        return !allCases.contains { $0.alternateIconName == name }
+    }
 
     @MainActor
     static var current: MealMateAppIcon {
@@ -105,25 +116,31 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Puts the default icon back when the current one is no longer included (Head Chef lapsed or
-/// was refunded). Supporter status and other icons are untouched. Runs once StoreKit has
-/// confirmed the entitlements this launch, and again whenever the level changes or the app
-/// becomes active (`setAlternateIconName` only works while active).
+/// Puts the default icon back when the current one is no longer included (the subscription
+/// lapsed or was refunded) or no longer exists (a retired icon). Supporter status and the food
+/// icons are untouched. Runs once StoreKit
+/// has confirmed the entitlements this launch, and again whenever the subscription state changes
+/// or the app becomes active (`setAlternateIconName` only works while active).
 private struct AppIconEntitlementGuard: ViewModifier {
     @Environment(SupporterStore.self) private var store
     @Environment(\.scenePhase) private var scenePhase
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: store.activeTier) { enforce() }
+            .onChange(of: store.isSubscribed) { enforce() }
             .onChange(of: store.hasResolvedEntitlements) { enforce() }
             .onChange(of: scenePhase) { enforce() }
     }
 
     private func enforce() {
-        guard store.hasResolvedEntitlements, scenePhase == .active,
+        guard scenePhase == .active else { return }
+        if MealMateAppIcon.currentIsRetired {
+            Task { try? await MealMateAppIcon.select(.default) }
+            return
+        }
+        guard store.hasResolvedEntitlements,
               let fallback = MealMateAppIcon.fallback(for: .current, isSupporter: store.isSupporter,
-                                                      tier: store.activeTier) else { return }
+                                                      isSubscribed: store.isSubscribed) else { return }
         Task { try? await MealMateAppIcon.select(fallback) }
     }
 }
