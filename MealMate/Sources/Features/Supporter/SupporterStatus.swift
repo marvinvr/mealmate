@@ -53,17 +53,6 @@ enum SupporterProduct: String, CaseIterable, Sendable {
         case .tipFeast: "Feast"
         }
     }
-
-    /// The line under a tip's name in the sheet (same as its App Store Connect description).
-    var tipDescription: String? {
-        switch self {
-        case .tipEspresso: "A quick thank-you."
-        case .tipBrunch: "A generous thank-you."
-        case .tipDinnerParty: "Thanks for keeping MealMate going."
-        case .tipFeast: "Wow. Thank you, truly."
-        case .monthly, .yearly, .legacySousChefMonthly, .legacySousChefYearly: nil
-        }
-    }
 }
 
 /// One verified transaction from `Transaction.all`, reduced to what supporter status needs.

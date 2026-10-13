@@ -110,27 +110,28 @@ food icons, `Design/make-icon-subscriber.swift` the subscription icons (see `STY
     sized so a sixth one is cut in half at the edge (it shows the strip scrolls); the strip bleeds
     to the screen edge. Locked tiles carry a white lock on a dark disc (`AppIconImage`, also in
     the picker); unlocked ones apply on tap.
-  - **Recurring:** one "MealMate Supporter" card: checkmark perks (the five food icons, yours to
-    keep; three subscriber exclusives with inline thumbnails; keeps MealMate free) and two
-    equal-width price buttons ("$2.99 / month", "$24.99 / year") with "Billed monthly" /
-    "Saves n%" under each. Right below: the subscription terms (charged to the Apple Account,
-    auto-renewal, how to cancel, the subscription icons only while active, Family Sharing) and
-    the Privacy Policy (`PRIVACY.md` on GitHub) and Terms of Use (Apple's standard EULA) links,
-    as App Review requires them at the subscription options. Subscribed (a retired Sous Chef
+  - **Recurring:** one "MealMate Supporter" card ("Monthly or yearly."): checkmark perks (the
+    five food icons, for good; three subscriber exclusives with inline thumbnails; keeps MealMate
+    independent) and two equal-width price buttons ("$2.99 / month", "$24.99 / year") with
+    "Billed monthly" / "Saves n%" under each. Right below, the minimum App Review asks for at the
+    subscription options (title, period and price are on the card and buttons): "Renews
+    automatically, cancel anytime in Settings." and the Privacy Policy (`PRIVACY.md` on GitHub)
+    and Terms of Use (Apple's standard EULA) links. Subscribed (a retired Sous Chef
     plan included): an "Active" badge and accent outline, the billing period and Manage
     Subscription (`manageSubscriptionsSheet`) instead of the price buttons.
-  - **One-Time** ("Support Again" for supporters): one full-width row per tip with the name, the
-    app's own description (`SupporterProduct.tipDescription`), from Brunch up "Includes the five
-    food icons" (one line; the footnote says they're yours to keep), and the price on the right; footnote "A tip is a one-time
-    thank-you…".
-  - Footer: everything stays free, Restore Purchases (and Manage Subscription while subscribed
-    but the products can't load).
+  - **One-Time** ("Support Again" for supporters): one full-width row per tip with the name,
+    from Brunch up "Unlocks the food icons for good", and the price on the right; footnote
+    "A one-time thank-you.".
+  - Footer: Restore Purchases (and Manage Subscription while subscribed but the products can't
+    load).
   - Busy buttons keep their size: `busyOverlay` hides the label and overlays a small spinner.
 - **Settings**: the first section holds the supporter row (opens the sheet; "Thank You for
   Subscribing" / "Thank You for Your Support" for supporters) and the **App Icon** row, which
   pushes `AppIconPickerView` (default / Supporter / Subscription sections; a locked tile opens
   the sheet).
-- Copy: calm, no guilt, no countdowns or "last chance"; every surface says everything stays free.
+- Copy: calm, no guilt, no countdowns or "last chance". Short: every footnote is at most one
+  short sentence, nothing repeated (the pitch says it's free once; no Family Sharing or
+  renewal prose beyond the one line App Review needs).
 
 ## Prompt Ladder
 

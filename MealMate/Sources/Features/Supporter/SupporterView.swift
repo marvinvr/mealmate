@@ -104,12 +104,12 @@ struct SupporterView: View {
 
     private var message: String {
         if store.isSubscribed {
-            return "You’re subscribed. Thank you for keeping MealMate free, independent and well looked after."
+            return "You’re subscribed. Thanks for keeping MealMate going."
         }
         if store.isSupporter {
-            return "You’re a supporter. Thank you for helping keep MealMate free and independent."
+            return "Thanks for keeping MealMate going."
         }
-        return "MealMate is free and independent: no ads, no tracking, made by one person. If it has earned a spot in your kitchen, you can chip in. Everything stays free either way."
+        return "Free, ad-free and made by one person. Chip in if it’s earned a spot in your kitchen."
     }
 
     private var supporterDetail: String? {
@@ -132,9 +132,9 @@ struct SupporterView: View {
                     SupporterSectionLabel(title: "Recurring")
                     SupporterSubscriptionCard(showsManage: $showsManageSubscriptions)
                     // App Review wants the terms right at the subscription options: period and
-                    // price on every button, renewal terms, Privacy Policy and Terms of Use (EULA).
+                    // price on every button, auto-renewal, Privacy Policy and Terms of Use (EULA).
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        SupporterFootnote(text: "Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. The subscriber icons are included while the subscription is active. Family Sharing included.")
+                        SupporterFootnote(text: "Renews automatically, cancel anytime in Settings.")
                         SupporterLegalLinks()
                     }
                     .padding(.top, 2)
@@ -179,7 +179,7 @@ struct SupporterView: View {
                         SupporterTipRow(product: product)
                     }
                 }
-                SupporterFootnote(text: "A tip is a one-time thank-you and can be given again anytime. From Brunch up it includes the five food icons, yours to keep.")
+                SupporterFootnote(text: "A one-time thank-you.")
                     .padding(.top, 2)
             }
         }
@@ -189,10 +189,6 @@ struct SupporterView: View {
 
     private var footer: some View {
         VStack(spacing: Theme.Spacing.m) {
-            Text("Everything in MealMate stays free either way: supporting unlocks app icons and keeps development going.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
             // The subscription card carries Manage Subscription; this is the fallback while the
             // products can't load.
             if store.isSubscribed && store.subscriptionProducts.isEmpty {
@@ -331,9 +327,9 @@ private struct SupporterSubscriptionCard: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                perk("The five food icons, yours to keep")
+                perk("The five food icons, for good")
                 subscriptionIconsPerk
-                perk("Keeps MealMate free, ad-free and independent")
+                perk("Keeps MealMate independent")
             }
 
             actions
@@ -346,7 +342,7 @@ private struct SupporterSubscriptionCard: View {
     }
 
     private var subtitle: String {
-        guard store.isSubscribed else { return "Monthly or yearly. Cancel anytime." }
+        guard store.isSubscribed else { return "Monthly or yearly." }
         guard let current = store.activeSubscription else { return "Thank you for subscribing." }
         return current.isYearly ? "Billed yearly" : "Billed monthly"
     }
@@ -472,7 +468,7 @@ extension View {
 
 // MARK: - Tip row
 
-/// One tip: name, description and, from Brunch up, the food icons; the price on the right. The
+/// One tip: the name and, from Brunch up, the food icons; the price on the right. The
 /// spinner overlays the price, so the row never shifts while buying.
 private struct SupporterTipRow: View {
     let product: Product
@@ -489,23 +485,16 @@ private struct SupporterTipRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(name)
                         .font(.subheadline.weight(.semibold))
-                    if let description = kind?.tipDescription {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
-                    }
                     if kind?.unlocksFoodIcons == true {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Image(systemName: "checkmark")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.tint)
-                            Text("Includes the five food icons")
+                            Text("Unlocks the food icons for good")
                                 .font(.caption)
                                 .multilineTextAlignment(.leading)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.top, Theme.Spacing.xxs)
                     }
                 }
                 Spacer(minLength: 0)
@@ -522,7 +511,7 @@ private struct SupporterTipRow: View {
         .buttonStyle(.plain)
         .disabled(store.purchasingProductID != nil)
         .accessibilityLabel("\(name) tip, \(product.displayPrice)"
-            + (kind?.unlocksFoodIcons == true ? ", includes the five food icons" : ""))
+            + (kind?.unlocksFoodIcons == true ? ", unlocks the food icons" : ""))
     }
 }
 
@@ -605,10 +594,8 @@ struct SupporterIconShowcase: View {
     }
 
     private var caption: String {
-        let exclusives = "Enamel Cocotte, Candlelight and Sunday Brunch come with the subscription"
-        if store.isSubscribed { return "Tap an icon to use it." }
-        if store.hasFoodIcons { return "Tap an icon to use it. \(exclusives)." }
-        return "The subscription unlocks all eight icons, a tip from Brunch up the five food icons."
+        if store.hasFoodIcons { return "Tap an icon to use it." }
+        return "Tips from Brunch up unlock the food icons, the subscription all of them."
     }
 }
 
