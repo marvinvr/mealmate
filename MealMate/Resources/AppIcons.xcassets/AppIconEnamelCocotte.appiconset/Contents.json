@@ -1,7 +1,7 @@
 {
   "images": [
     {
-      "filename": "AppIconMidnightKitchen.png",
+      "filename": "AppIconEnamelCocotte.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"
@@ -13,7 +13,7 @@
           "value": "dark"
         }
       ],
-      "filename": "AppIconMidnightKitchen-dark.png",
+      "filename": "AppIconEnamelCocotte-dark.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"
@@ -25,7 +25,7 @@
           "value": "tinted"
         }
       ],
-      "filename": "AppIconMidnightKitchen-tinted.png",
+      "filename": "AppIconEnamelCocotte-tinted.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"

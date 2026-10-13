@@ -145,15 +145,15 @@ struct AppIconEntitlementTests {
         #expect(MealMateAppIcon.ramen.isAvailable(hasFoodIcons: true, isSubscribed: false))
         #expect(MealMateAppIcon.grainBowl.isAvailable(hasFoodIcons: false, isSubscribed: true))
         // Subscription icons: only while subscribed, tips don't unlock them.
-        #expect(!MealMateAppIcon.copperPot.isAvailable(hasFoodIcons: true, isSubscribed: false))
-        #expect(MealMateAppIcon.midnightKitchen.isAvailable(hasFoodIcons: true, isSubscribed: true))
+        #expect(!MealMateAppIcon.enamelCocotte.isAvailable(hasFoodIcons: true, isSubscribed: false))
+        #expect(MealMateAppIcon.sundayBrunch.isAvailable(hasFoodIcons: true, isSubscribed: true))
         #expect(MealMateAppIcon.foodIcons == [.grainBowl, .spaghetti, .shakshuka, .ramen, .margherita])
-        #expect(MealMateAppIcon.subscriptionIcons == [.copperPot, .midnightKitchen])
+        #expect(MealMateAppIcon.subscriptionIcons == [.enamelCocotte, .candlelight, .sundayBrunch])
     }
 
     @Test func lapsedSubscriptionFallsBackToTheDefaultIcon() {
-        #expect(MealMateAppIcon.fallback(for: .copperPot, hasFoodIcons: true, isSubscribed: false) == .default)
-        #expect(MealMateAppIcon.fallback(for: .copperPot, hasFoodIcons: true, isSubscribed: true) == nil)
+        #expect(MealMateAppIcon.fallback(for: .candlelight, hasFoodIcons: true, isSubscribed: false) == .default)
+        #expect(MealMateAppIcon.fallback(for: .candlelight, hasFoodIcons: true, isSubscribed: true) == nil)
         // Food icons stay after a subscription ends: they're unlocked for good.
         #expect(MealMateAppIcon.fallback(for: .margherita, hasFoodIcons: true, isSubscribed: false) == nil)
         #expect(MealMateAppIcon.fallback(for: .default, hasFoodIcons: false, isSubscribed: false) == nil)
@@ -164,7 +164,13 @@ struct AppIconEntitlementTests {
     @Test func everyIconHasDistinctAssetNames() {
         let names = MealMateAppIcon.allCases.compactMap(\.alternateIconName)
         #expect(Set(names).count == MealMateAppIcon.allCases.count - 1)
-        #expect(MealMateAppIcon.copperPot.previewImageName == "IconPreviewCopperPot")
+        #expect(MealMateAppIcon.enamelCocotte.previewImageName == "IconPreviewEnamelCocotte")
+        #expect(MealMateAppIcon.sundayBrunch.alternateIconName == "AppIconSundayBrunch")
+        // Retired icons (also Copper Pot and Midnight Kitchen) are no case any more, so the guard
+        // treats them as retired and puts the default back.
+        for retired in ["AppIconCopperPot", "AppIconMidnightKitchen", "AppIconMono"] {
+            #expect(!MealMateAppIcon.allCases.contains { $0.alternateIconName == retired })
+        }
         #expect(MealMateAppIcon.grainBowl.previewImageName == "IconPreviewGrainBowl")
         #expect(MealMateAppIcon.default.previewImageName == "IconPreviewDefault")
     }
@@ -347,7 +353,7 @@ final class SupporterStoreKitTests {
         #expect(store.status.supporterSince != nil)
         // Tips unlock the food icons, not the subscription icons.
         #expect(MealMateAppIcon.shakshuka.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
-        #expect(!MealMateAppIcon.copperPot.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
+        #expect(!MealMateAppIcon.candlelight.isAvailable(hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed))
     }
 
     @Test func anEspressoTipUnlocksNoIcons() async throws {
@@ -381,7 +387,7 @@ final class SupporterStoreKitTests {
         try await buy(.legacySousChefMonthly, store: store)
         #expect(store.isSubscribed)
         #expect(store.activeSubscription == .legacySousChefMonthly)
-        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == nil)
+        #expect(MealMateAppIcon.fallback(for: .sundayBrunch, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == nil)
 
         // Moving to the current subscription (the higher level) starts right away.
         try await buy(.yearly, store: store)
@@ -407,7 +413,7 @@ final class SupporterStoreKitTests {
         #expect(!store.isSubscribed)
         #expect(store.activeSubscription == nil)
         #expect(store.isSupporter)
-        #expect(MealMateAppIcon.fallback(for: .midnightKitchen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == .default)
+        #expect(MealMateAppIcon.fallback(for: .sundayBrunch, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == .default)
         #expect(MealMateAppIcon.fallback(for: .ramen, hasFoodIcons: store.hasFoodIcons, isSubscribed: store.isSubscribed) == nil)
     }
 

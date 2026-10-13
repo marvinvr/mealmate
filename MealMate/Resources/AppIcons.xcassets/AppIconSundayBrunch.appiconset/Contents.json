@@ -1,7 +1,7 @@
 {
   "images": [
     {
-      "filename": "AppIconCopperPot.png",
+      "filename": "AppIconSundayBrunch.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"
@@ -13,7 +13,7 @@
           "value": "dark"
         }
       ],
-      "filename": "AppIconCopperPot-dark.png",
+      "filename": "AppIconSundayBrunch-dark.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"
@@ -25,7 +25,7 @@
           "value": "tinted"
         }
       ],
-      "filename": "AppIconCopperPot-tinted.png",
+      "filename": "AppIconSundayBrunch-tinted.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"

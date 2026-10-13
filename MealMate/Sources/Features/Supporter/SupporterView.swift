@@ -134,7 +134,7 @@ struct SupporterView: View {
                     // App Review wants the terms right at the subscription options: period and
                     // price on every button, renewal terms, Privacy Policy and Terms of Use (EULA).
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        SupporterFootnote(text: "Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. Copper Pot and Midnight Kitchen are included while the subscription is active. Family Sharing included.")
+                        SupporterFootnote(text: "Payment is charged to your Apple Account. The subscription renews automatically at the price shown unless cancelled at least 24 hours before the end of the current period; manage or cancel it in your Apple Account settings. The subscriber icons are included while the subscription is active. Family Sharing included.")
                         SupporterLegalLinks()
                     }
                     .padding(.top, 2)
@@ -363,7 +363,7 @@ private struct SupporterSubscriptionCard: View {
     private var subscriptionIconsPerk: some View {
         HStack(alignment: .center, spacing: 10) {
             SupporterCheckmark()
-            Text("Two subscriber exclusives")
+            Text("Three subscriber exclusives")
                 .font(.footnote)
             HStack(spacing: 6) {
                 ForEach(MealMateAppIcon.subscriptionIcons) { icon in
@@ -372,7 +372,7 @@ private struct SupporterSubscriptionCard: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Two subscriber exclusives: "
+        .accessibilityLabel("Three subscriber exclusives: "
             + MealMateAppIcon.subscriptionIcons.map(\.displayName).formatted(.list(type: .and)))
     }
 
@@ -605,10 +605,10 @@ struct SupporterIconShowcase: View {
     }
 
     private var caption: String {
-        let exclusives = "Copper Pot and Midnight Kitchen come with the subscription"
+        let exclusives = "Enamel Cocotte, Candlelight and Sunday Brunch come with the subscription"
         if store.isSubscribed { return "Tap an icon to use it." }
         if store.hasFoodIcons { return "Tap an icon to use it. \(exclusives)." }
-        return "The subscription unlocks all seven icons, a tip from Brunch up the five food icons."
+        return "The subscription unlocks all eight icons, a tip from Brunch up the five food icons."
     }
 }
 

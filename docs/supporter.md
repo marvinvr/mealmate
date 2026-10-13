@@ -72,16 +72,18 @@ into the environment and started in the root `.task`.
 ## Perks: App Icons
 
 `MealMateAppIcon` lists the icons; `Design/make-icon-variants.swift` draws the default and the
-food icons, `Design/make-icon.swift` the subscription icons (see `STYLE.md` §12).
+food icons, `Design/make-icon-subscriber.swift` the subscription icons (see `STYLE.md` §12).
 
 - **Default** (Salad, shown as "MealMate"): free.
 - **Food icons** (any subscription or a tip from Brunch up, for good; not the Espresso tip):
   Grain Bowl, Spaghetti, Shakshuka, Ramen, Margherita.
-- **Subscription icons** (only while a subscription is active): Copper Pot, Midnight Kitchen.
+- **Subscription icons** (only while a subscription is active): Enamel Cocotte, Candlelight,
+  Sunday Brunch.
 - Alternates live in `MealMate/Resources/AppIcons.xcassets` (app target only, so the share
   extension doesn't carry them), registered via `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES`
   in `project.yml`. Previews for the picker: `IconPreview<Name>` imagesets (light + dark).
-- Retired with this setup: Mono, Dark, Herb, Tomato, Pastel, Wood. If the home screen still
+- Retired: Mono, Dark, Herb, Tomato, Pastel, Wood (replaced by the food icons) and the earlier
+  subscription icons Copper Pot and Midnight Kitchen. If the home screen still
   names one of them (`MealMateAppIcon.currentIsRetired`), the guard below switches to the default
   the next time the app is active.
 - **Lapse:** `appIconEntitlementGuard()` (on the root view) switches back to the default icon
@@ -109,7 +111,7 @@ food icons, `Design/make-icon.swift` the subscription icons (see `STYLE.md` §12
     to the screen edge. Locked tiles carry a white lock on a dark disc (`AppIconImage`, also in
     the picker); unlocked ones apply on tap.
   - **Recurring:** one "MealMate Supporter" card: checkmark perks (the five food icons, yours to
-    keep; two subscriber exclusives with inline thumbnails; keeps MealMate free) and two
+    keep; three subscriber exclusives with inline thumbnails; keeps MealMate free) and two
     equal-width price buttons ("$2.99 / month", "$24.99 / year") with "Billed monthly" /
     "Saves n%" under each. Right below: the subscription terms (charged to the Apple Account,
     auto-renewal, how to cancel, the subscription icons only while active, Family Sharing) and
@@ -226,7 +228,7 @@ Consumables aren't Family Sharing eligible.
 
   > MealMate is free; every feature works without purchases. These optional purchases only
   > support development: the subscription or a tip from Brunch up unlocks five alternate app
-  > icons for good; the subscription additionally unlocks two more icons while it is active.
+  > icons for good; the subscription additionally unlocks three more icons while it is active.
   > The Espresso tip is a thank-you only and unlocks nothing. To find them: sign
   > in (demo server credentials are in the app review notes), tap the avatar at the top right
   > to open Settings, then "Support MealMate" at the top. The App Icon row below it shows the

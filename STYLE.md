@@ -218,7 +218,8 @@ Two reproducible scripts draw every icon (run from the repo root; edit the scrip
 - `swift Design/make-icon-variants.swift` draws dishes seen from above: the default and the five
   food icons. `--sheet <dir>` also writes a contact sheet (every icon large, at home-screen size
   and on light / dark / tinted home screens) for reviewing changes.
-- `swift Design/make-icon.swift` draws the two subscription icons (prep bowls).
+- `swift Design/make-icon-subscriber.swift` draws the three subscription icons, same light and
+  helpers, more detail (per-pixel shaded enamel, candle and window light); same `--sheet` option.
 
 Each icon comes in light (opaque), dark and tinted (grayscale mark on black, levels stretched so
 the dish still reads once tinted) appearances, single 1024pt universal size. Dishes sit on warm,
@@ -230,12 +231,13 @@ saturated grounds in white ceramic; dark and tinted swap the white ceramic for d
 - **Alternates** (supporter perk, `docs/supporter.md`) go to `AppIcons.xcassets/AppIcon<Name>.appiconset`,
   an app-only catalog the share extension doesn't compile; their dark appearance is a deeper,
   opaque version of the ground.
-  - **Food icons** (any tip or subscription): Grain Bowl (poke-style toppings on saffron),
+  - **Food icons** (the subscription or a tip from Brunch up): Grain Bowl (poke-style toppings on saffron),
     Spaghetti (tomato and basil on cobalt), Shakshuka (cast-iron pan on sage), Ramen (black bowl
     on vermilion), Margherita (whole pizza on bottle green).
-  - **Subscription icons:** Copper Pot (polished copper saucepan with handle and rivets, copper
-    bowls, deep warm-brown ground) and Midnight Kitchen (midnight-blue ground with gold dust, dark
-    ceramic with gilded rims).
+  - **Subscription icons:** Enamel Cocotte (orange enamel cocotte of stew with carrots, mushrooms,
+    pearl onions and thyme on deep teal), Candlelight (sliced steak on a gold-rimmed porcelain plate,
+    a candle and a glass of red on burgundy) and Sunday Brunch (pancake stack with butter and
+    berries on a speckled pale-blue plate, window shadows on cream).
 - **Previews** for the in-app picker: `AppIcons.xcassets/IconPreview<Name>.imageset` (384 px, light +
   dark; `IconPreviewDefault` for the default). A transparent dark render sits on a dark backdrop.
 

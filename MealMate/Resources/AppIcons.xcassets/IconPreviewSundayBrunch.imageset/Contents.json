@@ -1,7 +1,7 @@
 {
   "images": [
     {
-      "filename": "IconPreviewMidnightKitchen.png",
+      "filename": "IconPreviewSundayBrunch.png",
       "idiom": "universal"
     },
     {
@@ -11,7 +11,7 @@
           "value": "dark"
         }
       ],
-      "filename": "IconPreviewMidnightKitchen-dark.png",
+      "filename": "IconPreviewSundayBrunch-dark.png",
       "idiom": "universal"
     }
   ],

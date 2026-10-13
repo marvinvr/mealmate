@@ -2,12 +2,12 @@ import SwiftUI
 import UIKit
 
 /// The app icons. The default (a salad) is free; five food icons are a thank-you for the
-/// subscription or a tip from Brunch up, for good; two are subscription icons that only stay on while it is active.
+/// subscription or a tip from Brunch up, for good; three are subscription icons that only stay on while it is active.
 ///
 /// `alternateIconName` must match an `AppIcon<Name>.appiconset` in `AppIcons.xcassets` listed
 /// in `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` (`project.yml`). The artwork and the
 /// `IconPreview<Name>` images come from `Design/make-icon-variants.swift` (default and food
-/// icons) and `Design/make-icon.swift` (subscription icons).
+/// icons) and `Design/make-icon-subscriber.swift` (subscription icons).
 enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     case `default`
     case grainBowl
@@ -15,8 +15,9 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     case shakshuka
     case ramen
     case margherita
-    case copperPot
-    case midnightKitchen
+    case enamelCocotte
+    case candlelight
+    case sundayBrunch
 
     enum Requirement: Sendable {
         /// Free for everyone.
@@ -37,8 +38,9 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
         case .shakshuka: "Shakshuka"
         case .ramen: "Ramen"
         case .margherita: "Margherita"
-        case .copperPot: "Copper Pot"
-        case .midnightKitchen: "Midnight Kitchen"
+        case .enamelCocotte: "Enamel Cocotte"
+        case .candlelight: "Candlelight"
+        case .sundayBrunch: "Sunday Brunch"
         }
     }
 
@@ -51,8 +53,9 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
         case .shakshuka: "AppIconShakshuka"
         case .ramen: "AppIconRamen"
         case .margherita: "AppIconMargherita"
-        case .copperPot: "AppIconCopperPot"
-        case .midnightKitchen: "AppIconMidnightKitchen"
+        case .enamelCocotte: "AppIconEnamelCocotte"
+        case .candlelight: "AppIconCandlelight"
+        case .sundayBrunch: "AppIconSundayBrunch"
         }
     }
 
@@ -64,7 +67,7 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     var requirement: Requirement {
         switch self {
         case .default: .free
-        case .copperPot, .midnightKitchen: .subscription
+        case .enamelCocotte, .candlelight, .sundayBrunch: .subscription
         case .grainBowl, .spaghetti, .shakshuka, .ramen, .margherita: .supporter
         }
     }
@@ -90,7 +93,8 @@ enum MealMateAppIcon: String, CaseIterable, Identifiable, Sendable {
     // MARK: - Applying
 
     /// The home screen shows an icon this version no longer ships (Mono, Dark, Herb, Tomato,
-    /// Pastel, Wood before the food icons replaced them).
+    /// Pastel, Wood before the food icons replaced them; Copper Pot and Midnight Kitchen before the
+    /// current subscription icons).
     @MainActor
     static var currentIsRetired: Bool {
         guard let name = UIApplication.shared.alternateIconName else { return false }

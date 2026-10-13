@@ -3,7 +3,7 @@ import XCTest
 
 /// Supporter tier states in the real app, with purchases from the local `MealMate.storekit`
 /// through `SKTestSession` (apps started by `simctl launch` don't get the scheme's StoreKit
-/// configuration). Walks non-supporter → Espresso tip → Brunch tip → subscribed (Copper Pot applied) → lapsed → a
+/// configuration). Walks non-supporter → Espresso tip → Brunch tip → subscribed (Candlelight applied) → lapsed → a
 /// retired Sous Chef subscription, and writes `screenshots/qa-supporter-[ipad-]*-<appearance>.png`. `XCUIDevice.appearance` doesn't
 /// switch the iOS 27 simulator, so set it first and pass its name for the file names:
 ///
@@ -52,12 +52,12 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         // Subscribe, then use one of the subscription icons.
         try session.buyProduct(productIdentifier: "headchef.yearly")
         try shoot("subscribed", sheet: true, icons: true)
-        try open("app-icon", waitFor: "Copper Pot")
-        app.buttons["Copper Pot"].tap()
+        try open("app-icon", waitFor: "Candlelight")
+        app.buttons["Candlelight"].tap()
         XCTAssertTrue(springboard.alerts.firstMatch.waitForExistence(timeout: 8), "icon change alert")
         snapshot("supporter-\(device)icon-applied-\(appearance)")
         dismissIconAlert()
-        snapshotHomeScreen("copper-pot")
+        snapshotHomeScreen("candlelight")
 
         // The subscription lapses. The running app hears about it (or the next launch does), the
         // guard puts the default icon back and the system confirms that with its alert.
@@ -119,7 +119,7 @@ final class SupporterScreenshotTests: MealMateUITestCase {
             snapshot("supporter-\(device)prompt-\(appearance)")
         }
         if icons {
-            try open("app-icon", waitFor: "Midnight Kitchen")
+            try open("app-icon", waitFor: "Sunday Brunch")
             snapshot("supporter-\(device)icons-\(state)-\(appearance)")
         }
     }
