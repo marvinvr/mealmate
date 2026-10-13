@@ -7,8 +7,9 @@ import StoreKit
 ///   and is monotonic (`SupporterStatus.merging`). Finished consumables only show up there
 ///   because `SKIncludeConsumableInAppPurchaseHistory` is true in Info.plist; reinstall and
 ///   second-device recognition of tippers depend on it.
-/// - The active subscription level (`activeTier`) comes from `Transaction.currentEntitlements`.
-///   It gates the Head Chef icons and can go down again (lapse, refund).
+/// - Whether a subscription is active (`isSubscribed`) comes from `Transaction.currentEntitlements`.
+///   It gates the subscription icons and can go away again (lapse, refund). Retired `souschef.*`
+///   subscriptions count too.
 /// - Every verified transaction is finished (listener + launch sweep); an unfinished consumable
 ///   would block buying the same tip again.
 /// - `AppStore.sync()` can ask for the Apple Account password: only `restorePurchases()` calls
@@ -18,24 +19,25 @@ import StoreKit
 final class SupporterStore {
     private enum Keys {
         static let status = "supporter.status"
-        static let activeTier = "supporter.activeTier"
+        static let isSubscribed = "supporter.isSubscribed"
+        /// Cache of the two-level setup (0 none, 1 Sous Chef, 2 Head Chef), read once as a fallback.
+        static let legacyActiveTier = "supporter.activeTier"
     }
 
-    /// Subscription products by level, monthly before yearly. Empty until loaded.
-    private(set) var sousChefProducts: [Product] = []
-    private(set) var headChefProducts: [Product] = []
+    /// The subscription's billing periods, monthly before yearly. Empty until loaded.
+    private(set) var subscriptionProducts: [Product] = []
     /// Tips in ascending price order. Empty until loaded.
     private(set) var tipProducts: [Product] = []
     /// Product loading finished and returned nothing usable.
     private(set) var productsUnavailable = false
 
     private(set) var status: SupporterStatus
-    /// Last known active subscription level; cached so the UI is right before the first refresh.
-    private(set) var activeTier: SupporterTier
-    /// Product ID of the active subscription, if any.
-    private(set) var activeSubscriptionID: String?
-    /// True once `currentEntitlements` was read this launch: only then is `activeTier` fresh
-    /// enough to take a Head Chef icon away.
+    /// Last known subscription state; cached so the UI is right before the first refresh.
+    private(set) var isSubscribed: Bool
+    /// The active subscription, if any (also a retired one).
+    private(set) var activeSubscription: SupporterProduct?
+    /// True once `currentEntitlements` was read this launch: only then is `isSubscribed` fresh
+    /// enough to take a subscription icon away.
     private(set) var hasResolvedEntitlements = false
 
     /// Product ID of an in-flight purchase, for the row spinner.
@@ -46,9 +48,7 @@ final class SupporterStore {
     private(set) var lastErrorMessage: String?
 
     var isSupporter: Bool { status.isSupporter }
-    var isHeadChef: Bool { activeTier == .headChef }
-    var hasActiveSubscription: Bool { activeTier > .none }
-    var hasProducts: Bool { !(sousChefProducts.isEmpty && headChefProducts.isEmpty && tipProducts.isEmpty) }
+    var hasProducts: Bool { !(subscriptionProducts.isEmpty && tipProducts.isEmpty) }
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
@@ -58,7 +58,9 @@ final class SupporterStore {
         self.defaults = defaults
         status = defaults.data(forKey: Keys.status)
             .flatMap { try? JSONDecoder().decode(SupporterStatus.self, from: $0) } ?? SupporterStatus()
-        activeTier = SupporterTier(rawValue: defaults.integer(forKey: Keys.activeTier)) ?? .none
+        isSubscribed = defaults.object(forKey: Keys.isSubscribed) != nil
+            ? defaults.bool(forKey: Keys.isSubscribed)
+            : defaults.integer(forKey: Keys.legacyActiveTier) > 0
     }
 
     /// Starts the transaction listener, finishes leftovers, reconciles entitlements and loads
@@ -76,10 +78,9 @@ final class SupporterStore {
 
     func loadProducts() async {
         do {
-            let products = try await Product.products(for: SupporterProduct.allIDs)
+            let products = try await Product.products(for: SupporterProduct.offeredIDs)
                 .sorted { order(of: $0) < order(of: $1) }
-            sousChefProducts = products.filter { SupporterProduct(rawValue: $0.id)?.tier == .sousChef }
-            headChefProducts = products.filter { SupporterProduct(rawValue: $0.id)?.tier == .headChef }
+            subscriptionProducts = products.filter { SupporterProduct(rawValue: $0.id)?.isSubscription == true }
             tipProducts = products.filter { SupporterProduct(rawValue: $0.id)?.isSubscription == false }
             productsUnavailable = products.isEmpty
         } catch {
@@ -126,7 +127,7 @@ final class SupporterStore {
 
     // MARK: - Entitlements
 
-    /// Recomputes the active level and folds the purchase history into the cached status.
+    /// Recomputes the active subscription and folds the purchase history into the cached status.
     func refreshEntitlements() async {
         var entitlements: [SupporterEntitlementRecord] = []
         for await result in Transaction.currentEntitlements {
@@ -148,12 +149,9 @@ final class SupporterStore {
                 isRevoked: transaction.revocationDate != nil))
         }
 
-        let tier = SupporterStatus.activeTier(entitlements: entitlements)
-        activeTier = tier
-        activeSubscriptionID = entitlements
-            .filter { !$0.isRevoked && !$0.isUpgraded && SupporterProduct(rawValue: $0.productID)?.tier == tier }
-            .first?.productID
-        status = status.merging(history: history, activeTier: tier)
+        activeSubscription = SupporterStatus.activeSubscription(entitlements: entitlements)
+        isSubscribed = activeSubscription != nil
+        status = status.merging(history: history, isSubscribed: isSubscribed)
         hasResolvedEntitlements = true
         persist()
     }
@@ -162,7 +160,8 @@ final class SupporterStore {
         if let data = try? JSONEncoder().encode(status) {
             defaults.set(data, forKey: Keys.status)
         }
-        defaults.set(activeTier.rawValue, forKey: Keys.activeTier)
+        defaults.set(isSubscribed, forKey: Keys.isSubscribed)
+        defaults.removeObject(forKey: Keys.legacyActiveTier)
     }
 
     // MARK: - Transaction plumbing

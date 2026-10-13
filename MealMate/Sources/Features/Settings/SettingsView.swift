@@ -115,11 +115,8 @@ struct SettingsView: View {
     }
 
     private var supporterTitle: String {
-        switch supporter.activeTier {
-        case .headChef: "Thank You, Head Chef"
-        case .sousChef: "Thank You, Sous Chef"
-        case .none: supporter.isSupporter ? "Thank You for Your Support" : "Support MealMate"
-        }
+        if supporter.isSubscribed { return "Thank You for Subscribing" }
+        return supporter.isSupporter ? "Thank You for Your Support" : "Support MealMate"
     }
 
     private var supporterSubtitle: String {

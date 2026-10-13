@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Settings → App Icon. The default icon, the supporter icons and the Head Chef icons, each in
-/// their own section. Locked icons open the supporter sheet instead of applying.
+/// Settings → App Icon. The default icon, the food icons (any tip or subscription) and the
+/// subscription icons, each in their own section. Locked icons open the supporter sheet instead of applying.
 struct AppIconPickerView: View {
     @Environment(SupporterStore.self) private var store
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -15,7 +15,7 @@ struct AppIconPickerView: View {
                 grid([.default])
             }
             Section {
-                grid(MealMateAppIcon.supporterIcons.filter { $0 != .default })
+                grid(MealMateAppIcon.foodIcons)
             } header: {
                 Text("Supporter")
             } footer: {
@@ -24,13 +24,13 @@ struct AppIconPickerView: View {
                      : "Any tip or subscription unlocks these for good.")
             }
             Section {
-                grid(MealMateAppIcon.headChefIcons)
+                grid(MealMateAppIcon.subscriptionIcons)
             } header: {
-                Text("Head Chef")
+                Text("Subscription")
             } footer: {
-                Text(store.isHeadChef
-                     ? "Included while your Head Chef subscription is active. If it ends, MealMate switches back to the default icon."
-                     : "Included with a Head Chef subscription, for as long as it’s active.")
+                Text(store.isSubscribed
+                     ? "Included while your subscription is active. If it ends, MealMate switches back to the default icon."
+                     : "Included with the MealMate Supporter subscription, for as long as it’s active.")
             }
         }
         .screenBackground()
@@ -60,7 +60,7 @@ struct AppIconPickerView: View {
     }
 
     private func tile(_ icon: MealMateAppIcon, size: CGFloat) -> some View {
-        let available = icon.isAvailable(isSupporter: store.isSupporter, tier: store.activeTier)
+        let available = icon.isAvailable(isSupporter: store.isSupporter, isSubscribed: store.isSubscribed)
         let selected = current == icon
         return Button {
             guard available else {

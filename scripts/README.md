@@ -113,8 +113,8 @@ unless `--keep-results` (then `build/ui-tests.xcresult`, local only). Details:
 
 `SupporterScreenshotTests` buys products from `MealMate.storekit` through `SKTestSession`
 and shoots the supporter sheet, prompt, Settings rows and icon picker for each state
-(non-supporter, Sous Chef, Head Chef with Copper Pot applied, lapsed back to the default
-icon): `screenshots/qa-supporter-*-<appearance>.png`. Set the appearance first (the test
+(non-supporter, tip, subscribed with Copper Pot applied, lapsed back to the default icon, a
+retired Sous Chef subscription): `screenshots/qa-supporter-*-<appearance>.png`. Set the appearance first (the test
 can't switch it on the iOS 27 simulator) and name it for the files:
 
 ```bash

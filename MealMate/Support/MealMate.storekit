@@ -104,52 +104,52 @@
         {
           "adHocOffers": [],
           "codeOffers": [],
-          "displayPrice": "4.99",
+          "displayPrice": "2.99",
           "familyShareable": true,
           "groupNumber": 1,
           "internalID": "6E0B0001-0000-4000-8000-000000000101",
           "introductoryOffer": null,
           "localizations": [
             {
-              "description": "All icons, incl. two Head Chef exclusives.",
-              "displayName": "Head Chef Monthly",
+              "description": "All app icons and a big thank-you.",
+              "displayName": "Supporter Monthly",
               "locale": "en_US"
             },
             {
-              "description": "Alle App-Icons plus zwei exklusive.",
-              "displayName": "Head Chef monatlich",
+              "description": "Alle App-Icons und ein herzliches Danke.",
+              "displayName": "Supporter monatlich",
               "locale": "de"
             }
           ],
           "productID": "headchef.monthly",
           "recurringSubscriptionPeriod": "P1M",
-          "referenceName": "Head Chef – Monthly",
+          "referenceName": "Supporter – Monthly",
           "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
           "type": "RecurringSubscription"
         },
         {
           "adHocOffers": [],
           "codeOffers": [],
-          "displayPrice": "39.99",
+          "displayPrice": "24.99",
           "familyShareable": true,
           "groupNumber": 1,
           "internalID": "6E0B0002-0000-4000-8000-000000000102",
           "introductoryOffer": null,
           "localizations": [
             {
-              "description": "All icons, incl. two Head Chef exclusives.",
-              "displayName": "Head Chef Yearly",
+              "description": "All app icons and a big thank-you.",
+              "displayName": "Supporter Yearly",
               "locale": "en_US"
             },
             {
-              "description": "Alle App-Icons plus zwei exklusive.",
-              "displayName": "Head Chef jährlich",
+              "description": "Alle App-Icons und ein herzliches Danke.",
+              "displayName": "Supporter jährlich",
               "locale": "de"
             }
           ],
           "productID": "headchef.yearly",
           "recurringSubscriptionPeriod": "P1Y",
-          "referenceName": "Head Chef – Yearly",
+          "referenceName": "Supporter – Yearly",
           "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
           "type": "RecurringSubscription"
         },
@@ -175,7 +175,7 @@
           ],
           "productID": "souschef.monthly",
           "recurringSubscriptionPeriod": "P1M",
-          "referenceName": "Sous Chef – Monthly",
+          "referenceName": "Sous Chef – Monthly (retired)",
           "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
           "type": "RecurringSubscription"
         },
@@ -201,7 +201,7 @@
           ],
           "productID": "souschef.yearly",
           "recurringSubscriptionPeriod": "P1Y",
-          "referenceName": "Sous Chef – Yearly",
+          "referenceName": "Sous Chef – Yearly (retired)",
           "subscriptionGroupID": "6E0B0000-0000-4000-8000-000000000100",
           "type": "RecurringSubscription"
         }

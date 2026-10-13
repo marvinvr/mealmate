@@ -3,8 +3,8 @@ import XCTest
 
 /// Supporter tier states in the real app, with purchases from the local `MealMate.storekit`
 /// through `SKTestSession` (apps started by `simctl launch` don't get the scheme's StoreKit
-/// configuration). Walks non-supporter → Sous Chef → Head Chef (upgrade) → Head Chef lapsed,
-/// and writes `screenshots/qa-supporter-[ipad-]*-<appearance>.png`. `XCUIDevice.appearance` doesn't
+/// configuration). Walks non-supporter → tip → subscribed (Copper Pot applied) → lapsed → a
+/// retired Sous Chef subscription, and writes `screenshots/qa-supporter-[ipad-]*-<appearance>.png`. `XCUIDevice.appearance` doesn't
 /// switch the iOS 27 simulator, so set it first and pass its name for the file names:
 ///
 ///   xcrun simctl ui "$UDID" appearance dark
@@ -31,27 +31,33 @@ final class SupporterScreenshotTests: MealMateUITestCase {
 
     func testSupporterStates() throws {
         // Non-supporter: ignore whatever an earlier run cached in this simulator.
-        stateArguments = ["-supporter.status", "", "-supporter.activeTier", "0"]
+        stateArguments = ["-supporter.status", "", "-supporter.isSubscribed", "0"]
         try shoot("none", sheet: true, prompt: true, icons: true)
+        snapshotHomeScreen("default")
         stateArguments = []
 
-        // Sous Chef.
-        try session.buyProduct(productIdentifier: "souschef.monthly")
-        try shoot("souschef", sheet: true, icons: true)
+        // A tip: the food icons unlock, the subscription icons stay locked.
+        try session.buyProduct(productIdentifier: "tip.espresso")
+        try shoot("tip", sheet: true, icons: true)
+        try open("app-icon", waitFor: "Ramen")
+        app.buttons["Ramen"].tap()
+        XCTAssertTrue(springboard.alerts.firstMatch.waitForExistence(timeout: 8), "icon change alert")
+        dismissIconAlert()
+        snapshotHomeScreen("ramen")
 
-        // Upgrade to Head Chef, then use one of its icons.
+        // Subscribe, then use one of the subscription icons.
         try session.buyProduct(productIdentifier: "headchef.yearly")
-        try shoot("headchef", sheet: true, icons: true)
+        try shoot("subscribed", sheet: true, icons: true)
         try open("app-icon", waitFor: "Copper Pot")
         app.buttons["Copper Pot"].tap()
         XCTAssertTrue(springboard.alerts.firstMatch.waitForExistence(timeout: 8), "icon change alert")
         snapshot("supporter-\(device)icon-applied-\(appearance)")
         dismissIconAlert()
+        snapshotHomeScreen("copper-pot")
 
-        // Head Chef lapses. The running app hears about it (or the next launch does), the guard
-        // puts the default icon back and the system confirms that with its alert.
+        // The subscription lapses. The running app hears about it (or the next launch does), the
+        // guard puts the default icon back and the system confirms that with its alert.
         try session.expireSubscription(productIdentifier: "headchef.yearly")
-        try session.expireSubscription(productIdentifier: "souschef.monthly")
         let alert = springboard.alerts.firstMatch
         if !alert.waitForExistence(timeout: 8) {
             app.terminate()
@@ -61,6 +67,10 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         snapshot("supporter-\(device)icon-reset-\(appearance)")
         dismissIconAlert()
         try shoot("lapsed", sheet: true, icons: true)
+
+        // Someone still on a retired Sous Chef subscription keeps every subscription perk.
+        try session.buyProduct(productIdentifier: "souschef.monthly")
+        try shoot("legacy", sheet: true, icons: true)
     }
 
     // MARK: Helpers
@@ -105,6 +115,19 @@ final class SupporterScreenshotTests: MealMateUITestCase {
         app.launch()
         try wait(element(containing: text), timeout: 15, "\(route): \(text)")
         Thread.sleep(forTimeInterval: 1.5) // products load, sheets settle
+    }
+
+    /// The home screen page with MealMate (the App Library on a fresh simulator).
+    private func snapshotHomeScreen(_ name: String) {
+        if springboard.alerts.firstMatch.exists { dismissIconAlert() }
+        XCUIDevice.shared.press(.home)
+        let icon = springboard.icons["MealMate"]
+        for _ in 0..<5 where !(icon.exists && icon.isHittable) {
+            springboard.swipeLeft()
+            Thread.sleep(forTimeInterval: 0.8)
+        }
+        Thread.sleep(forTimeInterval: 1)
+        snapshot("supporter-\(device)home-\(name)-\(appearance)")
     }
 
     private func dismissIconAlert() {
