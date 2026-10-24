@@ -14,7 +14,9 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   pull-to-refresh, context menus (`RecipeContextMenu`), empty/error states. Both layouts are a
   plain `List` (the grid as rows of `RecipeCard`s, at least 2 per row, larger cards and 4–5
   per row on iPad, 1 at accessibility sizes), so the search field is visible under the large
-  title from the start.
+  title from the start. A grid card's menu is on that card (`.borderless`, with a
+  `contextMenuPreview` content shape). The list row is not the menu target, so a long-press
+  lifts the pressed card and not the rest of the row. List layout is one recipe per row.
 - **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press keeps the
   context menu; Select in that menu selects the recipe (a glass bar below the list offers
   the household action by its title, or an Actions menu when there are several, plus shopping

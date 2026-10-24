@@ -94,7 +94,9 @@ struct RecipeCollectionContent: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.grid) {
                     ForEach(row) { recipe in
                         // A Button, not a NavigationLink: links inside List rows get a chevron.
-                        recipeControl(recipe) {
+                        // The menu stays on this card. The HStack is one list row, and a menu
+                        // on that row lifts every card in it.
+                        recipeControl(recipe, isolatesContextPreview: true) {
                             gridCard(recipe)
                         }
                         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -215,15 +217,23 @@ struct RecipeCollectionContent: View {
 
     /// Opens the recipe, or toggles selection once Select has started it. The context menu,
     /// including Select, stays available until then.
-    private func recipeControl<Label: View>(_ recipe: RecipeSummary, @ViewBuilder label: () -> Label) -> some View {
+    ///
+    /// `isolatesContextPreview` is for a card that shares a list row with its neighbours.
+    /// `.borderless` keeps the row from adopting the button, and the preview shape (applied
+    /// with the menu) limits the lift to this card.
+    private func recipeControl<Label: View>(
+        _ recipe: RecipeSummary,
+        isolatesContextPreview: Bool = false,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
         let selecting = isSelecting
         let selected = selection?.wrappedValue.contains(recipe.id) == true
         let favorite = userData.isFavorite(recipe.id)
         return Button(action: { handleTap(recipe) }) {
             label()
         }
-        .buttonStyle(.plain)
-        .modifier(contextMenu(for: recipe))
+        .modifier(CardButtonStyle(isolatesContextPreview: isolatesContextPreview))
+        .modifier(contextMenu(for: recipe, isolatesPreview: isolatesContextPreview))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel(for: recipe, favorite: favorite, selecting: selecting, selected: selected))
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -233,9 +243,10 @@ struct RecipeCollectionContent: View {
 
     /// The recipe menu. Hidden while selecting, so a long-press doesn't compete with toggling.
     /// Select is only on the Recipes tab.
-    private func contextMenu(for recipe: RecipeSummary) -> RecipeContextMenuAttachment {
+    private func contextMenu(for recipe: RecipeSummary, isolatesPreview: Bool = false) -> RecipeContextMenuAttachment {
         RecipeContextMenuAttachment(
             enabled: !isSelecting,
+            isolatesPreview: isolatesPreview,
             recipe: recipe,
             sheet: $sheet,
             toast: $toast,
@@ -420,9 +431,26 @@ private struct FavoriteSwipeButton: View {
 
 // MARK: - Press handling
 
+/// Grid cards share a list row, so they use `.borderless` (the row would otherwise adopt a
+/// plain button and its context menu). One-recipe rows keep `.plain`.
+private struct CardButtonStyle: ViewModifier {
+    var isolatesContextPreview: Bool
+
+    func body(content: Content) -> some View {
+        if isolatesContextPreview {
+            content.buttonStyle(.borderless)
+        } else {
+            content.buttonStyle(.plain)
+        }
+    }
+}
+
 /// The recipe context menu. Hidden while multi-select is active.
 private struct RecipeContextMenuAttachment: ViewModifier {
     var enabled: Bool
+    /// A card in a multi-card list row. The preview shape is what gets lifted; without it the
+    /// list row (every card in the line) is the preview.
+    var isolatesPreview = false
     let recipe: RecipeSummary
     @Binding var sheet: RecipeSheet?
     @Binding var toast: RecipeToast?
@@ -432,13 +460,25 @@ private struct RecipeContextMenuAttachment: ViewModifier {
 
     func body(content: Content) -> some View {
         if enabled {
-            content
+            previewShape(content)
                 .contextMenu {
                     RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast, onSelect: onSelect) {
                         namesNewList = true
                     }
                 }
                 .modifier(RecipeNewListAlert(isPresented: $namesNewList, recipe: recipe, toast: $toast))
+        } else {
+            content
+        }
+    }
+
+    @ViewBuilder
+    private func previewShape(_ content: Content) -> some View {
+        if isolatesPreview {
+            content.contentShape(
+                .contextMenuPreview,
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+            )
         } else {
             content
         }
