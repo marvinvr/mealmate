@@ -111,7 +111,14 @@ final class AddToShoppingListModel {
 
     /// Adds the selection; returns the number of lines added, or `nil` on failure.
     func add() async -> Int? {
-        guard let listID = destination.selectedListID, !selection.isEmpty else { return nil }
+        guard let listID = destination.selectedListID else { return nil }
+        return await add(to: listID, using: mealie)
+    }
+
+    /// Adds the selection to `listID`; returns the number of lines added, or `nil` on failure.
+    /// The recipe context menu calls this directly with the default (not on hand) selection.
+    func add(to listID: String, using mealie: MealieService) async -> Int? {
+        guard !selection.isEmpty else { return nil }
         isAdding = true
         defer { isAdding = false }
         // All lines → let Mealie take the recipe's ingredients; otherwise send the subset.

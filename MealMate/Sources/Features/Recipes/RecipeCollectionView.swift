@@ -32,6 +32,7 @@ struct RecipeCollectionContent: View {
     @State private var changes = RecipeChanges.shared
     @State private var gridWidth: CGFloat = 0
     @Environment(AppRouter.self) private var router
+    @Environment(\.mealie) private var mealie
 
     var body: some View {
         // One scroll container per layout (states render inside it) so the large title
@@ -44,6 +45,7 @@ struct RecipeCollectionContent: View {
             }
         }
         .animation(.smooth, value: model.items.map(\.id))
+        .task { await RecipeShoppingLists.shared.load(mealie) }
         .onChange(of: changes.revision) {
             model.removeDeleted(changes.deletedIDs)
             Task { await model.reload() }
@@ -347,6 +349,8 @@ struct RecipeContextMenu: View {
     @Binding var toast: RecipeToast?
     /// Set on the Recipes tab. Choosing it enters multi-select with this recipe selected.
     var onSelect: (() -> Void)? = nil
+    /// Asks the host for a new shopping list's name.
+    var onNewList: () -> Void = {}
 
     @Environment(\.mealie) private var mealie
     @Environment(AppSession.self) private var session
@@ -364,11 +368,7 @@ struct RecipeContextMenu: View {
         } label: {
             Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "heart.slash" : "heart")
         }
-        Button {
-            sheet = .addToShoppingList(slug: recipe.slug)
-        } label: {
-            Label("Add to Shopping List", systemImage: "cart.badge.plus")
-        }
+        RecipeShoppingListMenu(recipe: recipe, sheet: $sheet, toast: $toast, onNewList: onNewList)
         Button {
             sheet = .addToMealPlan(recipe)
         } label: {
@@ -428,11 +428,17 @@ private struct RecipeContextMenuAttachment: ViewModifier {
     @Binding var toast: RecipeToast?
     var onSelect: (() -> Void)?
 
+    @State private var namesNewList = false
+
     func body(content: Content) -> some View {
         if enabled {
-            content.contextMenu {
-                RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast, onSelect: onSelect)
-            }
+            content
+                .contextMenu {
+                    RecipeContextMenu(recipe: recipe, sheet: $sheet, toast: $toast, onSelect: onSelect) {
+                        namesNewList = true
+                    }
+                }
+                .modifier(RecipeNewListAlert(isPresented: $namesNewList, recipe: recipe, toast: $toast))
         } else {
             content
         }
