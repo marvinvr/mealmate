@@ -22,6 +22,12 @@ import CryptoKit
 /// the image key, so a changed photo gets a new URL). A cached image shows on the first
 /// frame without a fade; freshly loaded ones fade in. While a large `.original` loads, an
 /// already cached `.min` of the same recipe is shown in its place.
+///
+/// Lists and grids create cells before they're on screen and cancel a `.task` when the cell
+/// scrolls away — and that task does not always start again. Loading is therefore tied to
+/// appearance (and to scrolling into view), and a cache fill redraws any cell still showing
+/// its placeholder. The download itself keeps running after the cell disappears, so coming
+/// back is a memory hit.
 struct RecipeImage: View {
     let recipeID: String
     let imageKey: String?
@@ -31,6 +37,10 @@ struct RecipeImage: View {
 
     @Environment(\.mealie) private var mealie
     @State private var loaded: LoadedImage?
+    /// URL the in-flight `loadTask` is fetching. Distinct from `loaded` so a failed attempt
+    /// can be retried the next time the cell appears.
+    @State private var loadingURL: URL?
+    @State private var loadTask: Task<Void, Never>?
 
     init(recipeID: String, imageKey: String?, size: RecipeImageSize = .min, seed: String? = nil) {
         self.recipeID = recipeID
@@ -54,7 +64,10 @@ struct RecipeImage: View {
 
     var body: some View {
         let url = imageURL(size)
-        let image = currentImage(for: url)
+        // Subscribe to cache fills. A cell whose own task was cancelled (it scrolled away, or
+        // it hadn't appeared yet) still swaps the placeholder for the photo when the download
+        // finishes, without waiting for another appearance.
+        let image = currentImage(for: url, cacheRevision: RecipeImageCacheRevision.shared.revision)
         Color.clear
             .overlay {
                 if let image {
@@ -69,15 +82,53 @@ struct RecipeImage: View {
             }
             .clipped()
             .accessibilityHidden(true)
-            .task(id: url) {
-                guard let url, loaded?.url != url else { return }
-                if RecipeImageLoader.memoryImage(for: url) != nil { return }
-                guard let fetched = await RecipeImageLoader.shared.image(for: url, size: size) else { return }
-                guard !Task.isCancelled else { return }
-                withAnimation(.smooth(duration: 0.3)) {
-                    loaded = LoadedImage(url: url, image: fetched)
-                }
+            .onAppear { beginLoading(url) }
+            .onChange(of: url) { _, newURL in
+                if loaded?.url != newURL { loaded = nil }
+                beginLoading(newURL)
             }
+            // `onAppear` does not always fire again when a reused list cell scrolls back.
+            // Visibility does: any pixel on screen starts a load the cell doesn't already have.
+            .onScrollVisibilityChange(threshold: 0) { isVisible in
+                if isVisible { beginLoading(url) }
+            }
+    }
+
+    /// Starts a fetch unless this URL is already shown or already being fetched.
+    /// A memory hit is written into `loaded`: `body` may have drawn the placeholder a moment
+    /// before the cache filled, and returning here without touching state would leave it there.
+    private func beginLoading(_ url: URL?) {
+        guard let url else {
+            loadTask?.cancel()
+            loadTask = nil
+            loadingURL = nil
+            return
+        }
+        if loadingURL != url {
+            loadTask?.cancel()
+            loadTask = nil
+            loadingURL = nil
+        }
+        if loaded?.url == url { return }
+        if let cached = RecipeImageLoader.memoryImage(for: url) {
+            loaded = LoadedImage(url: url, image: cached)
+            return
+        }
+        if loadingURL == url, let loadTask, !loadTask.isCancelled { return }
+        loadingURL = url
+        let size = self.size
+        loadTask = Task { @MainActor in
+            let fetched = await RecipeImageLoader.shared.image(for: url, size: size)
+            // Cancelled only when this cell has moved on to another URL. The photo is already
+            // in the memory cache either way, so the next appearance (or a cache revision)
+            // shows it; applying it here would race a reused cell.
+            guard !Task.isCancelled, loadingURL == url else { return }
+            loadingURL = nil
+            guard let fetched else { return }
+            withAnimation(.smooth(duration: 0.3)) {
+                loaded = LoadedImage(url: url, image: fetched)
+            }
+        }
     }
 
     private func imageURL(_ size: RecipeImageSize) -> URL? {
@@ -85,7 +136,9 @@ struct RecipeImage: View {
         return mealie.recipeImageURL(recipeID: recipeID, imageKey: imageKey, size: size)
     }
 
-    private func currentImage(for url: URL?) -> UIImage? {
+    private func currentImage(for url: URL?, cacheRevision: Int) -> UIImage? {
+        // `cacheRevision` is read so a fill of the memory cache invalidates this view.
+        _ = cacheRevision
         guard let url else { return nil }
         if let loaded, loaded.url == url { return loaded.image }
         if let cached = RecipeImageLoader.memoryImage(for: url) { return cached }
@@ -94,6 +147,25 @@ struct RecipeImage: View {
             return RecipeImageLoader.memoryImage(for: smaller)
         }
         return nil
+    }
+}
+
+/// Bumped when `RecipeImageLoader` stores a photo. Cells subscribe in `body`, so a placeholder
+/// on screen updates even if the task that started the download was cancelled.
+@MainActor
+@Observable
+private final class RecipeImageCacheRevision {
+    static let shared = RecipeImageCacheRevision()
+    private(set) var revision = 0
+    private var coalesce = false
+
+    func noteStore() {
+        guard !coalesce else { return }
+        coalesce = true
+        Task { @MainActor in
+            self.coalesce = false
+            self.revision &+= 1
+        }
     }
 }
 
@@ -107,8 +179,10 @@ struct RecipeImage: View {
 /// disk (`Caches/RecipeImages`) → network, with in-flight requests de-duplicated. A disk hit
 /// older than `revalidationInterval` is shown immediately and refreshed in the background.
 /// Images are decoded and downsampled off the main thread (ImageIO), so scrolling a grid
-/// never decodes WebP on the main thread. A 404 is remembered (in memory) so a missing avatar
-/// isn't requested on every appearance.
+/// never decodes WebP on the main thread. A download is detached from the cell that started
+/// it: scrolling the cell away cancels only the view's wait, not the file, and the result is
+/// stored for the next cell. A 404 is remembered (in memory) so a missing avatar isn't
+/// requested on every appearance.
 ///
 /// Avatar URLs are the exception to "immutable": Mealie keeps a user's `cacheKey` when the file
 /// changes without an upload or OIDC sync (and every user starts on the same default key), so
@@ -167,6 +241,9 @@ actor RecipeImageLoader {
 
         trimDiskIfNeeded()
         let file = fileURL(for: url)
+        // Detached so a list cell disappearing (which cancels its view task) does not cancel
+        // the URLSession work or drop the bitmap. The photo is in the memory cache before
+        // waiters resume, including waiters that have already been cancelled.
         let task = Task.detached(priority: .userInitiated) { [session] () -> UIImage? in
             if let data = try? Data(contentsOf: file), let image = Self.decode(data, maxPixelSize: maxPixel) {
                 let age = (try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
@@ -174,6 +251,7 @@ actor RecipeImageLoader {
                 if age > Self.revalidationInterval {
                     await self.revalidate(request, file: file, maxPixel: maxPixel)
                 }
+                Self.remember(image, for: url)
                 return image
             }
             switch await Self.download(request, session: session) {
@@ -181,6 +259,7 @@ actor RecipeImageLoader {
                 await self.noteFetched(url)
                 guard let image = Self.decode(data, maxPixelSize: maxPixel) else { return nil }
                 try? data.write(to: file, options: .atomic)
+                Self.remember(image, for: url)
                 return image
             case .missing:
                 await self.noteFetched(url)
@@ -193,8 +272,16 @@ actor RecipeImageLoader {
         inFlight[url] = task
         let image = await task.value
         inFlight[url] = nil
-        if let image { Self.memory.store(image, for: url) }
         return image
+    }
+
+    /// Memory cache plus a redraw of any `RecipeImage` still showing a placeholder.
+    /// Called from the detached fetch, which outlives the cell that started it.
+    private nonisolated static func remember(_ image: UIImage, for url: URL) {
+        memory.store(image, for: url)
+        Task { @MainActor in
+            RecipeImageCacheRevision.shared.noteStore()
+        }
     }
 
     enum Refresh {

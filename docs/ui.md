@@ -57,7 +57,9 @@ states, haptics, accessibility). This doc covers how screens are wired. Tokens:
   cached `.min` stands in while `.original` loads. `RecipeImageLoader` (actor): memory
   `NSCache` → disk `Caches/RecipeImages` (300 MB, background revalidation after 7 days) →
   network, de-duplicated, decoded/downsampled off the main thread, 404s remembered,
-  cleared on sign-out. Also loads user avatars.
+  cleared on sign-out. Also loads user avatars. A list/grid cell starts its fetch on appear
+  and again when it scrolls into view; the download keeps running if the cell disappears,
+  and a cache fill redraws a cell still on its placeholder.
 - `UserAvatar` (`App/AccountButton.swift`): round Mealie profile picture of the signed-in
   user (toolbar account button, Settings), initials while loading, without a picture or on
   failure. Same URL as Mealie's web UI (`/api/media/users/{id}/profile.webp?cacheKey=…`; Mealie
