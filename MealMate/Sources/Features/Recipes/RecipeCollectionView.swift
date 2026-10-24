@@ -52,6 +52,12 @@ struct RecipeCollectionContent: View {
         }
     }
 
+    /// Hosts pass this to `.searchable`. iPhone pins the field under the large title: a grid
+    /// `ScrollView` would otherwise hide it until pulled down. iPad keeps the toolbar field.
+    static func searchPlacement(_ sizeClass: UserInterfaceSizeClass?) -> SearchFieldPlacement {
+        sizeClass == .regular ? .automatic : .navigationBarDrawer(displayMode: .always)
+    }
+
     // MARK: Layouts
 
     /// Cards per row: as many minimum-width columns as fit, at least two (also on 375 pt
@@ -65,57 +71,37 @@ struct RecipeCollectionContent: View {
         return max(2, Int((available + Theme.Spacing.grid) / (minimum + Theme.Spacing.grid)))
     }
 
-    private var gridRows: [[RecipeSummary]] {
-        let count = columnCount
-        return stride(from: 0, to: model.items.count, by: count).map {
-            Array(model.items[$0..<min($0 + count, model.items.count)])
-        }
-    }
-
-    /// The grid is a `List` of card rows rather than a `ScrollView` + `LazyVGrid`: only a List
-    /// keeps the large title together with an always-visible search field (iOS 26), and its
-    /// rows stay lazy.
+    /// A `ScrollView` + `LazyVGrid`, not a `List` of card rows: a List turns a context menu
+    /// anywhere in a row into the row's menu, so a long press lifted every card in the line.
     private var grid: some View {
-        List {
-            if let header {
-                header
-                    .listRowInsets(EdgeInsets(top: Theme.Spacing.xs, leading: Theme.Spacing.screen, bottom: Theme.Spacing.xs, trailing: Theme.Spacing.screen))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-            }
-            if model.refreshError != nil {
-                refreshNote
-                    .listRowInsets(EdgeInsets(top: 0, leading: Theme.Spacing.screen, bottom: Theme.Spacing.s, trailing: Theme.Spacing.screen))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-            }
-            let columns = columnCount
-            ForEach(gridRows, id: \.first?.id) { row in
-                HStack(alignment: .top, spacing: Theme.Spacing.grid) {
-                    ForEach(row) { recipe in
-                        // A Button, not a NavigationLink: links inside List rows get a chevron.
-                        // The menu stays on this card. The HStack is one list row, and a menu
-                        // on that row lifts every card in it.
+        let columns = Array(
+            repeating: GridItem(.flexible(), spacing: Theme.Spacing.grid, alignment: .top),
+            count: columnCount
+        )
+        return ScrollView {
+            LazyVStack(spacing: 0) {
+                if let header {
+                    header
+                        .padding(.vertical, Theme.Spacing.xs)
+                }
+                if model.refreshError != nil {
+                    refreshNote
+                        .padding(.bottom, Theme.Spacing.s)
+                }
+                LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Spacing.xl) {
+                    ForEach(model.items) { recipe in
                         recipeControl(recipe, isolatesContextPreview: true) {
                             gridCard(recipe)
                         }
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
                         .onAppear { model.itemAppeared(recipe) }
                     }
-                    ForEach(row.count..<max(columns, row.count), id: \.self) { _ in
-                        Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
-                    }
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: Theme.Spacing.screen, bottom: Theme.Spacing.xl, trailing: Theme.Spacing.screen))
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
+                .padding(.top, Theme.Spacing.xs)
+                pagingFooter
             }
-            pagingFooter
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
+            .padding(.horizontal, Theme.Spacing.screen)
+            .padding(.bottom, Theme.Spacing.xl)
         }
-        .listStyle(.plain)
-        .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { gridWidth = $0 }
         .overlay {
             if model.items.isEmpty { stateView }
@@ -218,9 +204,7 @@ struct RecipeCollectionContent: View {
     /// Opens the recipe, or toggles selection once Select has started it. The context menu,
     /// including Select, stays available until then.
     ///
-    /// `isolatesContextPreview` is for a card that shares a list row with its neighbours.
-    /// `.borderless` keeps the row from adopting the button, and the preview shape (applied
-    /// with the menu) limits the lift to this card.
+    /// `isolatesContextPreview` gives a grid card a rounded preview of just the card.
     private func recipeControl<Label: View>(
         _ recipe: RecipeSummary,
         isolatesContextPreview: Bool = false,
@@ -232,7 +216,7 @@ struct RecipeCollectionContent: View {
         return Button(action: { handleTap(recipe) }) {
             label()
         }
-        .modifier(CardButtonStyle(isolatesContextPreview: isolatesContextPreview))
+        .buttonStyle(.plain)
         .modifier(contextMenu(for: recipe, isolatesPreview: isolatesContextPreview))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel(for: recipe, favorite: favorite, selecting: selecting, selected: selected))
@@ -429,27 +413,10 @@ private struct FavoriteSwipeButton: View {
     }
 }
 
-// MARK: - Press handling
-
-/// Grid cards share a list row, so they use `.borderless` (the row would otherwise adopt a
-/// plain button and its context menu). One-recipe rows keep `.plain`.
-private struct CardButtonStyle: ViewModifier {
-    var isolatesContextPreview: Bool
-
-    func body(content: Content) -> some View {
-        if isolatesContextPreview {
-            content.buttonStyle(.borderless)
-        } else {
-            content.buttonStyle(.plain)
-        }
-    }
-}
-
 /// The recipe context menu. Hidden while multi-select is active.
 private struct RecipeContextMenuAttachment: ViewModifier {
     var enabled: Bool
-    /// A card in a multi-card list row. The preview shape is what gets lifted; without it the
-    /// list row (every card in the line) is the preview.
+    /// A grid card: the preview is the card's rounded shape instead of its bounding box.
     var isolatesPreview = false
     let recipe: RecipeSummary
     @Binding var sheet: RecipeSheet?

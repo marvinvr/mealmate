@@ -24,6 +24,7 @@ private struct RecipeCollectionScreenContent: View {
     @State private var toast: RecipeToast?
     @AppStorage("recipes.layout") private var layout: RecipeLayout = .grid
     @Environment(\.mealie) private var mealie
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     init(preset: RecipeCollectionPreset, mealie: MealieService) {
         self.preset = preset
@@ -48,7 +49,7 @@ private struct RecipeCollectionScreenContent: View {
         )
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
-        .searchable(text: $model.search, prompt: "Search \(title)")
+        .searchable(text: $model.search, placement: RecipeCollectionContent.searchPlacement(horizontalSizeClass), prompt: "Search \(title)")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {

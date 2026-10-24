@@ -11,12 +11,15 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   each item's `onAppear`. The first page is cached (`ResponseCache`).
   `RecipeListQueryBuilder` turns preset + filters into a `RecipeQuery` (unit tested).
 - `RecipeCollectionContent` renders grid or rows (`RecipeLayout`, persisted per device),
-  pull-to-refresh, context menus (`RecipeContextMenu`), empty/error states. Both layouts are a
-  plain `List` (the grid as rows of `RecipeCard`s, at least 2 per row, larger cards and 4–5
-  per row on iPad, 1 at accessibility sizes), so the search field is visible under the large
-  title from the start. A grid card's menu is on that card (`.borderless`, with a
-  `contextMenuPreview` content shape). The list row is not the menu target, so a long-press
-  lifts the pressed card and not the rest of the row. List layout is one recipe per row.
+  pull-to-refresh, context menus (`RecipeContextMenu`), empty/error states. List layout is a
+  plain `List`, one recipe per row. The grid is a `ScrollView` + `LazyVGrid` of `RecipeCard`s
+  (at least 2 per row, larger cards and 4–5 per row on iPad, 1 at accessibility sizes), each
+  with its own menu and a rounded `contextMenuPreview` shape. Never put several cards in one
+  `List` row: the List makes any context menu in a row the row's menu, and a long-press
+  lifts the whole line (verified with `ContextMenuPreviewUITests`). On iPhone the hosts pin
+  the search field under the large title (`RecipeCollectionContent.searchPlacement`), which a
+  `ScrollView` would otherwise hide until pulled down. Trade-off: with a screenful of cards
+  the Recipes tab opens with the title inline (pull down expands it), which the List kept large.
 - **Multi-select is the Recipes tab only** (`RecipeSelectionState`). Long-press keeps the
   context menu; Select in that menu selects the recipe (a glass bar below the list offers
   the household action by its title, or an Actions menu when there are several, plus shopping

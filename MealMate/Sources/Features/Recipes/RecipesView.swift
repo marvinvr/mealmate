@@ -67,7 +67,7 @@ private struct RecipesScreen: View {
         // iPhone keeps the count inline between Cancel and Select All. On iPad the tab bar
         // occupies that centre, so the count stays a large title under the tabs.
         .navigationBarTitleDisplayMode(selection.isActive && horizontalSizeClass != .regular ? .inline : .large)
-        .searchable(text: $model.search, prompt: "Search recipes")
+        .searchable(text: $model.search, placement: RecipeCollectionContent.searchPlacement(horizontalSizeClass), prompt: "Search recipes")
         .toolbar { toolbar }
         .toolbarVisibility(selection.isActive && horizontalSizeClass != .regular ? .hidden : .automatic, for: .tabBar)
         .preference(key: AccountButtonHiddenKey.self, value: selection.isActive)
