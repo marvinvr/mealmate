@@ -24,12 +24,12 @@ final class RecipeShoppingLists {
     func load(_ mealie: MealieService) async {
         resetIfNeeded(for: mealie)
         if lists == nil, let cached = await mealie.cached([ShoppingListsViewModel.Row].self, key: Self.cacheKey) {
-            lists = Self.newestFirst(cached.map(\.list))
+            lists = cached.map(\.list).sorted(by: ShoppingList.newestFirst)
         }
         if let loadTask { return await loadTask.value }
         let task = Task {
             if let fresh = try? await mealie.shoppingLists() {
-                lists = Self.newestFirst(fresh)
+                lists = fresh.sorted(by: ShoppingList.newestFirst)
             }
         }
         loadTask = task
@@ -47,17 +47,6 @@ final class RecipeShoppingLists {
             await mealie.storeInCache(rows, key: Self.cacheKey)
         }
         return list
-    }
-
-    private static func newestFirst(_ lists: [ShoppingList]) -> [ShoppingList] {
-        lists.sorted {
-            switch ($0.createdAt, $1.createdAt) {
-            case let (lhs?, rhs?) where lhs != rhs: lhs > rhs
-            case (_?, nil): true
-            case (nil, _?): false
-            default: $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
-            }
-        }
     }
 
     private func resetIfNeeded(for mealie: MealieService) {
@@ -92,7 +81,10 @@ struct RecipeShoppingListMenu: View {
             }
             Menu {
                 ForEach(lists.dropFirst()) { list in
-                    Button(list.displayName) { add(to: list) }
+                    Button { add(to: list) } label: {
+                        Text(list.displayName)
+                        if let created = list.createdText { Text(created) }
+                    }
                 }
                 Section {
                     Button("New List…", systemImage: "plus", action: onNewList)
@@ -169,7 +161,9 @@ struct RecipeNewListAlert: ViewModifier {
                 Text("\(recipe.displayName) is added to this list.")
             }
             .onChange(of: isPresented) { _, presented in
-                if presented { name = "" }
+                if presented {
+                    name = ShoppingListNames.suggestion(avoiding: (RecipeShoppingLists.shared.lists ?? []).map(\.displayName))
+                }
             }
     }
 

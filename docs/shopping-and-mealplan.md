@@ -44,7 +44,7 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   (every ingredient, servings as written) and reports a failed request against each recipe.
 - Recipe context menu (`RecipeShoppingListMenu`): "Add to Shopping List" adds straight to the
   newest list (by `createdAt`, name as subtitle) with the sheet's default selection (on-hand
-  foods left out) and a toast; "Other List" holds the other lists newest first, "New List…" and
+  foods left out) and a toast; "Other List" holds the other lists newest first (date as subtitle), "New List…" (prefilled name) and
   "Choose Ingredients…" (the sheet). Lists come from `RecipeShoppingLists`, loaded when a
   recipe list appears (a menu can't load on open); until loaded the item opens the sheet.
 - `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by the
