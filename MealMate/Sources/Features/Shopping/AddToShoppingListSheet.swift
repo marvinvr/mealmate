@@ -94,9 +94,9 @@ final class AddToShoppingListModel {
 
     var canAdd: Bool { destination.selectedListID != nil && !selection.isEmpty && !isAdding }
 
-    func load(using mealie: MealieService, lastListID: String?) async {
+    func load(using mealie: MealieService) async {
         self.mealie = mealie
-        await destination.load(using: mealie, lastListID: lastListID)
+        await destination.load(using: mealie)
     }
 
     func toggle(_ index: Int) {
@@ -143,7 +143,6 @@ private struct AddToShoppingListForm: View {
     @Environment(\.mealie) private var mealie
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(ShoppingListChoice.lastListKey) private var lastListID = ""
 
     @State private var model: AddToShoppingListModel?
     let recipe: Recipe
@@ -187,7 +186,7 @@ private struct AddToShoppingListForm: View {
                 model = AddToShoppingListModel(recipe: recipe, scale: scale,
                                                householdSlug: session.currentUser?.householdSlug)
             }
-            await model?.load(using: mealie, lastListID: lastListID)
+            await model?.load(using: mealie)
         }
         .onChange(of: session.currentUser?.householdSlug) { _, slug in
             model?.applyHousehold(slug)
@@ -280,7 +279,6 @@ private struct AddToShoppingListForm: View {
             errorFeedback += 1
             return
         }
-        lastListID = model.destination.selectedListID ?? lastListID
         successFeedback += 1
         let listName = model.destination.selectedList?.displayName ?? "your list"
         toast = ActionToast(message: count == 1 ? "Added 1 item to \(listName)" : "Added \(count) items to \(listName)",

@@ -5,8 +5,10 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
 
 ## Shopping
 
-- `ShoppingListsView` / `ShoppingListsViewModel` (tab root): lists with unchecked counts
-  (cached `shopping.lists`), create, rename, delete. On iPad (regular width) it is the
+- `ShoppingListsView` / `ShoppingListsViewModel` (tab root): lists newest first
+  (`ShoppingList.newestFirst`, by `createdAt`) with unchecked counts and creation date
+  (cached `shopping.lists`), create, rename, delete. "New List" prefills a random playful name
+  (`ShoppingListNames`, skipping names already in use). On iPad (regular width) it is the
   sidebar of `ShoppingSplitRoot` (`MainTabView`) with a `selection`: rows select instead of
   push, the first list opens when none is, a deleted open list falls back to the first.
   `router.push(.shoppingList)` always replaces the open list (`shoppingPath = [list]`).
@@ -37,7 +39,7 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
 - `ShoppingItemEditor`: quantity, unit, food, note, label (`ShoppingCatalog`, cached
   `shopping.units` / `shopping.labels`).
 - `AddToShoppingListSheet`: adds a recipe's ingredients with a servings scale via
-  `POST …/lists/{id}/recipe`; last used list preselected; foods marked on hand start unticked.
+  `POST …/lists/{id}/recipe`; newest list preselected; foods marked on hand start unticked.
   The Recipes tab's multi-select uses the same endpoint with one body entry per recipe
   (every ingredient, servings as written) and reports a failed request against each recipe.
 - Recipe context menu (`RecipeShoppingListMenu`): "Add to Shopping List" adds straight to the
@@ -46,8 +48,9 @@ Sources: `Features/Shopping`, `Features/MealPlan`. Endpoints: `MealieService+Sho
   "Choose Ingredients…" (the sheet). Lists come from `RecipeShoppingLists`, loaded when a
   recipe list appears (a menu can't load on open); until loaded the item opens the sheet.
 - `ShoppingListChoice` + `ShoppingListPickerRow`: the target-list picker shared by the
-  add-to-list sheets (cached lists, last used preselected via `shopping.lastListID`).
-  "New List…" asks for a name, `POST /api/households/shopping/lists`, then adds to that list.
+  add-to-list sheets (cached lists, newest first, newest preselected).
+  Menu items show the creation date as a subtitle.
+  "New List…" asks for a name (prefilled like the tab's), `POST /api/households/shopping/lists`, then adds to that list.
 
 ## Meal Plan
 

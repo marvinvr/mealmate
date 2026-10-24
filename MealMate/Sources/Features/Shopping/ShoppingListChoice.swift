@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The target list of an "add to shopping list" sheet: the household's lists (cached first),
-/// the last used one preselected, and creating a new one.
+/// The target list of an "add to shopping list" sheet: the household's lists (cached first,
+/// newest first), the newest one preselected, and creating a new one.
 /// Shared by the add-to-list sheets; show it with `ShoppingListPickerRow`.
 @MainActor
 @Observable
@@ -14,33 +14,31 @@ final class ShoppingListChoice {
 
     enum Phase: Equatable { case loading, loaded, failed(MealieError) }
 
-    /// `@AppStorage` key of the last list something was added to.
-    static let lastListKey = "shopping.lastListID"
-
     @ObservationIgnored private var mealie: MealieService = .unconfigured
 
     var selectedList: ShoppingList? { lists.first { $0.id == selectedListID } }
 
-    func load(using mealie: MealieService, lastListID: String?) async {
+    func load(using mealie: MealieService) async {
         self.mealie = mealie
         if lists.isEmpty, let cached = await mealie.cached([ShoppingListsViewModel.Row].self, key: "shopping.lists") {
-            lists = cached.map(\.list)
+            lists = cached.map(\.list).sorted(by: ShoppingList.newestFirst)
             phase = .loaded
-            pickDefaultList(lastListID)
+            pickDefaultList()
         }
         do {
             lists = try await mealie.shoppingLists()
             phase = .loaded
-            pickDefaultList(lastListID)
+            pickDefaultList()
         } catch {
             let error = MealieError.wrap(error)
             if error != .cancelled, lists.isEmpty { phase = .failed(error) }
         }
     }
 
-    private func pickDefaultList(_ lastListID: String?) {
+    /// The newest list, unless the user already picked one.
+    private func pickDefaultList() {
         if let selectedListID, lists.contains(where: { $0.id == selectedListID }) { return }
-        selectedListID = lists.first { $0.id == lastListID }?.id ?? lists.first?.id
+        selectedListID = lists.first?.id
     }
 
     /// Creates the list, selects it, and returns it. `nil` when the name is empty or Mealie rejects it.
@@ -51,7 +49,7 @@ final class ShoppingListChoice {
         do {
             let list = try await mealie.createShoppingList(name: name)
             lists.append(list)
-            lists.sort { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+            lists.sort(by: ShoppingList.newestFirst)
             selectedListID = list.id
             await storeListsInCache()
             return list
@@ -67,7 +65,7 @@ final class ShoppingListChoice {
         for list in lists where !rows.contains(where: { $0.id == list.id }) {
             rows.append(.init(list: list, uncheckedCount: list.id == selectedListID ? 0 : nil))
         }
-        rows.sort { $0.list.displayName.localizedStandardCompare($1.list.displayName) == .orderedAscending }
+        rows.sort { ShoppingList.newestFirst($0.list, $1.list) }
         await mealie.storeInCache(rows, key: "shopping.lists")
     }
 }
@@ -88,14 +86,37 @@ struct ShoppingListPickerRow: View {
                 Text("No lists yet")
                     .foregroundStyle(.secondary)
             } else {
-                Picker("List", selection: $choice.selectedListID) {
+                // A menu of toggles rather than a `Picker`: menu pickers drop the date subtitle.
+                Menu {
                     ForEach(choice.lists) { list in
-                        Text(list.displayName).tag(Optional(list.id))
+                        Toggle(isOn: selectionBinding(list)) {
+                            Text(list.displayName)
+                            if let created = list.createdText {
+                                Text(created)
+                            }
+                        }
                     }
+                } label: {
+                    // The whole row opens the menu, like a menu picker.
+                    LabeledContent {
+                        HStack(spacing: 4) {
+                            Text(choice.selectedList?.displayName ?? "Choose")
+                            Image(systemName: "chevron.up.chevron.down")
+                                .imageScale(.small)
+                        }
+                        .foregroundStyle(.tint)
+                    } label: {
+                        Text("List")
+                            .foregroundStyle(Color.primary)
+                    }
+                    .contentShape(.rect)
                 }
-                .pickerStyle(.menu)
             }
         }
+    }
+
+    private func selectionBinding(_ list: ShoppingList) -> Binding<Bool> {
+        Binding { choice.selectedListID == list.id } set: { if $0 { choice.selectedListID = list.id } }
     }
 }
 
@@ -110,7 +131,7 @@ struct NewShoppingListButton: View {
 
     var body: some View {
         Button("New List…", systemImage: "plus") {
-            newListName = ""
+            newListName = ShoppingListNames.suggestion(avoiding: choice.lists.map(\.displayName))
             creatingList = true
         }
         .disabled(choice.phase == .loading && choice.lists.isEmpty)
@@ -136,5 +157,16 @@ struct NewShoppingListButton: View {
 
     private var errorBinding: Binding<Bool> {
         Binding { choice.error != nil } set: { if !$0 { choice.error = nil } }
+    }
+}
+
+extension ShoppingList {
+    /// Creation date as quiet secondary text ("Oct 12"; with the year when it isn't this year).
+    var createdText: String? {
+        guard let createdAt else { return nil }
+        let sameYear = Calendar.current.isDate(createdAt, equalTo: .now, toGranularity: .year)
+        return sameYear
+            ? createdAt.formatted(.dateTime.month(.abbreviated).day())
+            : createdAt.formatted(date: .abbreviated, time: .omitted)
     }
 }

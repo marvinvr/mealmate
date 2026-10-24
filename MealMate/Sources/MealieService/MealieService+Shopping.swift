@@ -2,11 +2,12 @@ import Foundation
 
 // Shopping lists and items (household-scoped).
 extension MealieService {
-    /// `GET /api/households/shopping/lists`: summaries without items.
+    /// `GET /api/households/shopping/lists`: summaries without items, newest first.
     func shoppingLists() async throws -> [ShoppingList] {
-        try await fetchAllPages("/api/households/shopping/lists",
-                                query: [URLQueryItem(name: "orderBy", value: "name"),
-                                        URLQueryItem(name: "orderDirection", value: "asc")])
+        let lists: [ShoppingList] = try await fetchAllPages("/api/households/shopping/lists",
+                                                            query: [URLQueryItem(name: "orderBy", value: "created_at"),
+                                                                    URLQueryItem(name: "orderDirection", value: "desc")])
+        return lists.sorted(by: ShoppingList.newestFirst)
     }
 
     /// `GET /api/households/shopping/lists/{id}` including items, label settings and recipe references.

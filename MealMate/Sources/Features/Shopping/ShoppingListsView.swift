@@ -27,10 +27,7 @@ struct ShoppingListsView: View {
             .navigationTitle("Shopping")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("New List", systemImage: "plus") {
-                        nameText = ""
-                        creating = true
-                    }
+                    Button("New List", systemImage: "plus", action: startCreating)
                 }
             }
             .task { await model.load(using: mealie) }
@@ -107,11 +104,8 @@ struct ShoppingListsView: View {
                 } description: {
                     Text("Create a list, then add items or a recipe’s ingredients to it.")
                 } actions: {
-                    Button("New List") {
-                        nameText = ""
-                        creating = true
-                    }
-                    .buttonStyle(.bordered)
+                    Button("New List", action: startCreating)
+                        .buttonStyle(.bordered)
                 }
             } else {
                 list
@@ -184,6 +178,12 @@ struct ShoppingListsView: View {
         }
     }
 
+    /// Prefills a playful name the user can keep or replace.
+    private func startCreating() {
+        nameText = ShoppingListNames.suggestion(avoiding: model.rows.map(\.list.displayName))
+        creating = true
+    }
+
     private func startRename(_ row: ShoppingListsViewModel.Row) {
         nameText = row.list.name ?? ""
         renamingRow = row
@@ -191,8 +191,7 @@ struct ShoppingListsView: View {
 
     private func consumeIntent() {
         if router.consumeIntent("shopping-new") != nil {
-            nameText = ""
-            creating = true
+            startCreating()
         } else if let intent = router.consumeIntent("shopping-add-recipe/") {
             addRecipeSlug = String(intent.dropFirst("shopping-add-recipe/".count))
         }
@@ -240,12 +239,15 @@ private struct ShoppingListRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// What's left to buy, then the creation date.
     private var summary: String {
-        switch row.uncheckedCount {
-        case nil: " "
+        let count: String? = switch row.uncheckedCount {
+        case nil: nil
         case 0: "All done"
         case 1: "1 item to buy"
         case let count?: "\(count) items to buy"
         }
+        let parts = [count, row.list.createdText].compactMap { $0 }
+        return parts.isEmpty ? " " : parts.joined(separator: " · ")
     }
 }

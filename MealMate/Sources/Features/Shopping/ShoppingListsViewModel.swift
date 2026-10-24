@@ -28,7 +28,7 @@ final class ShoppingListsViewModel {
     func load(using mealie: MealieService) async {
         self.mealie = mealie
         if rows.isEmpty, let cached = await mealie.cached([Row].self, key: Self.cacheKey) {
-            rows = cached
+            rows = cached.sorted { ShoppingList.newestFirst($0.list, $1.list) }
             phase = .loaded
         }
         await refresh()
@@ -79,7 +79,7 @@ final class ShoppingListsViewModel {
             let list = try await mealie.createShoppingList(name: name)
             withAnimation(.snappy) {
                 rows.append(Row(list: list, uncheckedCount: 0))
-                rows.sort { $0.list.displayName.localizedStandardCompare($1.list.displayName) == .orderedAscending }
+                rows.sort { ShoppingList.newestFirst($0.list, $1.list) }
             }
             await mealie.storeInCache(rows, key: Self.cacheKey)
             return list

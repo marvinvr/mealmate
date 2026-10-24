@@ -16,7 +16,6 @@ struct MealPlanShoppingSheet: View {
 
     @Environment(\.mealie) private var mealie
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(ShoppingListChoice.lastListKey) private var lastListID = ""
 
     @State private var model: MealPlanShoppingModel?
     @State private var toast: ActionToast?
@@ -65,7 +64,7 @@ struct MealPlanShoppingSheet: View {
                 model = MealPlanShoppingModel(week: week, entries: entries, day: day)
             }
             if model?.days.isEmpty == false {
-                await model?.load(using: mealie, lastListID: lastListID)
+                await model?.load(using: mealie)
             }
         }
         .alert(isPresented: errorBinding, error: model?.error) { _ in
@@ -114,7 +113,6 @@ struct MealPlanShoppingSheet: View {
             errorFeedback += 1
             return
         }
-        lastListID = model.destination.selectedListID ?? lastListID
         successFeedback += 1
         let listName = model.destination.selectedList?.displayName ?? "your list"
         let meals = count == 1 ? "1 meal" : "\(count) meals"
@@ -157,9 +155,9 @@ final class MealPlanShoppingModel {
         if selection.contains(id) { selection.remove(id) } else { selection.insert(id) }
     }
 
-    func load(using mealie: MealieService, lastListID: String?) async {
+    func load(using mealie: MealieService) async {
         self.mealie = mealie
-        await destination.load(using: mealie, lastListID: lastListID)
+        await destination.load(using: mealie)
     }
 
     /// Adds the ticked meals' recipes; returns the number of meals, or `nil` on failure.

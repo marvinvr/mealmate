@@ -185,7 +185,6 @@ struct RecipeBulkShoppingSheet: View {
 
     @Environment(\.mealie) private var mealie
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(ShoppingListChoice.lastListKey) private var lastListID = ""
     @State private var choice = ShoppingListChoice()
     @State private var job: RecipeBulkJob?
 
@@ -201,7 +200,7 @@ struct RecipeBulkShoppingSheet: View {
         .interactiveDismissDisabled(job?.isRunning == true)
         .task {
             guard job == nil else { return }
-            await choice.load(using: mealie, lastListID: lastListID)
+            await choice.load(using: mealie)
         }
     }
 
@@ -242,7 +241,6 @@ struct RecipeBulkShoppingSheet: View {
         let phrase = "to “\(list.displayName)”"
         let recipes = recipes
         let service = mealie
-        lastListID = listID
         onStarted()
         job = RecipeBulkJob.batch(
             progressTitle: "Adding",

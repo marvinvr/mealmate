@@ -21,6 +21,17 @@ struct ShoppingList: Codable, Hashable, Identifiable, Sendable {
     var displayName: String { name?.isEmpty == false ? name! : "Shopping list" }
     var items: [ShoppingListItem] { listItems ?? [] }
 
+    /// Newest first (by `createdAt`; lists without a date last, then by name): the order of
+    /// every list overview and picker.
+    static func newestFirst(_ a: ShoppingList, _ b: ShoppingList) -> Bool {
+        switch (a.createdAt, b.createdAt) {
+        case let (a?, b?) where a != b: a > b
+        case (_?, nil): true
+        case (nil, _?): false
+        default: a.displayName.localizedStandardCompare(b.displayName) == .orderedAscending
+        }
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
