@@ -263,17 +263,20 @@ private struct RecipeDetailScreen: View {
 
     // MARK: Actions
 
+    /// Start Cooking (filled) and Add to List (Mealie's shopping list) side by side; household
+    /// recipe actions are secondary, in a small menu after them. Without steps Add to List is
+    /// the one prominent action.
     @ViewBuilder
     private func actionRow(_ recipe: Recipe) -> some View {
         let hasSteps = !recipe.instructions.isEmpty
         ViewThatFits(in: .horizontal) {
             HStack(spacing: Theme.Spacing.s) {
                 if hasSteps { startCookingButton(recipe) }
-                recipeActionsControl(recipe)
+                shoppingAndActions(recipe, isPrimary: !hasSteps)
             }
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                 if hasSteps { startCookingButton(recipe) }
-                recipeActionsControl(recipe)
+                shoppingAndActions(recipe, isPrimary: !hasSteps)
             }
         }
     }
@@ -290,44 +293,54 @@ private struct RecipeDetailScreen: View {
         .controlSize(.large)
     }
 
-    /// One action → direct button (one tap from the recipe); several → a menu.
+    private func shoppingAndActions(_ recipe: Recipe, isPrimary: Bool) -> some View {
+        HStack(spacing: Theme.Spacing.s) {
+            addToListButton(recipe, isPrimary: isPrimary)
+            recipeActionsMenu(recipe)
+        }
+    }
+
     @ViewBuilder
-    private func recipeActionsControl(_ recipe: Recipe) -> some View {
-        let actions = model.actions
-        if actions.count == 1, let action = actions.first {
-            Button {
-                run(action, recipe: recipe)
-            } label: {
-                HStack(spacing: Theme.Spacing.xs) {
-                    if model.runningActionID == action.id {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Image(systemName: action.isLink ? "arrow.up.forward.app" : "paperplane")
-                    }
-                    Text(action.title).lineLimit(1)
-                }
-                .font(.body.weight(.medium))
-            }
-            .buttonStyle(.glass)
-            .controlSize(.large)
-            .disabled(model.runningActionID != nil)
-            .accessibilityHint(action.isLink ? "Opens a link for this recipe." : "Runs this household recipe action.")
-        } else if actions.count > 1 {
+    private func addToListButton(_ recipe: Recipe, isPrimary: Bool) -> some View {
+        let button = Button {
+            sheet = .addRecipeToShoppingList(recipe, scale: model.scale)
+        } label: {
+            Label("Add to List", systemImage: "cart.badge.plus")
+                .font(.body.weight(isPrimary ? .semibold : .medium))
+                .lineLimit(1)
+        }
+        .controlSize(.large)
+        .accessibilityLabel("Add to Shopping List")
+        if isPrimary {
+            button.primaryActionStyle()
+        } else {
+            button.buttonStyle(.glass)
+        }
+    }
+
+    /// Household recipe actions (Mealie's "Recipe Actions", e.g. send to another app), always
+    /// behind one icon-only menu so they never compete with the shopping list.
+    @ViewBuilder
+    private func recipeActionsMenu(_ recipe: Recipe) -> some View {
+        if !model.actions.isEmpty {
             Menu {
-                actionsMenuContent(recipe)
+                Section("Recipe Actions") { actionsMenuContent(recipe) }
             } label: {
-                HStack(spacing: Theme.Spacing.xs) {
+                Group {
                     if model.runningActionID != nil {
                         ProgressView().controlSize(.small)
                     } else {
                         Image(systemName: "paperplane")
                     }
-                    Text("Actions")
                 }
                 .font(.body.weight(.medium))
+                .frame(minWidth: 22, minHeight: 22)
             }
             .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
             .controlSize(.large)
+            .disabled(model.runningActionID != nil)
+            .accessibilityLabel("Recipe Actions")
         }
     }
 
@@ -440,7 +453,7 @@ private struct RecipeDetailScreen: View {
                     Label("I Made This", systemImage: "checkmark.seal")
                 }
             }
-            if model.actions.count > 1 {
+            if !model.actions.isEmpty {
                 Section("Recipe Actions") { actionsMenuContent(recipe) }
             }
             Section {

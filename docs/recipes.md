@@ -65,6 +65,10 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   a failed photo upload still saves the entry. Recipe actions: `post` actions are triggered on the
   server with the current scale; `link` actions open a URL with Mealie's placeholders
   (`${url}`, `${slug}`, `${scale}`, `${servings}`, …) filled by `RecipeActionLink`.
+- Action row under the header: Start Cooking (the one prominent button) and Add to List
+  (Mealie shopping list sheet; prominent itself when the recipe has no steps). Household recipe
+  actions are secondary: an icon-only `paperplane` menu after Add to List (only when the household
+  has any) and a section in the More menu.
 - More menu: Duplicate (`POST …/duplicate`, Mealie names the copy "<name> (1)", then it is
   pushed) and Delete Recipe (confirmation, then pop). Share menu: Public Link…
   (`RecipePublicLinkSheet`: expiring share tokens, copy / share / revoke).
