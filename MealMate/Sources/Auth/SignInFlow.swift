@@ -45,14 +45,14 @@ struct SignInFlow {
 
     // MARK: Username & password
 
-    func signIn(username: String, password: String) async throws -> SignInResult {
+    func signIn(username: String, password: String, mintLongLivedToken: Bool = true) async throws -> SignInResult {
         let session: AuthTokenResponse
         do {
             session = try await server.passwordLogin(username: username, password: password)
         } catch MealieError.unauthorized {
             throw SignInError.wrongCredentials
         }
-        return try await finish(sessionToken: session.accessToken, mintLongLivedToken: true)
+        return try await finish(sessionToken: session.accessToken, mintLongLivedToken: mintLongLivedToken)
     }
 
     // MARK: API token

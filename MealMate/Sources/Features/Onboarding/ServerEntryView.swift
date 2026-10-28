@@ -31,6 +31,7 @@ struct ServerEntryView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                demoFooter
             }
             .padding(.horizontal, 24)
             .padding(.top, Onboarding.topPadding(minimum: 48, height: height, isRegularWidth: horizontalSizeClass == .regular))
@@ -92,6 +93,29 @@ struct ServerEntryView: View {
         .primaryActionStyle()
         .controlSize(.large)
         .disabled(!model.canContinue)
+    }
+
+    private var demoFooter: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Works with any Mealie server. [Mealie](https://mealie.io) is free and open source.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                isFieldFocused = false
+                Task { await model.connectToDemo(session: session) }
+            } label: {
+                HStack(spacing: 6) {
+                    if model.isConnectingDemo {
+                        ProgressView().controlSize(.small)
+                    }
+                    Text(model.isConnectingDemo ? "Connecting to Demo…" : "No server yet? Try the Demo")
+                }
+                .font(.footnote.weight(.medium))
+            }
+            .buttonStyle(.borderless)
+            .disabled(model.isChecking || model.isConnectingDemo)
+        }
     }
 
     private func submit() {

@@ -15,6 +15,11 @@ kept) and accepts the first that answers `GET /api/app/about` like Mealie (other
   open when OIDC is off.
 - "Use API token" is always available.
 
+"No server yet? Try the Demo" on the server screen (`connectToDemo`) signs straight in to
+`https://demo.mealie.io` with Mealie's published demo account (`DemoServer`), skipping
+`LoginView`. It keeps the 48 h session token instead of minting an API token on the shared
+account. It exists so App Review (and new users) can try the app without a server.
+
 ## Native OIDC Flow (primary)
 
 `SignInFlow.signInWithOIDC()`, Mealie ≥ v3.23.0:

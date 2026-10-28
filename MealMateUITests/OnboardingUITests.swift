@@ -87,4 +87,18 @@ final class OnboardingUITests: MealMateUITestCase {
         try wait(element(containing: "Welcome to MealMate"), timeout: 10)
         XCTAssertFalse(tab("Recipes").exists)
     }
+
+    /// "Try the Demo" signs in to the public demo.mealie.io (needs internet, not the test server).
+    func testTryTheDemoShowsRecipes() throws {
+        app.launch()
+        try signOutIfNeeded()
+        try wait(element(containing: "Works with any Mealie server"), timeout: 10)
+        snapshot("onboarding-demo-entry")
+        try wait(button("label CONTAINS[c] 'Try the Demo'")).tap()
+        try wait(tab("Recipes"), timeout: 30, "Demo sign-in didn't reach the main tabs")
+        try waitFor("demo recipes", timeout: 20) { app.images.count + app.staticTexts.count > 8 }
+        sleep(3)
+        snapshot("onboarding-demo-recipes")
+        try signOutFromSettings()
+    }
 }
