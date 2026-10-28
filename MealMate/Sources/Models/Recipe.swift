@@ -357,6 +357,8 @@ struct TimelineEventCreate: Codable, Hashable, Sendable {
 
 /// Sort options for `GET /api/recipes`.
 enum RecipeSort: String, CaseIterable, Sendable, Hashable {
+    /// Daily shuffle, ordered on the device (`RecipeDailyOrder`). The Recipes tab default.
+    case todaysPicks
     case recentlyAdded
     case recentlyUpdated
     case name
@@ -366,6 +368,7 @@ enum RecipeSort: String, CaseIterable, Sendable, Hashable {
 
     var title: String {
         switch self {
+        case .todaysPicks: "Today's Picks"
         case .recentlyAdded: "Recently Added"
         case .recentlyUpdated: "Recently Updated"
         case .name: "Name"
@@ -377,6 +380,7 @@ enum RecipeSort: String, CaseIterable, Sendable, Hashable {
 
     var orderBy: String {
         switch self {
+        case .todaysPicks: "name"
         case .recentlyAdded: "created_at"
         case .recentlyUpdated: "updated_at"
         case .name: "name"
@@ -387,7 +391,7 @@ enum RecipeSort: String, CaseIterable, Sendable, Hashable {
     }
 
     var direction: PageQuery.SortDirection {
-        self == .name ? .asc : .desc
+        self == .name || self == .todaysPicks ? .asc : .desc
     }
 }
 

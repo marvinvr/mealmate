@@ -10,6 +10,10 @@ Endpoints: `MealieService+Recipes.swift`, `+Organizers.swift`, `+Parser.swift`.
   debounce), sort, `RecipeFilters` (favorites, categories, tags, tools, foods), paging from
   each item's `onAppear`. The first page is cached (`ResponseCache`).
   `RecipeListQueryBuilder` turns preset + filters into a `RecipeQuery` (unit tested).
+- **Today's Picks** (`RecipeSort.todaysPicks`) is the Recipes tab default (an explicit choice
+  persists in `recipes.sort`). It fetches the whole result set (`perPage=-1`, no paging) and
+  orders it on the device by a stable hash of recipe ID + local day (`RecipeDailyOrder`): same
+  order all day, a new one each day. DEBUG `-MealMateToday yyyy-MM-dd` simulates another day.
 - `RecipeCollectionContent` renders grid or rows (`RecipeLayout`, persisted per device),
   pull-to-refresh, context menus (`RecipeContextMenu`), empty/error states. List layout is a
   plain `List`, one recipe per row. The grid is a `ScrollView` + `LazyVGrid` of `RecipeCard`s

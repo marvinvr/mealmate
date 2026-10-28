@@ -194,6 +194,12 @@ struct RecipeListQueryTests {
         #expect(values["paginationSeed"] == ["abc"])
     }
 
+    @Test func todaysPicksFetchesEverything() {
+        let values = items(RecipeListQueryBuilder.query(preset: .all, search: "", sort: .todaysPicks, filters: RecipeFilters(), favoriteIDs: []))
+        #expect(values["perPage"] == ["-1"])
+        #expect(values["paginationSeed"] == nil)
+    }
+
     @Test func favoritesBecomeAnIDFilter() {
         var filters = RecipeFilters()
         filters.favoritesOnly = true
@@ -309,5 +315,38 @@ struct IngredientLinkTests {
         let substitutes = ingredient.substitutes
         #expect(substitutes == [.init(name: "Pecorino", note: "a little less"), .init(name: "Grana Padano", note: nil)])
         #expect(substitutes.map(IngredientFormatting.substituteText) == ["or Pecorino, a little less", "or Grana Padano"])
+    }
+}
+
+// MARK: - Today's Picks
+
+struct RecipeDailyOrderTests {
+    private let recipes = (0..<40).map { RecipeSummary(id: "id-\($0)", slug: "recipe-\($0)", name: "Recipe \($0)") }
+
+    private func order(_ day: String, _ input: [RecipeSummary]? = nil) -> [String] {
+        RecipeDailyOrder.sorted(input ?? recipes, day: day).map(\.id)
+    }
+
+    @Test func sameDaySameOrder() {
+        #expect(order("2026-10-28") == order("2026-10-28", recipes.reversed()))
+        #expect(Set(order("2026-10-28")) == Set(recipes.map(\.id)))
+    }
+
+    @Test func differentDayDifferentOrder() {
+        #expect(order("2026-10-28") != order("2026-10-29"))
+        #expect(order("2026-10-28") != recipes.map(\.id))
+    }
+
+    @Test func stableAcrossLaunches() {
+        // Pinned: the hash must not depend on the per-process `Hasher` seed.
+        #expect(RecipeDailyOrder.rank(id: "a", day: "2026-10-28") == 17_434_129_279_828_984_738)
+    }
+
+    @Test func dayKeyUsesTheLocalCalendar() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Pacific/Auckland")!
+        // 2026-10-28 20:00 UTC is already the 29th in Auckland.
+        let date = Date(timeIntervalSince1970: 1_793_217_600)
+        #expect(RecipeDailyOrder.dayKey(for: date, calendar: calendar) == "2026-10-29")
     }
 }

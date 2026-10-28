@@ -86,7 +86,7 @@ final class RecipeListModel {
         }
 
         if !hasLoaded, let cacheKey, let cached = await mealie.cached([RecipeSummary].self, key: cacheKey), items.isEmpty {
-            items = cached
+            items = arranged(cached)
             hasLoaded = true
         }
 
@@ -103,10 +103,10 @@ final class RecipeListModel {
         do {
             let result = try await mealie.recipes(query)
             guard generation == self.generation else { return }
-            items = result.items
+            items = arranged(result.items)
             total = result.total
             page = 1
-            hasMore = result.hasMore && !result.items.isEmpty
+            hasMore = sort != .todaysPicks && result.hasMore && !result.items.isEmpty
             hasLoaded = true
             refreshError = nil
             if let cacheKey { await mealie.storeInCache(result.items, key: cacheKey) }
@@ -176,6 +176,17 @@ final class RecipeListModel {
         loadError = MealieError.unreachable("The request timed out.").errorDescription
     }
     #endif
+
+    /// Applies the on-device order of Today's Picks; other sorts keep the server order.
+    private func arranged(_ recipes: [RecipeSummary]) -> [RecipeSummary] {
+        guard sort == .todaysPicks else { return recipes }
+        var day = RecipeDailyOrder.dayKey(for: .now)
+        #if DEBUG
+        // `-MealMateToday yyyy-MM-dd` simulates another day.
+        if let override = UserDefaults.standard.string(forKey: "MealMateToday") { day = override }
+        #endif
+        return RecipeDailyOrder.sorted(recipes, day: day)
+    }
 
     private func makeQuery(page: Int) -> RecipeQuery? {
         RecipeListQueryBuilder.query(preset: preset, search: search, sort: sort, filters: filters,

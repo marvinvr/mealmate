@@ -15,7 +15,7 @@ struct RecipesView: View {
 private struct RecipesScreen: View {
     @State private var model: RecipeListModel
     @AppStorage("recipes.layout") private var storedLayout: RecipeLayout = .grid
-    @AppStorage("recipes.sort") private var storedSort: String = RecipeSort.recentlyAdded.rawValue
+    @AppStorage("recipes.sort") private var storedSort: String = RecipeSort.todaysPicks.rawValue
     /// Debug-route override that isn't persisted.
     @State private var layoutOverride: RecipeLayout?
     @State private var sheet: RecipeSheet?
@@ -38,7 +38,7 @@ private struct RecipesScreen: View {
     @State private var userData = RecipeUserData.shared
 
     init(mealie: MealieService) {
-        let sort = RecipeSort(rawValue: UserDefaults.standard.string(forKey: "recipes.sort") ?? "") ?? .recentlyAdded
+        let sort = RecipeSort(rawValue: UserDefaults.standard.string(forKey: "recipes.sort") ?? "") ?? .todaysPicks
         _model = State(initialValue: RecipeListModel(preset: .all, sort: sort, mealie: mealie))
     }
 

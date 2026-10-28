@@ -92,7 +92,8 @@ enum RecipeListQueryBuilder {
     ) -> RecipeQuery? {
         var query = RecipeQuery()
         query.page = page
-        query.perPage = perPage
+        // Today's Picks is ordered on the device, so it needs the whole result set at once.
+        query.perPage = sort == .todaysPicks ? -1 : perPage
         query.sort = sort
         query.paginationSeed = sort == .random ? (seed ?? UUID().uuidString) : nil
 
@@ -130,5 +131,35 @@ enum RecipeListQueryBuilder {
             query.queryFilter = "id IN [\(ids)]"
         }
         return query
+    }
+}
+
+/// "Today's Picks": recipes ordered by a stable hash of (recipe ID, local day), so the
+/// order is the same all day and changes daily. Pure, so it's unit-tested.
+enum RecipeDailyOrder {
+    /// Local calendar day as `yyyy-MM-dd`.
+    static func dayKey(for date: Date, calendar: Calendar = .current) -> String {
+        let day = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", day.year ?? 0, day.month ?? 0, day.day ?? 0)
+    }
+
+    /// FNV-1a (stable across launches, unlike `Hasher`) plus a fmix64 finalizer, so a
+    /// one-digit change in the date reshuffles everything.
+    static func rank(id: String, day: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in "\(id)|\(day)".utf8 { hash = (hash ^ UInt64(byte)) &* 0x100_0000_01b3 }
+        hash ^= hash >> 33
+        hash &*= 0xff51_afd7_ed55_8ccd
+        hash ^= hash >> 33
+        hash &*= 0xc4ce_b9fe_1a85_ec53
+        hash ^= hash >> 33
+        return hash
+    }
+
+    static func sorted(_ recipes: [RecipeSummary], day: String) -> [RecipeSummary] {
+        recipes
+            .map { (rank: rank(id: $0.id, day: day), recipe: $0) }
+            .sorted { $0.rank != $1.rank ? $0.rank < $1.rank : $0.recipe.id < $1.recipe.id }
+            .map(\.recipe)
     }
 }
