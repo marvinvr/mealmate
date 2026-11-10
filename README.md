@@ -33,6 +33,13 @@ Dynamic Type and dark mode. It is not a web wrapper, has no paywall and no ads.
 - Pull to refresh everywhere, instant launch with your last data, haptics, context menus and
   share sheets.
 
+## Built from scratch
+
+MealMate is an original app, written from the ground up in Swift and SwiftUI by Marvin von Rappard.
+It is not a fork, template or reskin of another Mealie client, and it shares no code with one.
+It talks to your own Mealie server through Mealie's public v3 API.
+The full source is in this repository under the MIT license.
+
 ## Requirements
 
 - iOS 26 or later.
